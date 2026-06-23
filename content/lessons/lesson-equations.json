@@ -1,0 +1,321 @@
+{
+  "id": "lesson-equations",
+  "title": "Solving Equations",
+  "subject": "Algebra",
+  "description": "Learn to find x by moving terms across the equals sign.",
+  "estimatedMinutes": 15,
+  "totalSteps": 5,
+  "masteryRule": {
+    "description": "After all problems in a step are submitted, compute first-attempt correctness. If below masteryThreshold, send the student to fallbackStepId and show fallbackMessage. Step 1 failures restart Step 1.",
+    "nextButtonVisibleOnlyAfterMastery": true
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "title": "What Does x Mean?",
+      "concept": "Variables as unknowns",
+      "conceptFraming": "x is a mystery number. Your job is to find it. When you see x + 3 = 7, x is just a number we don't know yet.",
+      "masteryThreshold": 1.0,
+      "fallbackStepId": "step-1",
+      "fallbackMessage": "Let's try that again — x is just a number in disguise.",
+      "hints": [
+        "What number makes the equation true?",
+        "The equals sign means both sides must be the same value."
+      ],
+      "completionAction": {
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-2"
+      },
+      "problems": [
+        {
+          "id": "p1a",
+          "type": "numeric-input",
+          "prompt": "What is x? x + 0 = 9",
+          "answer": 9,
+          "feedback": {
+            "correct": "Right. Adding zero changes nothing, so x = 9.",
+            "incorrect": "Adding zero to x doesn't change it. So x must equal the number on the right."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-2",
+      "title": "One-Step Equations: Addition",
+      "concept": "Subtract to isolate x",
+      "conceptFraming": "To find x, you need to get it alone on one side of the equals sign. If something is being added to x, subtract it from both sides.",
+      "masteryThreshold": 0.5,
+      "fallbackStepId": "step-1",
+      "fallbackMessage": "Let's revisit what x means before we start moving terms.",
+      "partialMasteryMessage": "Watch your step — you missed one in the last section.",
+      "hints": ["How can we get x alone on one side?"],
+      "completionAction": {
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-3"
+      },
+      "problems": [
+        {
+          "id": "p2a",
+          "type": "drag-to-solve",
+          "prompt": "Drag the +3 across the = to isolate x.",
+          "equation": {
+            "left": ["x", "+3"],
+            "right": ["7"]
+          },
+          "targetTile": "+3",
+          "targetSide": "right",
+          "solution": {
+            "left": ["x"],
+            "right": ["7", "-3"]
+          },
+          "answer": 4,
+          "visual": {
+            "type": "grid-plot",
+            "leftLine": { "label": "y = x + 3", "fn": "x + 3" },
+            "rightLine": { "label": "y = 7", "fn": "7" },
+            "solution": 4
+          },
+          "animation": {
+            "gridAnimatesIn": true,
+            "greenVerticalLine": true,
+            "pulseIntersection": [4, 7]
+          },
+          "feedback": {
+            "correct": "Subtracting 3 from both sides isolates x. The grid shows why: x = 4 is the only point where both lines meet.",
+            "incorrect_moved_x": "Move the constant, not the variable. x is what you're solving for — leave it on the left.",
+            "incorrect_moved_right": "The 7 is already alone on the right. Drag the +3 across to get x by itself."
+          }
+        },
+        {
+          "id": "p2b",
+          "type": "numeric-input",
+          "prompt": "Now try on your own. Solve: x + 5 = 12. What is x?",
+          "answer": 7,
+          "feedback": {
+            "correct": "Yes — subtracting 5 from both sides gives x = 7. Same move, different numbers.",
+            "incorrect": "Subtract 5 from both sides. If x + 5 = 12, then x = 12 − 5."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-3",
+      "title": "One-Step Equations: Multiplication",
+      "concept": "Divide to isolate x",
+      "conceptFraming": "If x is being multiplied by a number, divide both sides by that number to isolate x.",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-2",
+      "fallbackMessage": "Let's revisit subtraction before dividing — the moves are related.",
+      "hints": [
+        "What number is multiplying x?",
+        "Divide both sides by that number to cancel it out."
+      ],
+      "completionAction": {
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-4"
+      },
+      "problems": [
+        {
+          "id": "p3a",
+          "type": "drag-to-solve",
+          "prompt": "Drag ÷2 across the = to isolate x.",
+          "equation": {
+            "left": ["2x", "÷2"],
+            "right": ["10"]
+          },
+          "targetTile": "÷2",
+          "targetSide": "right",
+          "solution": {
+            "left": ["x"],
+            "right": ["10", "÷2"]
+          },
+          "answer": 5,
+          "visual": {
+            "type": "grid-plot",
+            "leftLine": { "label": "y = 2x", "fn": "2 * x" },
+            "rightLine": { "label": "y = 10", "fn": "10" },
+            "solution": 5,
+            "verticalLine": true
+          },
+          "animation": { "greenVerticalLine": true },
+          "feedback": {
+            "correct": "Dividing both sides by 2 isolates x. The grid confirms it: x = 5 is where y = 2x meets y = 10.",
+            "incorrect_moved_x": "Leave x on the left. Drag the coefficient (the number multiplied by x) across the equals sign.",
+            "incorrect_wrong_tile": "You need to divide both sides by the number in front of x. Drag the ÷2 tile across."
+          }
+        },
+        {
+          "id": "p3b",
+          "type": "numeric-input",
+          "prompt": "Solve: 3x = 12. What is x?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Exactly. 12 ÷ 3 = 4, so x = 4.",
+            "incorrect": "Divide both sides by 3. What is 12 ÷ 3?"
+          }
+        },
+        {
+          "id": "p3c",
+          "type": "numeric-input",
+          "prompt": "Solve: 4x = 20. What is x?",
+          "answer": 5,
+          "feedback": {
+            "correct": "Right. 20 ÷ 4 = 5, so x = 5.",
+            "incorrect": "Divide both sides by 4. What is 20 ÷ 4?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-4",
+      "title": "Two-Step Equations",
+      "concept": "Undo in reverse order",
+      "conceptFraming": "Some equations need two moves. Always undo addition and subtraction first — then multiplication and division.",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-3",
+      "fallbackMessage": "Let's get division solid before we layer in two steps.",
+      "hints": [
+        "Deal with the number being added or subtracted first.",
+        "After that, divide both sides by the number in front of x."
+      ],
+      "completionAction": {
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-5"
+      },
+      "problems": [
+        {
+          "id": "p4a",
+          "type": "drag-to-solve",
+          "prompt": "Solve 2x + 3 = 11. Move the constant first, then the coefficient.",
+          "equation": {
+            "left": ["2x", "+3"],
+            "right": ["11"]
+          },
+          "moves": [
+            {
+              "targetTile": "+3",
+              "targetSide": "right",
+              "resultLeft": ["2x"],
+              "resultRight": ["11", "-3"],
+              "intermediateLabel": "2x = 8"
+            },
+            {
+              "targetTile": "÷2",
+              "targetSide": "right",
+              "resultLeft": ["x"],
+              "resultRight": ["8", "÷2"],
+              "intermediateLabel": "x = 4",
+              "blockedUntilPreviousMove": true,
+              "bounceBackOnEarlyAttempt": true
+            }
+          ],
+          "answer": 4,
+          "visual": {
+            "type": "grid-plot",
+            "leftLine": { "label": "y = 2x + 3", "fn": "2 * x + 3" },
+            "rightLine": { "label": "y = 11", "fn": "11" },
+            "solution": 4
+          },
+          "animation": { "greenVerticalLine": true },
+          "feedback": {
+            "correct": "Two moves, right order. Subtract 3 first, then divide by 2. The grid shows where both sides meet at x = 4.",
+            "incorrect_wrong_order": "Undo addition and subtraction first, then multiplication and division. Move the +3 across before dividing.",
+            "incorrect_moved_x": "x stays on the left. Move the constants across the equals sign."
+          }
+        },
+        {
+          "id": "p4b",
+          "type": "numeric-input",
+          "prompt": "Solve: 3x − 2 = 7. What is x?",
+          "answer": 3,
+          "feedback": {
+            "correct": "Right — add 2 to both sides first (getting 3x = 9), then divide by 3. x = 3.",
+            "incorrect": "Two steps: first add 2 to both sides, then divide by 3."
+          }
+        },
+        {
+          "id": "p4c",
+          "type": "numeric-input",
+          "prompt": "Solve: 2x + 5 = 13. What is x?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Good. Subtract 5 first (2x = 8), then divide by 2. x = 4.",
+            "incorrect": "Two steps: subtract 5 from both sides, then divide by 2."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-5",
+      "title": "Negative Numbers in Equations",
+      "concept": "Working with negatives",
+      "conceptFraming": "Negative numbers follow the same rules. When a negative term crosses the equals sign, it becomes positive — and vice versa.",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-4",
+      "fallbackMessage": "Two-step equations and negatives use the same moves. Let's solidify that first.",
+      "isLastStep": true,
+      "hints": [
+        "When a negative number crosses the =, its sign flips.",
+        "Think of it as: the opposite of −4 is +4."
+      ],
+      "completionAction": {
+        "buttonLabel": "Finish Lesson →",
+        "route": "/lesson/[id]/complete"
+      },
+      "problems": [
+        {
+          "id": "p5a",
+          "type": "drag-to-solve",
+          "prompt": "Drag −4 across the = to isolate x.",
+          "equation": {
+            "left": ["x", "−4"],
+            "right": ["3"]
+          },
+          "targetTile": "−4",
+          "targetSide": "right",
+          "solution": {
+            "left": ["x"],
+            "right": ["3", "+4"]
+          },
+          "answer": 7,
+          "visual": {
+            "type": "grid-plot",
+            "leftLine": { "label": "y = x − 4", "fn": "x - 4" },
+            "rightLine": { "label": "y = 3", "fn": "3" },
+            "solution": 7
+          },
+          "animation": { "greenVerticalLine": true },
+          "feedback": {
+            "correct": "When −4 crosses the equals sign, it becomes +4. Opposites swap. x = 7.",
+            "incorrect_moved_x": "Keep x on the left. Drag the −4 across.",
+            "incorrect_moved_right": "The 3 is already alone on the right. Move the −4 from the left side."
+          }
+        },
+        {
+          "id": "p5b",
+          "type": "multiple-choice",
+          "prompt": "Which equation has the same solution as x − 5 = 2?",
+          "options": [
+            { "id": "a", "text": "x + 3 = 10", "correct": true },
+            { "id": "b", "text": "x + 2 = 8", "correct": false },
+            { "id": "c", "text": "x − 1 = 5", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Yes — both x − 5 = 2 and x + 3 = 10 give x = 7. Same solution, different equation.",
+            "incorrect": "Solve x − 5 = 2 first: x = 7. Now check which option also gives x = 7."
+          }
+        },
+        {
+          "id": "p5c",
+          "type": "numeric-input",
+          "prompt": "Solve: x − 8 = −3. What is x?",
+          "answer": 5,
+          "feedback": {
+            "correct": "Right — add 8 to both sides. −3 + 8 = 5, so x = 5.",
+            "incorrect": "Add 8 to both sides. What is −3 + 8?"
+          }
+        }
+      ]
+    }
+  ]
+}

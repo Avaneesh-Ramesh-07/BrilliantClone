@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #f8f9fb;
+  --color-surface: #ffffff;
+  --color-primary: #3b5bdb;
+  --color-primary-light: #e7edff;
+  --color-success: #2f9e44;
+  --color-error: #e03131;
+  --color-text: #1a1b1e;
+  --color-muted: #868e96;
+  --color-border: #dee2e6;
+  --font-dm-sans: "DM Sans", system-ui, sans-serif;
+  --font-inter: "Inter", system-ui, sans-serif;
+  --font-dm-mono: "DM Mono", ui-monospace, monospace;
+}
+
+body {
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+@layer utilities {
+  .text-heading-lg {
+    font-family: var(--font-dm-sans), sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .text-heading-md {
+    font-family: var(--font-dm-sans), sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .text-body {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  .text-equation {
+    font-family: var(--font-dm-mono), monospace;
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  .text-label {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .text-feedback {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    font-style: italic;
+  }
+}
+
+@keyframes tile-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+.animate-tile-shake {
+  animation: tile-shake 0.4s ease-in-out;
+}
+
+@keyframes tile-snap {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-tile-snap {
+  animation: tile-snap 0.2s ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 0.6s ease-in-out 1;
+}
+
+@keyframes sign-flip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+.animate-sign-flip {
+  animation: sign-flip 0.2s ease-in-out;
+}
+
+@keyframes line-draw {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-line-draw {
+  stroke-dasharray: 1000;
+  animation: line-draw 0.6s ease-out forwards;
+}
+
+@keyframes vertical-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.animate-vertical-rise {
+  transform-origin: bottom;
+  animation: vertical-rise 0.3s ease-out forwards;
+}
