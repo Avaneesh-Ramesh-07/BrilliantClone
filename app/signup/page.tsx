@@ -21,7 +21,7 @@ export default function SignupPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signUp({
+    const { error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -30,33 +30,6 @@ export default function SignupPage() {
     });
 
     setLoading(false);
-
-    // #region agent log
-    fetch("http://127.0.0.1:7317/ingest/5ca51102-074a-497f-a02f-436942c7f190", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "427e58",
-      },
-      body: JSON.stringify({
-        sessionId: "427e58",
-        runId: "pre-fix",
-        hypothesisId: "H1-H3",
-        location: "app/signup/page.tsx:handleSubmit",
-        message: "signup attempt result",
-        data: {
-          hasUser: !!data?.user,
-          hasSession: !!data?.session,
-          userConfirmedAt: data?.user?.email_confirmed_at ?? null,
-          userCreatedAt: data?.user?.created_at ?? null,
-          identitiesCount: data?.user?.identities?.length ?? 0,
-          errorCode: authError?.code ?? null,
-          errorMessage: authError?.message ?? null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
 
     if (authError) {
       setError(authError.message);

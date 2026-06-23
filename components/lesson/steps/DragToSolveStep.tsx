@@ -14,6 +14,7 @@ import {
   EquationBoard,
   parseTileId,
 } from "@/components/equation/EquationBoard";
+import { parseDivisorTile } from "@/components/equation/FractionGlyph";
 import { GridPlotVisual } from "@/components/equation/GridPlotVisual";
 import {
   applyDivisionToCoefficient,
@@ -28,6 +29,7 @@ interface DragToSolveStepProps {
   problem: DragToSolveProblem;
   onCorrect: (feedback: string) => void;
   onIncorrect: (feedback: string) => void;
+  onReset?: () => void;
   disabled?: boolean;
 }
 
@@ -66,6 +68,7 @@ export function DragToSolveStep({
   problem,
   onCorrect,
   onIncorrect,
+  onReset,
   disabled,
 }: DragToSolveStepProps) {
   const moves = problem.moves ?? [];
@@ -193,6 +196,57 @@ export function DragToSolveStep({
     ]
   );
 
+  const currentTargetTile = isMultiMove
+    ? moves[moveIndex]?.targetTile
+    : problem.targetTile;
+  const divisionDivisor = currentTargetTile
+    ? parseDivisorTile(currentTargetTile)
+    : null;
+  const isDivisionMove =
+    divisionDivisor !== null && !awaitingSimplify && !simplified;
+
+  const applyDivision = useCallback(() => {
+    if (disabled || divisionDivisor === null || !currentTargetTile) return;
+
+    const target = isMultiMove
+      ? getMoveTarget(moves[moveIndex])
+      : {
+          targetTile: problem.targetTile!,
+          targetSide: problem.targetSide!,
+          expected: problem.solution!,
+        };
+
+    let newEquation = resolveMoveEquation(equation, "left", currentTargetTile);
+    newEquation = applyDivisionToCoefficient(newEquation);
+
+    if (!equationMatches(newEquation, target.expected)) {
+      onIncorrect(problem.feedback.incorrect_wrong_tile ?? "Try again.");
+      return;
+    }
+
+    setEquation(newEquation);
+
+    if (isMultiMove && moveIndex < moves.length - 1) {
+      setIntermediateLabel(moves[moveIndex].intermediateLabel ?? null);
+      const nextMove = moves[moveIndex + 1];
+      setEquation(prepareNextEquation(newEquation, nextMove));
+      setMoveIndex((i) => i + 1);
+      return;
+    }
+
+    setAwaitingSimplify(true);
+  }, [
+    disabled,
+    divisionDivisor,
+    currentTargetTile,
+    equation,
+    isMultiMove,
+    moves,
+    moveIndex,
+    problem,
+    onIncorrect,
+  ]);
+
   function handleSimplify() {
     const answer = simplifyEquationAnswer(equation.left, equation.right);
     if (answer === problem.answer) {
@@ -204,6 +258,25 @@ export function DragToSolveStep({
       onIncorrect("Simplify the right side to find x.");
     }
   }
+
+  function resetBoard() {
+    setEquation(problem.equation);
+    setMoveIndex(0);
+    setAnimatingTile(null);
+    setErrorTileId(null);
+    setAwaitingSimplify(false);
+    setSimplified(false);
+    setShowVisual(false);
+    setIntermediateLabel(null);
+    onReset?.();
+  }
+
+  const canReset =
+    !simplified &&
+    (moveIndex > 0 ||
+      awaitingSimplify ||
+      equation.left.join() !== problem.equation.left.join() ||
+      equation.right.join() !== problem.equation.right.join());
 
   return (
     <div>
@@ -218,21 +291,41 @@ export function DragToSolveStep({
       <div className="mt-4">
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <EquationBoard
-            left={equation.left}
+            left={
+              isDivisionMove
+                ? equation.left.filter((t) => parseDivisorTile(t) === null)
+                : equation.left
+            }
             right={equation.right}
             animatingTile={animatingTile}
+            interactive={!isDivisionMove}
             tileStates={errorTileId ? { [errorTileId]: "error" } : undefined}
           />
         </DndContext>
       </div>
 
-      {awaitingSimplify && !simplified && (
-        <div className="mt-4">
+      <div className="mt-4 flex items-center gap-3">
+        {isDivisionMove && !disabled && (
+          <Button type="button" onClick={applyDivision} variant="secondary">
+            Divide both sides by {divisionDivisor}
+          </Button>
+        )}
+        {awaitingSimplify && !simplified && (
           <Button type="button" onClick={handleSimplify} variant="secondary">
             Simplify
           </Button>
-        </div>
-      )}
+        )}
+        {canReset && !disabled && (
+          <Button
+            type="button"
+            onClick={resetBoard}
+            variant="ghost"
+            className="border border-border"
+          >
+            Reset
+          </Button>
+        )}
+      </div>
 
       {simplified && (
         <p className="mt-3 font-equation text-equation text-success">

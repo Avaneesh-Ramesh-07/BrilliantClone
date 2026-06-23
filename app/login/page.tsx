@@ -20,39 +20,12 @@ export default function LoginPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
+    const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     setLoading(false);
-
-    // #region agent log
-    fetch("http://127.0.0.1:7317/ingest/5ca51102-074a-497f-a02f-436942c7f190", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "427e58",
-      },
-      body: JSON.stringify({
-        sessionId: "427e58",
-        runId: "pre-fix",
-        hypothesisId: "H1-H4",
-        location: "app/login/page.tsx:handleSubmit",
-        message: "login attempt result",
-        data: {
-          hasUser: !!data?.user,
-          hasSession: !!data?.session,
-          errorCode: authError?.code ?? null,
-          errorMessage: authError?.message ?? null,
-          errorStatus: authError?.status ?? null,
-          emailLength: email.length,
-          emailHasWhitespace: email !== email.trim(),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
 
     if (authError) {
       setError("Invalid email or password. Please try again.");

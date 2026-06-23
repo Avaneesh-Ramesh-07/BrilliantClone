@@ -4,15 +4,19 @@ import type { Problem } from "@/types/lesson";
 import { ConceptStep } from "./steps/ConceptStep";
 import { DragToSolveStep } from "./steps/DragToSolveStep";
 import { MultipleChoiceStep } from "./steps/MultipleChoiceStep";
+import { SliderBalanceStep } from "./steps/SliderBalanceStep";
 
 interface StepRendererProps {
   problem: Problem;
   numericValue: string;
   onNumericChange: (value: string) => void;
+  sliderValue: number;
+  onSliderChange: (value: number) => void;
   selectedChoice: string | null;
   onChoiceSelect: (id: string) => void;
   onDragCorrect: (feedback: string) => void;
   onDragIncorrect: (feedback: string) => void;
+  onDragReset: () => void;
   problemSolved: boolean;
   showChoiceResult: boolean;
   disabled?: boolean;
@@ -22,10 +26,13 @@ export function StepRenderer({
   problem,
   numericValue,
   onNumericChange,
+  sliderValue,
+  onSliderChange,
   selectedChoice,
   onChoiceSelect,
   onDragCorrect,
   onDragIncorrect,
+  onDragReset,
   problemSolved,
   showChoiceResult,
   disabled,
@@ -51,6 +58,16 @@ export function StepRenderer({
           </div>
         </div>
       );
+    case "slider-balance":
+      return (
+        <SliderBalanceStep
+          problem={problem}
+          value={sliderValue}
+          onChange={onSliderChange}
+          disabled={disabled || problemSolved}
+          showBalanced={problemSolved}
+        />
+      );
     case "multiple-choice":
       return (
         <MultipleChoiceStep
@@ -67,6 +84,7 @@ export function StepRenderer({
           problem={problem}
           onCorrect={onDragCorrect}
           onIncorrect={onDragIncorrect}
+          onReset={onDragReset}
           disabled={disabled || problemSolved}
         />
       );

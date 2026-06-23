@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { evaluate } from "mathjs";
+import { evalExpression } from "@/lib/expression";
 import type { GridPlotVisual, GridAnimation } from "@/types/lesson";
 
 interface GridPlotVisualProps {
@@ -15,7 +15,7 @@ const PADDING = 30;
 
 function evalFn(fn: string, x: number): number {
   try {
-    return evaluate(fn, { x }) as number;
+    return evalExpression(fn, x);
   } catch {
     return 0;
   }

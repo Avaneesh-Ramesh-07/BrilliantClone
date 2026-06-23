@@ -94,6 +94,40 @@ export async function completeLesson(
   }
 }
 
+export async function restartLesson(
+  supabase: SupabaseClient,
+  userId: string,
+  lessonId: string
+): Promise<void> {
+  const { data: existing } = await supabase
+    .from("lesson_progress")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  const payload = {
+    status: "in_progress" as const,
+    current_step_index: 0,
+    completed_at: null,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existing) {
+    await supabase
+      .from("lesson_progress")
+      .update(payload)
+      .eq("user_id", userId)
+      .eq("lesson_id", lessonId);
+  } else {
+    await supabase.from("lesson_progress").insert({
+      user_id: userId,
+      lesson_id: lessonId,
+      ...payload,
+    });
+  }
+}
+
 export async function recordStepAttempt(
   supabase: SupabaseClient,
   params: {
@@ -113,6 +147,32 @@ export async function recordStepAttempt(
     correct: params.correct,
     hints_used: params.hintsUsed,
   });
+}
+
+/**
+ * Returns the most recent attempt timestamp (ISO string) for each step the user
+ * has practiced in a lesson, keyed by step_id. Used to show "days since you
+ * practiced X" analytics on the home screen.
+ */
+export async function getSkillActivity(
+  supabase: SupabaseClient,
+  userId: string,
+  lessonId: string
+): Promise<Record<string, string>> {
+  const { data } = await supabase
+    .from("step_attempts")
+    .select("step_id, attempted_at")
+    .eq("user_id", userId)
+    .eq("lesson_id", lessonId)
+    .order("attempted_at", { ascending: false });
+
+  const lastByStep: Record<string, string> = {};
+  for (const row of data ?? []) {
+    if (!(row.step_id in lastByStep)) {
+      lastByStep[row.step_id] = row.attempted_at as string;
+    }
+  }
+  return lastByStep;
 }
 
 export function getCompletedStepCount(progress: LessonProgress): number {

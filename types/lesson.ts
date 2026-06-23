@@ -87,11 +87,26 @@ export interface DragToSolveProblem {
   feedback: ProblemFeedback;
 }
 
+export interface SliderBalanceProblem {
+  id: string;
+  type: "slider-balance";
+  prompt: string;
+  answer: number;
+  sliderMin: number;
+  sliderMax: number;
+  sliderDefault?: number;
+  leftLabel: string;
+  rightLabel: string;
+  rightValue: number;
+  feedback: ProblemFeedback;
+}
+
 export type Problem =
   | ConceptProblem
   | NumericInputProblem
   | MultipleChoiceProblem
-  | DragToSolveProblem;
+  | DragToSolveProblem
+  | SliderBalanceProblem;
 
 export interface StepCompletionAction {
   buttonLabel: string;
@@ -108,9 +123,17 @@ export interface Step {
   fallbackStepId: string;
   fallbackMessage: string;
   partialMasteryMessage?: string;
+  skipMasteryGate?: boolean;
   isLastStep?: boolean;
   hints: string[];
   completionAction: StepCompletionAction;
+  /**
+   * Number of problems to present from the `problems` bank. The first problem
+   * (the teaching "anchor") is always included; the rest are sampled at random
+   * so a fresh set appears each time the lesson is started or restarted.
+   * When omitted, all problems are presented.
+   */
+  present?: number;
   problems: Problem[];
 }
 

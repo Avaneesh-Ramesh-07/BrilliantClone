@@ -7,9 +7,11 @@ import { FeedbackPanel } from "@/components/lesson/FeedbackPanel";
 import { HintButton } from "@/components/lesson/HintButton";
 import { StepProgressBar } from "@/components/lesson/StepProgressBar";
 import { StepRenderer } from "@/components/lesson/StepRenderer";
+import { defaultSliderValue } from "@/components/lesson/steps/SliderBalanceStep";
 import { Button } from "@/components/ui/Button";
+import { fireConfetti } from "@/lib/confetti";
 import { getStepIndexById } from "@/lib/lessons";
-import { computeMastery } from "@/lib/mastery";
+import { computeMastery, isMasteryImpossible } from "@/lib/mastery";
 import { recordStepAttempt, updateStepIndex, completeLesson } from "@/lib/progress";
 import { updateStreak } from "@/lib/streak";
 import { createClient } from "@/lib/supabase/client";
@@ -32,6 +34,7 @@ interface EngineState {
   problemSolved: boolean;
   masteryPassed: boolean;
   numericValue: string;
+  sliderValue: number;
   selectedChoice: string | null;
   showChoiceResult: boolean;
 }
@@ -45,9 +48,11 @@ type Action =
       fallbackIndex: number;
     }
   | { type: "ADVANCE_STEP"; nextIndex: number; banner?: string | null }
+  | { type: "PREV_STEP"; prevIndex: number }
   | { type: "NEXT_PROBLEM" }
   | { type: "REVEAL_HINT" }
   | { type: "SET_NUMERIC"; value: string }
+  | { type: "SET_SLIDER"; value: number }
   | { type: "SET_CHOICE"; id: string }
   | { type: "RESET_ATTEMPT" };
 
@@ -58,6 +63,7 @@ function problemDefaults(): Pick<
   | "problemSolved"
   | "masteryPassed"
   | "numericValue"
+  | "sliderValue"
   | "selectedChoice"
   | "showChoiceResult"
 > {
@@ -67,6 +73,7 @@ function problemDefaults(): Pick<
     problemSolved: false,
     masteryPassed: false,
     numericValue: "",
+    sliderValue: 5,
     selectedChoice: null,
     showChoiceResult: false,
   };
@@ -123,6 +130,8 @@ function reducer(state: EngineState, action: Action): EngineState {
         firstAttempts: {},
         attemptCounts: {},
       };
+    case "PREV_STEP":
+      return createInitialState(action.prevIndex);
     case "NEXT_PROBLEM":
       return {
         ...state,
@@ -133,6 +142,8 @@ function reducer(state: EngineState, action: Action): EngineState {
       return { ...state, hintsRevealed: state.hintsRevealed + 1 };
     case "SET_NUMERIC":
       return { ...state, numericValue: action.value };
+    case "SET_SLIDER":
+      return { ...state, sliderValue: action.value };
     case "SET_CHOICE":
       return { ...state, selectedChoice: action.id };
     case "RESET_ATTEMPT":
@@ -149,12 +160,22 @@ function reducer(state: EngineState, action: Action): EngineState {
 function validateProblem(
   problem: Problem,
   numericValue: string,
-  selectedChoice: string | null
+  selectedChoice: string | null,
+  sliderValue: number
 ): FeedbackState | null {
   switch (problem.type) {
     case "numeric-input": {
       const parsed = parseFloat(numericValue);
       const correct = !isNaN(parsed) && parsed === problem.answer;
+      return {
+        message: correct
+          ? problem.feedback.correct
+          : (problem.feedback.incorrect ?? "Try again."),
+        isCorrect: correct,
+      };
+    }
+    case "slider-balance": {
+      const correct = sliderValue === problem.answer;
       return {
         message: correct
           ? problem.feedback.correct
@@ -186,31 +207,6 @@ function checkMastery(
   persistStepIndex: (index: number) => void
 ) {
   const mastery = computeMastery(step, firstAttempts);
-  // #region agent log
-  fetch("http://127.0.0.1:7317/ingest/5ca51102-074a-497f-a02f-436942c7f190", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "427e58",
-    },
-    body: JSON.stringify({
-      sessionId: "427e58",
-      runId: "step-advance",
-      hypothesisId: "H1-H2",
-      location: "StepPlayer.tsx:checkMastery",
-      message: "mastery computed",
-      data: {
-        stepId: step.id,
-        passed: mastery.passed,
-        rate: mastery.rate,
-        threshold: step.masteryThreshold,
-        firstAttempts,
-        problemIds: step.problems.map((p) => p.id),
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
   if (mastery.passed) {
     dispatch({ type: "MASTERY_PASS", partialNudge: mastery.partialMasteryMessage });
   } else {
@@ -262,6 +258,15 @@ export function StepPlayer({
     persistStepIndex(state.stepIndex);
   }, [state.stepIndex, persistStepIndex]);
 
+  const sliderDefault =
+    problem.type === "slider-balance" ? defaultSliderValue(problem) : null;
+
+  useEffect(() => {
+    if (sliderDefault !== null) {
+      dispatch({ type: "SET_SLIDER", value: sliderDefault });
+    }
+  }, [problem.id, state.stepIndex, state.problemIndex, sliderDefault]);
+
   const persistAttempt = useCallback(
     async (correct: boolean, hintsUsed: number, problemId: string, stepId: string) => {
       await recordStepAttempt(supabase, {
@@ -283,11 +288,30 @@ export function StepPlayer({
     [step, lesson, persistStepIndex]
   );
 
+  // Regress as soon as mastery is mathematically out of reach, without waiting
+  // for the learner to finish the remaining problems in the step.
+  const maybeRegressEarly = useCallback(
+    (updatedFirstAttempts: Record<string, boolean>): boolean => {
+      if (!isMasteryImpossible(step, updatedFirstAttempts)) return false;
+      const fallbackIndex = getStepIndexById(lesson, step.fallbackStepId);
+      const idx = fallbackIndex >= 0 ? fallbackIndex : 0;
+      dispatch({
+        type: "MASTERY_FAIL",
+        message: step.fallbackMessage,
+        fallbackIndex: idx,
+      });
+      persistStepIndex(idx);
+      return true;
+    },
+    [step, lesson, persistStepIndex]
+  );
+
   const handleCheck = useCallback(async () => {
     const result = validateProblem(
       problem,
       state.numericValue,
-      state.selectedChoice
+      state.selectedChoice,
+      state.sliderValue
     );
     if (!result) return;
 
@@ -295,20 +319,27 @@ export function StepPlayer({
     dispatch({ type: "SUBMIT", feedback: result, problemId: problem.id });
     await persistAttempt(result.isCorrect, state.hintsRevealed, problem.id, step.id);
 
+    if (result.isCorrect) {
+      fireConfetti({ particleCount: 36, origin: { x: 0.5, y: 0.78 } });
+    }
+
     if (result.isCorrect && isFirst) {
       await updateStreak(supabase, userId);
     }
 
+    const updated = isFirst
+      ? { ...state.firstAttempts, [problem.id]: result.isCorrect }
+      : state.firstAttempts;
+
+    if (isFirst && maybeRegressEarly(updated)) return;
+
     if (result.isCorrect && isLastProblem) {
-      const updated = {
-        ...state.firstAttempts,
-        [problem.id]: isFirst ? result.isCorrect : (state.firstAttempts[problem.id] ?? false),
-      };
       afterCorrectLastProblem(updated);
     }
   }, [
     problem,
     state.numericValue,
+    state.sliderValue,
     state.selectedChoice,
     state.attemptCounts,
     state.firstAttempts,
@@ -319,6 +350,7 @@ export function StepPlayer({
     supabase,
     userId,
     afterCorrectLastProblem,
+    maybeRegressEarly,
   ]);
 
   const handleDragCorrect = useCallback(
@@ -330,6 +362,7 @@ export function StepPlayer({
         problemId: problem.id,
       });
       await persistAttempt(true, state.hintsRevealed, problem.id, step.id);
+      fireConfetti({ particleCount: 36, origin: { x: 0.5, y: 0.78 } });
 
       if (isFirst) {
         await updateStreak(supabase, userId);
@@ -359,15 +392,36 @@ export function StepPlayer({
 
   const handleDragIncorrect = useCallback(
     async (feedbackMsg: string) => {
+      const isFirst = (state.attemptCounts[problem.id] ?? 0) === 0;
       dispatch({
         type: "SUBMIT",
         feedback: { message: feedbackMsg, isCorrect: false },
         problemId: problem.id,
       });
       await persistAttempt(false, state.hintsRevealed, problem.id, step.id);
+
+      if (isFirst) {
+        const updated = { ...state.firstAttempts, [problem.id]: false };
+        maybeRegressEarly(updated);
+      }
     },
-    [problem.id, state.hintsRevealed, step.id, persistAttempt]
+    [
+      problem.id,
+      state.attemptCounts,
+      state.firstAttempts,
+      state.hintsRevealed,
+      step.id,
+      persistAttempt,
+      maybeRegressEarly,
+    ]
   );
+
+  const goToPrevStep = useCallback(() => {
+    if (state.stepIndex === 0) return;
+    const prevIndex = state.stepIndex - 1;
+    persistStepIndex(prevIndex);
+    dispatch({ type: "PREV_STEP", prevIndex });
+  }, [state.stepIndex, persistStepIndex]);
 
   const goToNextStep = useCallback(async () => {
     if (isLastStep) {
@@ -377,24 +431,6 @@ export function StepPlayer({
     }
     const nextIndex = state.stepIndex + 1;
     const banner = state.masteryBanner;
-    // #region agent log
-    fetch("http://127.0.0.1:7317/ingest/5ca51102-074a-497f-a02f-436942c7f190", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "427e58",
-      },
-      body: JSON.stringify({
-        sessionId: "427e58",
-        runId: "step-advance",
-        hypothesisId: "H4",
-        location: "StepPlayer.tsx:goToNextStep",
-        message: "advancing step",
-        data: { fromIndex: state.stepIndex, nextIndex, nextStepId: lesson.steps[nextIndex]?.id },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     persistStepIndex(nextIndex);
     dispatch({ type: "ADVANCE_STEP", nextIndex, banner });
   }, [
@@ -409,36 +445,6 @@ export function StepPlayer({
   ]);
 
   const handlePrimary = async () => {
-    // #region agent log
-    fetch("http://127.0.0.1:7317/ingest/5ca51102-074a-497f-a02f-436942c7f190", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "427e58",
-      },
-      body: JSON.stringify({
-        sessionId: "427e58",
-        runId: "step-advance",
-        hypothesisId: "H3-H5",
-        location: "StepPlayer.tsx:handlePrimary",
-        message: "primary button clicked",
-        data: {
-          stepIndex: state.stepIndex,
-          stepId: step.id,
-          problemIndex: state.problemIndex,
-          problemId: problem.id,
-          problemType: problem.type,
-          masteryPassed: state.masteryPassed,
-          problemSolved: state.problemSolved,
-          isLastProblem,
-          isLastStep,
-          buttonLabel,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-
     if (state.masteryPassed) {
       goToNextStep();
       return;
@@ -446,28 +452,6 @@ export function StepPlayer({
 
     if (state.problemSolved && !isLastProblem) {
       dispatch({ type: "NEXT_PROBLEM" });
-      // #region agent log
-      fetch("http://127.0.0.1:7317/ingest/5ca51102-074a-497f-a02f-436942c7f190", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "427e58",
-        },
-        body: JSON.stringify({
-          sessionId: "427e58",
-          runId: "post-fix",
-          hypothesisId: "H5-fix",
-          location: "StepPlayer.tsx:handlePrimary:NEXT_PROBLEM",
-          message: "dispatched NEXT_PROBLEM",
-          data: {
-            fromProblemIndex: state.problemIndex,
-            nextProblemIndex: state.problemIndex + 1,
-            stepId: step.id,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
       return;
     }
 
@@ -501,11 +485,34 @@ export function StepPlayer({
     !state.problemSolved;
 
   return (
-    <div className="flex min-h-screen flex-col pb-28 pt-6">
-      <StepProgressBar
-        current={state.stepIndex + 1}
-        total={lesson.totalSteps}
-      />
+    <div className="flex min-h-screen flex-col pb-28">
+      <div className="sticky top-0 z-20 -mx-4 border-b border-border/60 bg-bg/85 px-4 pb-3 pt-4 backdrop-blur">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={goToPrevStep}
+            disabled={state.stepIndex === 0}
+            aria-label="Go to previous step"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-border/60 hover:text-text disabled:pointer-events-none disabled:opacity-30"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden>
+              <path
+                d="M15 18l-6-6 6-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <div className="flex-1">
+            <StepProgressBar
+              current={state.stepIndex + 1}
+              total={lesson.totalSteps}
+            />
+          </div>
+        </div>
+      </div>
 
       {state.masteryBanner && (
         <div className="mt-4 rounded-lg border border-primary/30 bg-primary-light px-4 py-3">
@@ -523,10 +530,13 @@ export function StepPlayer({
           problem={problem}
           numericValue={state.numericValue}
           onNumericChange={(v) => dispatch({ type: "SET_NUMERIC", value: v })}
+          sliderValue={state.sliderValue}
+          onSliderChange={(v) => dispatch({ type: "SET_SLIDER", value: v })}
           selectedChoice={state.selectedChoice}
           onChoiceSelect={(id) => dispatch({ type: "SET_CHOICE", id })}
           onDragCorrect={handleDragCorrect}
           onDragIncorrect={handleDragIncorrect}
+          onDragReset={() => dispatch({ type: "RESET_ATTEMPT" })}
           problemSolved={state.problemSolved}
           showChoiceResult={state.showChoiceResult}
           disabled={state.masteryPassed}
@@ -554,6 +564,9 @@ export function StepPlayer({
           hints={step.hints}
           hintsRevealed={state.hintsRevealed}
           onReveal={() => dispatch({ type: "REVEAL_HINT" })}
+          canReveal={
+            (state.attemptCounts[problem.id] ?? 0) > 0 && !state.problemSolved
+          }
         />
         {showButton && (
           <Button

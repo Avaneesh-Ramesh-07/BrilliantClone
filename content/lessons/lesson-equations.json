@@ -16,6 +16,7 @@
       "concept": "Variables as unknowns",
       "conceptFraming": "x is a mystery number. Your job is to find it. When you see x + 3 = 7, x is just a number we don't know yet.",
       "masteryThreshold": 1.0,
+      "skipMasteryGate": true,
       "fallbackStepId": "step-1",
       "fallbackMessage": "Let's try that again — x is just a number in disguise.",
       "hints": [
@@ -29,9 +30,15 @@
       "problems": [
         {
           "id": "p1a",
-          "type": "numeric-input",
+          "type": "slider-balance",
           "prompt": "What is x? x + 0 = 9",
           "answer": 9,
+          "sliderMin": 0,
+          "sliderMax": 18,
+          "sliderDefault": 5,
+          "leftLabel": "x + 0",
+          "rightLabel": "9",
+          "rightValue": 9,
           "feedback": {
             "correct": "Right. Adding zero changes nothing, so x = 9.",
             "incorrect": "Adding zero to x doesn't change it. So x must equal the number on the right."
@@ -53,6 +60,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-3"
       },
+      "present": 2,
       "problems": [
         {
           "id": "p2a",
@@ -95,6 +103,36 @@
             "correct": "Yes — subtracting 5 from both sides gives x = 7. Same move, different numbers.",
             "incorrect": "Subtract 5 from both sides. If x + 5 = 12, then x = 12 − 5."
           }
+        },
+        {
+          "id": "p2c",
+          "type": "numeric-input",
+          "prompt": "Solve: x + 8 = 15. What is x?",
+          "answer": 7,
+          "feedback": {
+            "correct": "Right — subtract 8 from both sides, so x = 7.",
+            "incorrect": "Subtract 8 from both sides. If x + 8 = 15, then x = 15 − 8."
+          }
+        },
+        {
+          "id": "p2d",
+          "type": "numeric-input",
+          "prompt": "Solve: x + 2 = 9. What is x?",
+          "answer": 7,
+          "feedback": {
+            "correct": "Yes — subtract 2 from both sides to get x = 7.",
+            "incorrect": "Subtract 2 from both sides. If x + 2 = 9, then x = 9 − 2."
+          }
+        },
+        {
+          "id": "p2e",
+          "type": "numeric-input",
+          "prompt": "Solve: x + 6 = 10. What is x?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Right — subtract 6 from both sides, so x = 4.",
+            "incorrect": "Subtract 6 from both sides. If x + 6 = 10, then x = 10 − 6."
+          }
         }
       ]
     },
@@ -114,11 +152,12 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-4"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p3a",
           "type": "drag-to-solve",
-          "prompt": "Drag ÷2 across the = to isolate x.",
+          "prompt": "Tap \"Divide both sides by 2\" to isolate x. The right side becomes the fraction 10⁄2.",
           "equation": {
             "left": ["2x", "÷2"],
             "right": ["10"]
@@ -139,9 +178,9 @@
           },
           "animation": { "greenVerticalLine": true },
           "feedback": {
-            "correct": "Dividing both sides by 2 isolates x. The grid confirms it: x = 5 is where y = 2x meets y = 10.",
-            "incorrect_moved_x": "Leave x on the left. Drag the coefficient (the number multiplied by x) across the equals sign.",
-            "incorrect_wrong_tile": "You need to divide both sides by the number in front of x. Drag the ÷2 tile across."
+            "correct": "Dividing both sides by 2 makes the fraction 10⁄2 = 5. The grid confirms it: x = 5 is where y = 2x meets y = 10.",
+            "incorrect_moved_x": "Leave x on the left and divide both sides by 2.",
+            "incorrect_wrong_tile": "Divide both sides by 2 so the right side becomes the fraction 10⁄2."
           }
         },
         {
@@ -163,6 +202,26 @@
             "correct": "Right. 20 ÷ 4 = 5, so x = 5.",
             "incorrect": "Divide both sides by 4. What is 20 ÷ 4?"
           }
+        },
+        {
+          "id": "p3d",
+          "type": "numeric-input",
+          "prompt": "Solve: 5x = 35. What is x?",
+          "answer": 7,
+          "feedback": {
+            "correct": "Right. 35 ÷ 5 = 7, so x = 7.",
+            "incorrect": "Divide both sides by 5. What is 35 ÷ 5?"
+          }
+        },
+        {
+          "id": "p3e",
+          "type": "numeric-input",
+          "prompt": "Solve: 6x = 18. What is x?",
+          "answer": 3,
+          "feedback": {
+            "correct": "Right. 18 ÷ 6 = 3, so x = 3.",
+            "incorrect": "Divide both sides by 6. What is 18 ÷ 6?"
+          }
         }
       ]
     },
@@ -182,11 +241,12 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-5"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p4a",
           "type": "drag-to-solve",
-          "prompt": "Solve 2x + 3 = 11. Move the constant first, then the coefficient.",
+          "prompt": "Solve 2x + 3 = 11. Move the constant across first, then divide both sides by 2.",
           "equation": {
             "left": ["2x", "+3"],
             "right": ["11"]
@@ -242,6 +302,26 @@
             "correct": "Good. Subtract 5 first (2x = 8), then divide by 2. x = 4.",
             "incorrect": "Two steps: subtract 5 from both sides, then divide by 2."
           }
+        },
+        {
+          "id": "p4d",
+          "type": "numeric-input",
+          "prompt": "Solve: 4x + 1 = 13. What is x?",
+          "answer": 3,
+          "feedback": {
+            "correct": "Good. Subtract 1 first (4x = 12), then divide by 4. x = 3.",
+            "incorrect": "Two steps: subtract 1 from both sides, then divide by 4."
+          }
+        },
+        {
+          "id": "p4e",
+          "type": "numeric-input",
+          "prompt": "Solve: 5x − 4 = 16. What is x?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Right. Add 4 first (5x = 20), then divide by 5. x = 4.",
+            "incorrect": "Two steps: add 4 to both sides, then divide by 5."
+          }
         }
       ]
     },
@@ -262,6 +342,7 @@
         "buttonLabel": "Finish Lesson →",
         "route": "/lesson/[id]/complete"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p5a",
@@ -313,6 +394,26 @@
           "feedback": {
             "correct": "Right — add 8 to both sides. −3 + 8 = 5, so x = 5.",
             "incorrect": "Add 8 to both sides. What is −3 + 8?"
+          }
+        },
+        {
+          "id": "p5d",
+          "type": "numeric-input",
+          "prompt": "Solve: x − 3 = −7. What is x?",
+          "answer": -4,
+          "feedback": {
+            "correct": "Right — add 3 to both sides. −7 + 3 = −4, so x = −4.",
+            "incorrect": "Add 3 to both sides. What is −7 + 3?"
+          }
+        },
+        {
+          "id": "p5e",
+          "type": "numeric-input",
+          "prompt": "Solve: x + 6 = 1. What is x?",
+          "answer": -5,
+          "feedback": {
+            "correct": "Right — subtract 6 from both sides. 1 − 6 = −5, so x = −5.",
+            "incorrect": "Subtract 6 from both sides. What is 1 − 6?"
           }
         }
       ]

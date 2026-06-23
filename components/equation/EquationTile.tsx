@@ -2,6 +2,7 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { FractionGlyph, parseDivisorTile } from "./FractionGlyph";
 
 interface EquationTileProps {
   id: string;
@@ -28,6 +29,8 @@ export function EquationTile({
     ? { transform: CSS.Translate.toString(transform) }
     : undefined;
 
+  const divisor = parseDivisorTile(label);
+
   const stateClasses = {
     default: "border-border bg-surface",
     dragging: "border-primary border-2 bg-primary-light z-10",
@@ -35,15 +38,24 @@ export function EquationTile({
     error: "border-error animate-tile-shake",
   };
 
+  const cursor = disabled
+    ? "cursor-default"
+    : "cursor-grab active:cursor-grabbing";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
+      {...(disabled ? {} : listeners)}
       {...attributes}
-      className={`flex min-h-[44px] min-w-[44px] cursor-grab items-center justify-center rounded-lg border px-3 py-2 font-equation text-equation touch-none select-none active:cursor-grabbing ${stateClasses[isDragging ? "dragging" : state]} ${animating ? "animate-sign-flip" : ""}`}
+      className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border px-3 py-2 font-equation text-equation touch-none select-none ${cursor} ${stateClasses[isDragging ? "dragging" : state]} ${animating ? "animate-sign-flip" : ""}`}
+      aria-label={divisor !== null ? `one over ${divisor}` : label}
     >
-      {label}
+      {divisor !== null ? (
+        <FractionGlyph numerator="1" denominator={divisor} />
+      ) : (
+        label
+      )}
     </div>
   );
 }

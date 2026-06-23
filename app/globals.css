@@ -19,7 +19,10 @@
 
 body {
   color: var(--color-text);
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  /* Subtle, dense maze-like texture over the off-white background. */
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='22'%20height='22'%3E%3Cg%20fill='none'%20stroke='%23808890'%20stroke-opacity='0.045'%20stroke-width='1'%3E%3Cpath%20d='M0,5.5H11V16.5H22'/%3E%3Cpath%20d='M5.5,0V11H16.5V22'/%3E%3Cpath%20d='M16.5,0V5.5H22'/%3E%3Cpath%20d='M0,16.5H5.5'/%3E%3Cpath%20d='M11,5.5V11'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
 }
 
 @layer utilities {
