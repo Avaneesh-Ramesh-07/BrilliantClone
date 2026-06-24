@@ -1,0 +1,246 @@
+{
+  "id": "lesson-graphing-lines",
+  "title": "Graphing Lines",
+  "subject": "Algebra",
+  "description": "Learn to graph linear equations using the slope and y-intercept.",
+  "estimatedMinutes": 15,
+  "totalSteps": 5,
+  "masteryRule": {
+    "description": "After all problems in a step are submitted, compute first-attempt correctness. If below masteryThreshold, send the student to fallbackStepId and show fallbackMessage. Step 1 failures restart Step 1.",
+    "nextButtonVisibleOnlyAfterMastery": true
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "title": "What is the y-intercept?",
+      "concept": "Locating the starting point on the y-axis",
+      "conceptFraming": "In the equation y = mx + b, the number b is the y-intercept. It tells you exactly where the line crosses the vertical y-axis. When x = 0, y is just b.",
+      "masteryThreshold": 1.0,
+      "fallbackStepId": "step-1",
+      "fallbackMessage": "Let's try that again — the y-intercept is always where the line crosses the vertical axis.",
+      "hints": [
+        "The equation format is y = mx + b. What number is in the b spot?",
+        "If x = 0, then 2(0) + 4 equals what?"
+      ],
+      "completionAction": {
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-2"
+      },
+      "problems": [
+        {
+          "id": "p1a",
+          "type": "numeric-input",
+          "prompt": "Look at the equation: y = 2x + 4. What is the y-value where this line crosses the vertical y-axis?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Right! The constant +4 is our b, meaning the line crosses the y-axis at (0, 4).",
+            "incorrect": "Not quite. Look at the number at the very end of the equation. That constant is your y-intercept."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-2",
+      "title": "Plotting the Starting Point",
+      "concept": "Plotting (0, b) on a coordinate plane",
+      "conceptFraming": "To graph a line, start by placing your first point directly on the y-axis at your b value.",
+      "masteryThreshold": 0.5,
+      "fallbackStepId": "step-1",
+      "fallbackMessage": "Let's review how to find the y-intercept before we start placing it on a grid.",
+      "partialMasteryMessage": "Watch your step — check your signs on the vertical axis.",
+      "hints": [
+        "Look at the constant term at the end of y = -x + 5."
+      ],
+      "completionAction": {
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-3"
+      },
+      "problems": [
+        {
+          "id": "p2a",
+          "type": "numeric-input",
+          "prompt": "Plot the intercept for y = 3x - 2. The y-intercept is the point (0, b) on the vertical y-axis. What is b — the y-value where the line crosses the y-axis?",
+          "answer": -2,
+          "feedback": {
+            "correct": "Perfect. Since b = -2, our line passes through (0, -2).",
+            "incorrect": "Check the sign. The equation has -2, so the line crosses the y-axis below zero, at (0, -2)."
+          }
+        },
+        {
+          "id": "p2b",
+          "type": "numeric-input",
+          "prompt": "If a line has the equation y = -x + 5, what is the coordinate point of its y-intercept? Enter the missing y value: (0, _)",
+          "answer": 5,
+          "feedback": {
+            "correct": "Great job. The y-intercept is at (0, 5).",
+            "incorrect": "Remember, the y-intercept is the constant value at the end. Here, it is +5."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-3",
+      "title": "Understanding Slope (Rise / Run)",
+      "concept": "Using slope to find the next point",
+      "conceptFraming": "The number m in y = mx + b is the slope. Think of it as a fraction: Rise / Run. The top number tells you how far up/down to go, and the bottom number tells you how far right to go.",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-2",
+      "fallbackMessage": "Let's make sure we have our starting point locked down before we calculate how the line moves.",
+      "hints": [
+        "Slope is Rise / Run.",
+        "The bottom number controls your horizontal rightward movement."
+      ],
+      "completionAction": {
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-4"
+      },
+      "problems": [
+        {
+          "id": "p3a",
+          "type": "numeric-input",
+          "prompt": "The slope is 2/3 (rise 2, run 3) and you start at (0, 1). Rise 2, then run 3 to reach the next point. What is the x-coordinate of that next point?",
+          "answer": 3,
+          "feedback": {
+            "correct": "Spot on! Up 2, right 3 leads you perfectly to the next point at (3, 3).",
+            "incorrect": "Run 3 units to the right from x = 0. Where does that land your x-coordinate?"
+          }
+        },
+        {
+          "id": "p3b",
+          "type": "numeric-input",
+          "prompt": "If the slope of a line is 4, we can write it as a fraction: 4/1. From your starting point, how many units do you rise?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Yes! A whole number always has a 'Rise' equal to itself and a 'Run' of 1.",
+            "incorrect": "The top number is the rise. For a whole number like 4, the rise is 4."
+          }
+        },
+        {
+          "id": "p3c",
+          "type": "numeric-input",
+          "prompt": "For the line y = (1/2)x - 3, how many units do you run (move right) to find the next point?",
+          "answer": 2,
+          "feedback": {
+            "correct": "Correct! The denominator (bottom number) is 2, so you run 2 units right.",
+            "incorrect": "The bottom number of the fraction is your run. Check the slope fraction again."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-4",
+      "title": "Graphing the Whole Line",
+      "concept": "Combining intercept and slope to map a full line",
+      "conceptFraming": "Now put it all together. Step 1: Plot the y-intercept. Step 2: Use the slope to find your second point. Step 3: Draw the line connecting them.",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-3",
+      "fallbackMessage": "Let's brush up on rise and run fractions before drawing full lines.",
+      "hints": [
+        "Start at your intercept value on the y-axis.",
+        "Add the rise to the y-coordinate, and add the run to the x-coordinate."
+      ],
+      "completionAction": {
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-5"
+      },
+      "problems": [
+        {
+          "id": "p4a",
+          "type": "numeric-input",
+          "prompt": "Graph the line y = 2x - 1. Start at the intercept (0, -1), then apply slope 2 (rise 2, run 1). What is the y-coordinate of the second point?",
+          "answer": 1,
+          "feedback": {
+            "correct": "Perfect execution! You hit the intercept at -1 and used a slope of 2/1 to reach (1, 1).",
+            "incorrect": "From your starting point at y = -1, rise up 2 units: -1 + 2 = _"
+          }
+        },
+        {
+          "id": "p4b",
+          "type": "numeric-input",
+          "prompt": "You are graphing y = (3/2)x + 2. Your first point is at (0, 2). What will be the y-coordinate of your second point after you 'Rise'?",
+          "answer": 5,
+          "feedback": {
+            "correct": "Awesome. Starting at y = 2 and rising 3 brings you to y = 5.",
+            "incorrect": "Add your rise to your starting y-intercept: 2 + 3 = _"
+          }
+        },
+        {
+          "id": "p4c",
+          "type": "numeric-input",
+          "prompt": "For the same line y = (3/2)x + 2, what will be the final x-coordinate of that second point after you 'Run'?",
+          "answer": 2,
+          "feedback": {
+            "correct": "Exactly. You ran 2 units right from the y-axis, landing on x = 2. Your second point is (2, 5).",
+            "incorrect": "Since you started on the y-axis (x=0), moving right by your 'Run' value of 2 puts you at what x value?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-5",
+      "title": "Negative Slopes",
+      "concept": "Slopes that go downhill",
+      "conceptFraming": "If a slope is negative, the line goes down from left to right. Think of a negative slope as a Negative Rise (falling down) while still running to the right.",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-4",
+      "fallbackMessage": "Positive lines move up-and-right. Let's make sure that's comfortable before going downhill.",
+      "isLastStep": true,
+      "hints": [
+        "Negative slopes always have a minus sign in front of the x variable.",
+        "A negative rise means counting downwards on the grid map."
+      ],
+      "completionAction": {
+        "buttonLabel": "Finish Lesson →",
+        "route": "/lesson/[id]/complete"
+      },
+      "problems": [
+        {
+          "id": "p5a",
+          "type": "numeric-input",
+          "prompt": "Graph the line y = -(1/2)x + 3. Start at (0, 3). With a negative slope (fall 1, run 2), fall 1 then run 2 to the next point. What is the y-coordinate of that next point?",
+          "answer": 2,
+          "feedback": {
+            "correct": "Splendid. A negative slope means we fall 1 unit and run right 2 units. From y = 3, falling 1 lands you at y = 2.",
+            "incorrect": "The slope is negative, so go down from your start: 3 - 1 = _"
+          }
+        },
+        {
+          "id": "p5b",
+          "type": "multiple-choice",
+          "prompt": "Which of these equations describes a line that moves downwards from left to right?",
+          "options": [
+            {
+              "id": "a",
+              "text": "y = -3x + 4",
+              "correct": true
+            },
+            {
+              "id": "b",
+              "text": "y = 3x - 4",
+              "correct": false
+            },
+            {
+              "id": "c",
+              "text": "y = (1/2)x - 1",
+              "correct": false
+            }
+          ],
+          "feedback": {
+            "correct": "Correct! The negative sign in front of the 3x indicates a downward trajectory.",
+            "incorrect": "Look for a negative sign directly attached to the slope coefficient (m), not the constant (b)."
+          }
+        },
+        {
+          "id": "p5c",
+          "type": "numeric-input",
+          "prompt": "If you graph y = -2x + 1, you start at (0, 1). If you fall 2 units, what is your new y-coordinate?",
+          "answer": -1,
+          "feedback": {
+            "correct": "Excellent. 1 - 2 = -1. Your next point coordinates will be (1, -1).",
+            "incorrect": "Think of subtraction: you start at +1 on the vertical axis and count down 2 spaces. Where do you land?"
+          }
+        }
+      ]
+    }
+  ]
+}
