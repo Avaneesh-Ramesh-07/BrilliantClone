@@ -14,6 +14,8 @@ export interface ComfortMetric {
   score: number;
   /** Total active solve time (ms) of the most recent completed run, if any. */
   totalMs: number | null;
+  /** The lesson's expected duration in minutes (for explaining the score). */
+  expectedMinutes: number;
 }
 
 export interface SkillSummary {
@@ -51,7 +53,12 @@ export function computeComfort(
   estimatedMinutes: number
 ): ComfortMetric {
   if (!totalMs || totalMs <= 0) {
-    return { level: "not-started", score: 0, totalMs: null };
+    return {
+      level: "not-started",
+      score: 0,
+      totalMs: null,
+      expectedMinutes: estimatedMinutes,
+    };
   }
 
   const targetMs = Math.max(estimatedMinutes, 1) * 60 * 1000;
@@ -63,7 +70,12 @@ export function computeComfort(
   );
   const score = Math.round(speedScore * 100);
 
-  return { level: toLevel(score), score, totalMs };
+  return {
+    level: toLevel(score),
+    score,
+    totalMs,
+    expectedMinutes: estimatedMinutes,
+  };
 }
 
 /** Formats a millisecond duration as e.g. "4m 12s" or "47s". */
@@ -82,7 +94,7 @@ function toLevel(score: number): ComfortLevel {
   return "needs-practice";
 }
 
-export function daysSince(iso: string | undefined): number | null {
+function daysSince(iso: string | undefined): number | null {
   if (!iso) return null;
   const then = new Date(iso);
   if (Number.isNaN(then.getTime())) return null;

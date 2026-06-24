@@ -1,12 +1,10 @@
 import lessonEquations from "@/content/lessons/lesson-equations.json";
 import lessonGraphingLines from "@/content/lessons/lesson-graphing-lines.json";
-import lessonQuadraticFactoring from "@/content/lessons/lesson-quadratic-factoring.json";
 import type { Lesson, Problem } from "@/types/lesson";
 
 const LESSONS: Record<string, Lesson> = {
   "lesson-equations": lessonEquations as Lesson,
   "lesson-graphing-lines": lessonGraphingLines as Lesson,
-  "lesson-quadratic-factoring": lessonQuadraticFactoring as Lesson,
 };
 
 export function getLesson(id: string): Lesson | undefined {

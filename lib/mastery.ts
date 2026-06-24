@@ -1,38 +1,16 @@
 import type { Problem, Step, MasteryResult } from "@/types/lesson";
 
+/**
+ * Tolerance for the mastery comparison. Thresholds like 0.67 are meant to read
+ * as "2 out of 3", but 2/3 = 0.6667 is just below 0.67, which would wrongly fail
+ * a learner who only missed one of three. A small epsilon makes 2/3 satisfy a
+ * 0.67 gate without letting a meaningfully lower rate slip through.
+ */
+const MASTERY_EPSILON = 0.01;
+
 /** Demo problems are guided walkthroughs and don't count toward mastery. */
 function isGraded(problem: Problem): boolean {
   return !(problem.type === "drag-to-solve" && problem.demo === true);
-}
-
-/**
- * Returns true when the step can no longer reach its mastery threshold given
- * the first attempts recorded so far — i.e. even getting every remaining
- * problem right would leave the first-attempt rate below the threshold. Used to
- * regress the learner immediately instead of waiting for the step to finish.
- */
-export function isMasteryImpossible(
-  step: Step,
-  firstAttempts: Record<string, boolean>
-): boolean {
-  if (step.skipMasteryGate) return false;
-
-  const ids = step.problems.filter(isGraded).map((p) => p.id);
-  const total = ids.length;
-  if (total === 0) return false;
-
-  let attempted = 0;
-  let correct = 0;
-  for (const id of ids) {
-    if (id in firstAttempts) {
-      attempted++;
-      if (firstAttempts[id]) correct++;
-    }
-  }
-
-  const remaining = total - attempted;
-  const maxAchievableRate = (correct + remaining) / total;
-  return maxAchievableRate < step.masteryThreshold;
 }
 
 export function computeMastery(
@@ -58,7 +36,7 @@ export function computeMastery(
   }
 
   const rate = firstAttemptCorrect / totalProblems;
-  const passed = rate >= step.masteryThreshold;
+  const passed = rate >= step.masteryThreshold - MASTERY_EPSILON;
 
   if (passed) {
     return {

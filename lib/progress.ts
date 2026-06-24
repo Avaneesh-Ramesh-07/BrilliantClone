@@ -234,11 +234,6 @@ export async function getAllLessonProgress(
   return map;
 }
 
-export function getCompletedStepCount(progress: LessonProgress): number {
-  if (progress.status === "complete") return 5;
-  return progress.current_step_index;
-}
-
 export async function getProfile(
   supabase: SupabaseClient,
   userId: string

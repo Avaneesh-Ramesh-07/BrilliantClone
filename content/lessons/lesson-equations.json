@@ -134,6 +134,26 @@
             "correct": "Right — subtract 6 from both sides, so x = 4.",
             "incorrect": "Subtract 6 from both sides. If x + 6 = 10, then x = 10 − 6."
           }
+        },
+        {
+          "id": "p2f",
+          "type": "numeric-input",
+          "prompt": "Solve: x + 4 = 11. What is x?",
+          "answer": 7,
+          "feedback": {
+            "correct": "Yes — subtract 4 from both sides to get x = 7.",
+            "incorrect": "Subtract 4 from both sides. If x + 4 = 11, then x = 11 − 4."
+          }
+        },
+        {
+          "id": "p2g",
+          "type": "numeric-input",
+          "prompt": "Solve: x + 9 = 13. What is x?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Right — subtract 9 from both sides, so x = 4.",
+            "incorrect": "Subtract 9 from both sides. If x + 9 = 13, then x = 13 − 9."
+          }
         }
       ]
     },

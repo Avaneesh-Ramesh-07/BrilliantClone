@@ -8,7 +8,6 @@ import { StepProgressBar } from "@/components/lesson/StepProgressBar";
 import { StepRenderer } from "@/components/lesson/StepRenderer";
 import { defaultSliderValue } from "@/components/lesson/steps/SliderBalanceStep";
 import { Button } from "@/components/ui/Button";
-import { fireConfetti } from "@/lib/confetti";
 import { getStepIndexById } from "@/lib/lessons";
 import { computeMastery } from "@/lib/mastery";
 import { recordStepAttempt, updateStepIndex, completeLesson } from "@/lib/progress";
@@ -49,6 +48,8 @@ interface EngineState {
   sliderValue: number;
   selectedChoice: string | null;
   showChoiceResult: boolean;
+  /** Set when the learner checks an empty answer, asking them to enter one. */
+  answerPrompt: string | null;
 }
 
 type Action =
@@ -72,6 +73,7 @@ type Action =
   | { type: "SET_NUMERIC"; value: string }
   | { type: "SET_SLIDER"; value: number }
   | { type: "SET_CHOICE"; id: string }
+  | { type: "PROMPT_ANSWER"; message: string }
   | { type: "RESET_ATTEMPT" };
 
 function problemDefaults(): Pick<
@@ -84,6 +86,7 @@ function problemDefaults(): Pick<
   | "sliderValue"
   | "selectedChoice"
   | "showChoiceResult"
+  | "answerPrompt"
 > {
   return {
     hintsRevealed: 0,
@@ -94,6 +97,7 @@ function problemDefaults(): Pick<
     sliderValue: 5,
     selectedChoice: null,
     showChoiceResult: false,
+    answerPrompt: null,
   };
 }
 
@@ -119,6 +123,7 @@ function reducer(state: EngineState, action: Action): EngineState {
         feedback: action.feedback,
         problemSolved: action.feedback.isCorrect,
         showChoiceResult: true,
+        answerPrompt: null,
         attemptCounts: {
           ...state.attemptCounts,
           [action.problemId]: count,
@@ -181,16 +186,19 @@ function reducer(state: EngineState, action: Action): EngineState {
     case "REVEAL_HINT":
       return { ...state, hintsRevealed: state.hintsRevealed + 1 };
     case "SET_NUMERIC":
-      return { ...state, numericValue: action.value };
+      return { ...state, numericValue: action.value, answerPrompt: null };
     case "SET_SLIDER":
-      return { ...state, sliderValue: action.value };
+      return { ...state, sliderValue: action.value, answerPrompt: null };
     case "SET_CHOICE":
-      return { ...state, selectedChoice: action.id };
+      return { ...state, selectedChoice: action.id, answerPrompt: null };
+    case "PROMPT_ANSWER":
+      return { ...state, answerPrompt: action.message };
     case "RESET_ATTEMPT":
       return {
         ...state,
         feedback: null,
         showChoiceResult: false,
+        answerPrompt: null,
       };
     default:
       return state;
@@ -428,6 +436,16 @@ export function StepPlayer({
   }, [state.redemptionOriginIndex, state.firstAttempts, step, goToNextStep]);
 
   const handleCheck = useCallback(async () => {
+    // Require a value before checking a numeric problem; a blank submission
+    // shouldn't count as a wrong attempt — nudge the learner instead.
+    if (problem.type === "numeric-input" && state.numericValue.trim() === "") {
+      dispatch({
+        type: "PROMPT_ANSWER",
+        message: "Enter an answer to check — or tap \u201cI don\u2019t know\u201d.",
+      });
+      return;
+    }
+
     const result = validateProblem(
       problem,
       state.numericValue,
@@ -439,10 +457,6 @@ export function StepPlayer({
     const isFirst = (state.attemptCounts[problem.id] ?? 0) === 0;
     dispatch({ type: "SUBMIT", feedback: result, problemId: problem.id });
     await persistAttempt(result.isCorrect, state.hintsRevealed, problem.id, step.id);
-
-    if (result.isCorrect) {
-      fireConfetti({ particleCount: 36, origin: { x: 0.5, y: 0.78 } });
-    }
 
     if (result.isCorrect && isFirst) {
       await updateStreak(supabase, userId);
@@ -494,6 +508,48 @@ export function StepPlayer({
     failToFallback,
   ]);
 
+  // "I don't know" — explicitly give up on the current problem. This produces
+  // the same outcome as submitting a wrong answer (counts against mastery, can
+  // trigger the redemption / regression flow).
+  const handleGiveUp = useCallback(async () => {
+    let incorrectMsg = "That's okay — review the explanation and keep going.";
+    if (
+      problem.type === "numeric-input" ||
+      problem.type === "slider-balance" ||
+      problem.type === "multiple-choice"
+    ) {
+      incorrectMsg = problem.feedback.incorrect ?? incorrectMsg;
+    }
+    const result: FeedbackState = { message: incorrectMsg, isCorrect: false };
+    const isFirst = (state.attemptCounts[problem.id] ?? 0) === 0;
+
+    dispatch({ type: "SUBMIT", feedback: result, problemId: problem.id });
+    await persistAttempt(false, state.hintsRevealed, problem.id, step.id);
+
+    if (state.redemption) {
+      failToFallback();
+      return;
+    }
+
+    if (!isFirst && !isDemo) {
+      dispatch({
+        type: "ENTER_REDEMPTION",
+        message: REDEMPTION_BANNER,
+        originIndex: state.problemIndex,
+      });
+    }
+  }, [
+    problem,
+    state.attemptCounts,
+    state.hintsRevealed,
+    state.redemption,
+    state.problemIndex,
+    isDemo,
+    step.id,
+    persistAttempt,
+    failToFallback,
+  ]);
+
   const handleDragCorrect = useCallback(
     async (feedbackMsg: string) => {
       const isFirst = (state.attemptCounts[problem.id] ?? 0) === 0;
@@ -503,7 +559,6 @@ export function StepPlayer({
         problemId: problem.id,
       });
       await persistAttempt(true, state.hintsRevealed, problem.id, step.id);
-      fireConfetti({ particleCount: 36, origin: { x: 0.5, y: 0.78 } });
 
       if (isFirst) {
         await updateStreak(supabase, userId);
@@ -632,6 +687,14 @@ export function StepPlayer({
     !state.masteryPassed &&
     problem.type === "multiple-choice" &&
     !state.selectedChoice &&
+    !state.problemSolved;
+
+  // Offer an explicit "I don't know" escape while the learner is still on a
+  // fresh attempt of an answerable (non-drag) problem.
+  const showGiveUp =
+    problem.type !== "drag-to-solve" &&
+    buttonLabel === "Check Answer" &&
+    !state.masteryPassed &&
     !state.problemSolved;
 
   return (
@@ -780,6 +843,11 @@ export function StepPlayer({
             (state.attemptCounts[problem.id] ?? 0) > 0 && !state.problemSolved
           }
         />
+        {state.answerPrompt && (
+          <p className="text-center text-label font-medium text-amber-700">
+            {state.answerPrompt}
+          </p>
+        )}
         {showButton && (
           <Button
             type="button"
@@ -789,6 +857,15 @@ export function StepPlayer({
           >
             {buttonLabel}
           </Button>
+        )}
+        {showGiveUp && (
+          <button
+            type="button"
+            onClick={() => void handleGiveUp()}
+            className="text-center text-label font-semibold text-muted underline-offset-2 transition-colors hover:text-text hover:underline"
+          >
+            I don&apos;t know
+          </button>
         )}
       </div>
     </div>

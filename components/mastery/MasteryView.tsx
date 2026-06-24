@@ -31,6 +31,21 @@ const COMFORT_META: Record<
   },
 };
 
+function comfortExplanation(mastery: LessonMastery): string | null {
+  const { level, totalMs, expectedMinutes } = mastery.comfort;
+  if (level === "not-started" || totalMs === null) return null;
+  const takenMin = Math.max(1, Math.round(totalMs / 60000));
+  const base = `You took ${takenMin} min and the expected time is ${expectedMinutes} min.`;
+  switch (level) {
+    case "needs-practice":
+      return `${base} We recommend you practice this lesson again.`;
+    case "developing":
+      return `${base} A little more practice will build your speed.`;
+    default:
+      return `${base} Nice work keeping a strong pace!`;
+  }
+}
+
 function daysLabel(daysSince: number | null): { label: string; tone: string } {
   if (daysSince === null)
     return { label: "Not practiced yet", tone: "text-muted" };
@@ -44,14 +59,32 @@ function daysLabel(daysSince: number | null): { label: string; tone: string } {
 function ComfortMeter({ mastery }: { mastery: LessonMastery }) {
   const meta = COMFORT_META[mastery.comfort.level];
   const started = mastery.comfort.level !== "not-started";
+  const explanation = comfortExplanation(mastery);
 
   return (
     <div className="mt-1">
       <div className="flex items-center justify-between gap-2">
         <span className="text-label text-muted">Comfort</span>
-        <span className={`text-label font-medium ${meta.text}`}>
-          {meta.label}
-        </span>
+        {explanation ? (
+          <span className="group relative inline-flex items-center">
+            <span
+              tabIndex={0}
+              className={`cursor-help text-label font-medium underline decoration-dotted underline-offset-2 ${meta.text}`}
+            >
+              {meta.label}
+            </span>
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute right-0 top-full z-10 mt-1.5 w-60 rounded-lg border border-border bg-surface p-3 text-left text-label font-normal leading-relaxed text-text opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+            >
+              {explanation}
+            </span>
+          </span>
+        ) : (
+          <span className={`text-label font-medium ${meta.text}`}>
+            {meta.label}
+          </span>
+        )}
       </div>
       <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-border">
         <div
