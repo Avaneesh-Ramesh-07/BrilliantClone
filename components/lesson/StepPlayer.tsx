@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { revalidateProgressViews } from "@/app/actions";
 import { FeedbackPanel } from "@/components/lesson/FeedbackPanel";
 import { HintButton } from "@/components/lesson/HintButton";
 import { StepProgressBar } from "@/components/lesson/StepProgressBar";
@@ -375,19 +376,20 @@ export function StepPlayer({
 
   // Leave the lesson and return home, saving the current step so the learner
   // resumes where they left off. We flush the (debounced) save immediately so
-  // progress is persisted even if they navigate away right away, then refresh
-  // the Router Cache so Home and the lesson page re-fetch the saved step
-  // instead of serving a stale cached render (which would reset progress).
+  // progress is persisted even if they navigate away right away, then revalidate
+  // the Home/Mastery caches so they re-fetch the saved progress instead of
+  // serving a stale cached render (which would reset the steps-completed count).
   const exitLesson = useCallback(async () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     await updateStepIndex(supabase, userId, lesson.id, state.stepIndex);
-    router.refresh();
+    await revalidateProgressViews();
     router.push("/home");
   }, [supabase, userId, lesson.id, state.stepIndex, router]);
 
   const goToNextStep = useCallback(async () => {
     if (isLastStep) {
       await completeLesson(supabase, userId, lesson.id);
+      await revalidateProgressViews();
       router.push(`/lesson/${lesson.id}/complete`);
       return;
     }

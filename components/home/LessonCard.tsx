@@ -18,15 +18,12 @@ function statusLabel(status: LessonProgress["status"]): string {
   }
 }
 
-function buttonLabel(status: LessonProgress["status"]): string {
-  return status === "not_started" ? "Start" : "Continue";
-}
-
 export function LessonCard({ lesson, progress }: LessonCardProps) {
   const completedSteps =
     progress.status === "complete"
       ? lesson.totalSteps
       : progress.current_step_index;
+  const buttonLabel = completedSteps === 0 ? "Start Lesson" : "Continue";
 
   return (
     <Link href={`/lesson/${lesson.id}`} className="block">
@@ -67,7 +64,7 @@ export function LessonCard({ lesson, progress }: LessonCardProps) {
         </div>
         <div className="mt-4">
           <span className="inline-flex min-h-[44px] w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-body font-medium text-white">
-            {buttonLabel(progress.status)}
+            {buttonLabel}
           </span>
         </div>
       </article>

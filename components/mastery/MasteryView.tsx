@@ -1,4 +1,4 @@
-import type { ComfortLevel, LessonMastery } from "@/lib/comfort";
+import { formatDuration, type ComfortLevel, type LessonMastery } from "@/lib/comfort";
 
 const COMFORT_META: Record<
   ComfortLevel,
@@ -34,8 +34,9 @@ const COMFORT_META: Record<
 function comfortExplanation(mastery: LessonMastery): string | null {
   const { level, totalMs, expectedMinutes } = mastery.comfort;
   if (level === "not-started" || totalMs === null) return null;
-  const takenMin = Math.max(1, Math.round(totalMs / 60000));
-  const base = `You took ${takenMin} min and the expected time is ${expectedMinutes} min.`;
+  // Use the same formatting as the completion screen so the tooltip matches the
+  // most recent lesson time exactly (no rounding drift).
+  const base = `You took ${formatDuration(totalMs)} and the expected time is ${expectedMinutes} min.`;
   switch (level) {
     case "needs-practice":
       return `${base} We recommend you practice this lesson again.`;

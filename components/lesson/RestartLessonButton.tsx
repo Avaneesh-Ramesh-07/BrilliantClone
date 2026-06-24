@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { revalidateProgressViews } from "@/app/actions";
 import { Button } from "@/components/ui/Button";
 import { restartLesson } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/client";
@@ -22,8 +23,8 @@ export function RestartLessonButton({
     setLoading(true);
     const supabase = createClient();
     await restartLesson(supabase, userId, lessonId);
+    await revalidateProgressViews();
     router.push(`/lesson/${lessonId}`);
-    router.refresh();
   }
 
   return (
