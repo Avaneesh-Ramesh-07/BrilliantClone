@@ -3,8 +3,12 @@
 import type { Problem } from "@/types/lesson";
 import { ConceptStep } from "./steps/ConceptStep";
 import { DragToSolveStep } from "./steps/DragToSolveStep";
+import { GraphInterceptStep } from "./steps/GraphInterceptStep";
+import { IsolateBlocksStep } from "./steps/IsolateBlocksStep";
 import { MultipleChoiceStep } from "./steps/MultipleChoiceStep";
+import { PlotPointStep } from "./steps/PlotPointStep";
 import { SliderBalanceStep } from "./steps/SliderBalanceStep";
+import { SlopeRaceStep } from "./steps/SlopeRaceStep";
 
 interface StepRendererProps {
   problem: Problem;
@@ -85,6 +89,42 @@ export function StepRenderer({
           onCorrect={onDragCorrect}
           onIncorrect={onDragIncorrect}
           onReset={onDragReset}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "isolate-blocks":
+      return (
+        <IsolateBlocksStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "graph-intercept":
+      return (
+        <GraphInterceptStep
+          problem={problem}
+          value={sliderValue}
+          onChange={onSliderChange}
+          disabled={disabled || problemSolved}
+          showResult={problemSolved}
+        />
+      );
+    case "slope-race":
+      // Note: we intentionally don't disable on `problemSolved` — the demo
+      // stays replayable (via its own Reset) after it's been answered.
+      return (
+        <SlopeRaceStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled}
+        />
+      );
+    case "plot-point":
+      return (
+        <PlotPointStep
+          problem={problem}
+          onCorrect={onDragCorrect}
           disabled={disabled || problemSolved}
         />
       );

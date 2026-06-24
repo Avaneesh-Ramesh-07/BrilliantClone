@@ -4,7 +4,12 @@ import { AccountActions } from "@/components/home/AccountActions";
 import { StreakBadge } from "@/components/home/StreakBadge";
 import { LessonCard } from "@/components/home/LessonCard";
 import { getAllLessons } from "@/lib/lessons";
-import { getLessonProgress, getProfile, getStreak } from "@/lib/progress";
+import {
+  getLessonProgress,
+  getProfile,
+  getStreak,
+  hasEverCompleted,
+} from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function HomePage() {
@@ -26,9 +31,16 @@ export default async function HomePage() {
     }))
   );
 
-  const firstName = profile?.display_name?.split(" ")[0] ?? "Student";
-  const primaryLesson = lessons[0];
+  // A lesson is locked until the lesson before it has been completed at least
+  // once (this stays unlocked even if the learner revisits the prior lesson).
+  const withLockState = lessonsWithProgress.map((entry, index) => ({
+    ...entry,
+    locked:
+      index > 0 &&
+      !hasEverCompleted(lessonsWithProgress[index - 1].progress),
+  }));
 
+  const firstName = profile?.display_name?.split(" ")[0] ?? "Student";
   return (
     <main className="py-8">
       <header className="mb-8">
@@ -38,11 +50,6 @@ export default async function HomePage() {
             <h1 className="font-heading text-heading-lg text-text">
               {firstName}
             </h1>
-            {primaryLesson && (
-              <p className="mt-1 text-body text-muted">
-                {primaryLesson.subject} — {primaryLesson.title}
-              </p>
-            )}
           </div>
           <AccountActions email={user.email ?? ""} />
         </div>
@@ -54,8 +61,14 @@ export default async function HomePage() {
       <section>
         <h2 className="mb-4 text-label text-muted">Your lessons</h2>
         <div className="flex flex-col gap-4">
-          {lessonsWithProgress.map(({ lesson, progress }) => (
-            <LessonCard key={lesson.id} lesson={lesson} progress={progress} />
+          {withLockState.map(({ lesson, progress, locked }) => (
+            <LessonCard
+              key={lesson.id}
+              lesson={lesson}
+              progress={progress}
+              locked={locked}
+              userId={user.id}
+            />
           ))}
         </div>
       </section>

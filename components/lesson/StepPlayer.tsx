@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { revalidateProgressViews } from "@/app/actions";
 import { FeedbackPanel } from "@/components/lesson/FeedbackPanel";
-import { HintButton } from "@/components/lesson/HintButton";
 import { StepProgressBar } from "@/components/lesson/StepProgressBar";
 import { StepRenderer } from "@/components/lesson/StepRenderer";
+import { HelperInteractive } from "@/components/lesson/steps/HelperInteractive";
 import { defaultSliderValue } from "@/components/lesson/steps/SliderBalanceStep";
 import { Button } from "@/components/ui/Button";
 import { getStepIndexById } from "@/lib/lessons";
@@ -14,7 +14,12 @@ import { computeMastery } from "@/lib/mastery";
 import { recordStepAttempt, updateStepIndex, completeLesson } from "@/lib/progress";
 import { updateStreak } from "@/lib/streak";
 import { createClient } from "@/lib/supabase/client";
-import type { FeedbackState, Lesson, Problem } from "@/types/lesson";
+import type {
+  FeedbackState,
+  InteractiveHelper,
+  Lesson,
+  Problem,
+} from "@/types/lesson";
 
 interface StepPlayerProps {
   lesson: Lesson;
@@ -40,6 +45,12 @@ interface EngineState {
   /** When true, the learner is on their redemption problem for this step. */
   redemption: boolean;
   /**
+   * When true, a redemption has been triggered but not yet entered: the learner
+   * still sees the marking on the question that triggered it, plus an "I
+   * understand" button that takes them to the redemption problem.
+   */
+  redemptionArmed: boolean;
+  /**
    * Index of the regular problem that triggered the redemption, or null when the
    * redemption was triggered at the end of a step (below the mastery threshold).
    * On a successful redemption we resume right after this problem.
@@ -51,6 +62,12 @@ interface EngineState {
   showChoiceResult: boolean;
   /** Set when the learner checks an empty answer, asking them to enter one. */
   answerPrompt: string | null;
+  /** Whether this question's conceptual hint is currently shown. */
+  hintRevealed: boolean;
+  /** Whether the reinforcement interactive is currently being shown. */
+  helperActive: boolean;
+  /** Whether the reinforcement interactive has been worked through. */
+  helperDone: boolean;
 }
 
 type Action =
@@ -63,6 +80,7 @@ type Action =
     }
   | { type: "ADVANCE_STEP"; nextIndex: number; banner?: string | null }
   | { type: "PREV_STEP"; prevIndex: number }
+  | { type: "ARM_REDEMPTION"; originIndex: number | null }
   | { type: "ENTER_REDEMPTION"; message: string; originIndex: number | null }
   | {
       type: "REDEEM_NEXT_PROBLEM";
@@ -70,11 +88,13 @@ type Action =
       firstAttempts: Record<string, boolean>;
     }
   | { type: "NEXT_PROBLEM" }
-  | { type: "REVEAL_HINT" }
   | { type: "SET_NUMERIC"; value: string }
   | { type: "SET_SLIDER"; value: number }
   | { type: "SET_CHOICE"; id: string }
   | { type: "PROMPT_ANSWER"; message: string }
+  | { type: "REVEAL_HINT" }
+  | { type: "ACTIVATE_HELPER" }
+  | { type: "HELPER_DONE" }
   | { type: "RESET_ATTEMPT" };
 
 function problemDefaults(): Pick<
@@ -88,6 +108,9 @@ function problemDefaults(): Pick<
   | "selectedChoice"
   | "showChoiceResult"
   | "answerPrompt"
+  | "hintRevealed"
+  | "helperActive"
+  | "helperDone"
 > {
   return {
     hintsRevealed: 0,
@@ -99,6 +122,9 @@ function problemDefaults(): Pick<
     selectedChoice: null,
     showChoiceResult: false,
     answerPrompt: null,
+    hintRevealed: false,
+    helperActive: false,
+    helperDone: false,
   };
 }
 
@@ -111,6 +137,7 @@ function createInitialState(stepIndex: number): EngineState {
     attemptCounts: {},
     masteryBanner: null,
     redemption: false,
+    redemptionArmed: false,
     redemptionOriginIndex: null,
   };
 }
@@ -158,11 +185,20 @@ function reducer(state: EngineState, action: Action): EngineState {
       };
     case "PREV_STEP":
       return createInitialState(action.prevIndex);
+    case "ARM_REDEMPTION":
+      // Keep the current feedback/marking visible; just record that a redemption
+      // is queued so the UI can offer an "I understand" button.
+      return {
+        ...state,
+        redemptionArmed: true,
+        redemptionOriginIndex: action.originIndex,
+      };
     case "ENTER_REDEMPTION":
       return {
         ...state,
         ...problemDefaults(),
         redemption: true,
+        redemptionArmed: false,
         redemptionOriginIndex: action.originIndex,
         masteryBanner: action.message,
       };
@@ -173,6 +209,7 @@ function reducer(state: EngineState, action: Action): EngineState {
         ...state,
         ...problemDefaults(),
         redemption: false,
+        redemptionArmed: false,
         redemptionOriginIndex: null,
         masteryBanner: null,
         problemIndex: action.problemIndex,
@@ -182,10 +219,9 @@ function reducer(state: EngineState, action: Action): EngineState {
       return {
         ...state,
         ...problemDefaults(),
+        redemptionArmed: false,
         problemIndex: state.problemIndex + 1,
       };
-    case "REVEAL_HINT":
-      return { ...state, hintsRevealed: state.hintsRevealed + 1 };
     case "SET_NUMERIC":
       return { ...state, numericValue: action.value, answerPrompt: null };
     case "SET_SLIDER":
@@ -194,6 +230,23 @@ function reducer(state: EngineState, action: Action): EngineState {
       return { ...state, selectedChoice: action.id, answerPrompt: null };
     case "PROMPT_ANSWER":
       return { ...state, answerPrompt: action.message };
+    case "REVEAL_HINT":
+      return { ...state, hintRevealed: true };
+    case "ACTIVATE_HELPER":
+      return { ...state, helperActive: true };
+    case "HELPER_DONE":
+      // The interactive has been worked through. Clear the attempt so the
+      // learner can answer the question fresh; keep the hint visible.
+      return {
+        ...state,
+        helperActive: false,
+        helperDone: true,
+        feedback: null,
+        showChoiceResult: false,
+        answerPrompt: null,
+        numericValue: "",
+        selectedChoice: null,
+      };
     case "RESET_ATTEMPT":
       return {
         ...state,
@@ -243,6 +296,16 @@ function validateProblem(
         isCorrect: correct,
       };
     }
+    case "graph-intercept": {
+      const correct = sliderValue === (problem.targetX ?? 0);
+      return {
+        message: correct
+          ? problem.feedback.correct
+          : (problem.feedback.incorrect ??
+            "Slide the ball to x = 0 (the y-axis) first, then check."),
+        isCorrect: correct,
+      };
+    }
     default:
       return null;
   }
@@ -277,7 +340,30 @@ export function StepPlayer({
   const isLastStep = Boolean(step.isLastStep);
   // Demo problems are guided walkthroughs: they never gate progress or trigger
   // the redemption/regression flow.
-  const isDemo = problem.type === "drag-to-solve" && problem.demo === true;
+  const isDemo =
+    (problem.type === "drag-to-solve" ||
+      problem.type === "isolate-blocks" ||
+      problem.type === "graph-intercept" ||
+      problem.type === "slope-race" ||
+      problem.type === "plot-point") &&
+    problem.demo === true;
+  // Interactive demos drive their own primary action (drag / tap / play /
+  // click), so the bottom "Check Answer" button only appears once solved.
+  const isInteractiveDemo =
+    problem.type === "drag-to-solve" ||
+    problem.type === "isolate-blocks" ||
+    problem.type === "slope-race" ||
+    problem.type === "plot-point";
+
+  // The reinforcement interactive for this question (per-question override, else
+  // the step's interactive) and the question's conceptual hint, if any.
+  const activeInteractive: InteractiveHelper | undefined =
+    ("interactive" in problem ? problem.interactive : undefined) ??
+    step.interactive;
+  const problemHint =
+    "hint" in problem && typeof problem.hint === "string"
+      ? problem.hint
+      : undefined;
 
   const persistStepIndex = useCallback(
     (index: number) => {
@@ -303,7 +389,15 @@ export function StepPlayer({
   }, [state.stepIndex, persistStepIndex]);
 
   const sliderDefault =
-    problem.type === "slider-balance" ? defaultSliderValue(problem) : null;
+    problem.type === "slider-balance"
+      ? defaultSliderValue(problem)
+      : problem.type === "graph-intercept"
+        ? (problem.xDefault ??
+          Math.max(
+            problem.xMin,
+            Math.min(problem.xMax, (problem.targetX ?? 0) + 3)
+          ))
+        : null;
 
   useEffect(() => {
     if (sliderDefault !== null) {
@@ -355,13 +449,10 @@ export function StepPlayer({
           partialNudge: mastery.partialMasteryMessage,
         });
       } else {
-        // Below threshold at the end of the step: offer a redemption problem
-        // before regressing. Passing it progresses to the next step.
-        dispatch({
-          type: "ENTER_REDEMPTION",
-          message: REDEMPTION_BANNER,
-          originIndex: null,
-        });
+        // Below threshold at the end of the step: arm a redemption problem
+        // before regressing. The learner sees the marking on this question and
+        // taps "I understand" to move on. Passing redemption advances the step.
+        dispatch({ type: "ARM_REDEMPTION", originIndex: null });
       }
     },
     [step]
@@ -437,6 +528,37 @@ export function StepPlayer({
     }
   }, [state.redemptionOriginIndex, state.firstAttempts, step, goToNextStep]);
 
+  // Scaffolding after a wrong (non-redemption) answer:
+  //   1st miss  → reveal the conceptual hint.
+  //   2nd miss  → surface the step's reinforcement interactive (if any) to
+  //               rebuild understanding; otherwise arm the redemption flow.
+  //   later     → once the interactive has been worked through, fall back to
+  //               the usual redemption flow.
+  // Demos are exempt — they're guided walkthroughs, not graded questions.
+  const escalateAfterWrong = useCallback(
+    (attemptNum: number) => {
+      if (isDemo) return;
+      const hasHint =
+        "hint" in problem &&
+        typeof problem.hint === "string" &&
+        problem.hint.trim().length > 0;
+      const interactive =
+        ("interactive" in problem ? problem.interactive : undefined) ??
+        step.interactive;
+
+      if (attemptNum === 1) {
+        if (hasHint) dispatch({ type: "REVEAL_HINT" });
+        return;
+      }
+      if (interactive && !state.helperDone) {
+        dispatch({ type: "ACTIVATE_HELPER" });
+        return;
+      }
+      dispatch({ type: "ARM_REDEMPTION", originIndex: state.problemIndex });
+    },
+    [problem, step.interactive, isDemo, state.helperDone, state.problemIndex]
+  );
+
   const handleCheck = useCallback(async () => {
     // Require a value before checking a numeric problem; a blank submission
     // shouldn't count as a wrong attempt — nudge the learner instead.
@@ -481,15 +603,9 @@ export function StepPlayer({
       return;
     }
 
-    // Wrong answer. Missing the same question twice triggers the redemption
-    // flow regardless of the mastery threshold (demos are exempt).
-    if (!isFirst && !isDemo) {
-      dispatch({
-        type: "ENTER_REDEMPTION",
-        message: REDEMPTION_BANNER,
-        originIndex: state.problemIndex,
-      });
-    }
+    // Wrong answer. Surface a hint, then a reinforcement interactive, then the
+    // redemption flow as the learner keeps missing the same question.
+    escalateAfterWrong((state.attemptCounts[problem.id] ?? 0) + 1);
   }, [
     problem,
     state.numericValue,
@@ -499,7 +615,6 @@ export function StepPlayer({
     state.firstAttempts,
     state.hintsRevealed,
     state.redemption,
-    state.problemIndex,
     isLastProblem,
     isDemo,
     step.id,
@@ -508,6 +623,7 @@ export function StepPlayer({
     userId,
     afterCorrectLastProblem,
     failToFallback,
+    escalateAfterWrong,
   ]);
 
   // "I don't know" — explicitly give up on the current problem. This produces
@@ -523,7 +639,6 @@ export function StepPlayer({
       incorrectMsg = problem.feedback.incorrect ?? incorrectMsg;
     }
     const result: FeedbackState = { message: incorrectMsg, isCorrect: false };
-    const isFirst = (state.attemptCounts[problem.id] ?? 0) === 0;
 
     dispatch({ type: "SUBMIT", feedback: result, problemId: problem.id });
     await persistAttempt(false, state.hintsRevealed, problem.id, step.id);
@@ -533,23 +648,17 @@ export function StepPlayer({
       return;
     }
 
-    if (!isFirst && !isDemo) {
-      dispatch({
-        type: "ENTER_REDEMPTION",
-        message: REDEMPTION_BANNER,
-        originIndex: state.problemIndex,
-      });
-    }
+    escalateAfterWrong((state.attemptCounts[problem.id] ?? 0) + 1);
   }, [
     problem,
     state.attemptCounts,
     state.hintsRevealed,
     state.redemption,
-    state.problemIndex,
     isDemo,
     step.id,
     persistAttempt,
     failToFallback,
+    escalateAfterWrong,
   ]);
 
   const handleDragCorrect = useCallback(
@@ -613,11 +722,7 @@ export function StepPlayer({
       // Two misses on the same problem trigger the redemption flow (demos are
       // exempt — they're just guided walkthroughs).
       if (!isFirst && !isDemo) {
-        dispatch({
-          type: "ENTER_REDEMPTION",
-          message: REDEMPTION_BANNER,
-          originIndex: state.problemIndex,
-        });
+        dispatch({ type: "ARM_REDEMPTION", originIndex: state.problemIndex });
       }
     },
     [
@@ -641,6 +746,18 @@ export function StepPlayer({
     state.redemptionOriginIndex >= step.problems.length - 1;
 
   const handlePrimary = async () => {
+    // A redemption is queued: let the learner acknowledge the marking on the
+    // triggering question, then enter the redemption problem.
+    if (state.redemptionArmed) {
+      dispatch({
+        type: "ENTER_REDEMPTION",
+        message: REDEMPTION_BANNER,
+        originIndex: state.redemptionOriginIndex,
+      });
+      attemptStartRef.current = Date.now();
+      return;
+    }
+
     if (state.redemption && state.problemSolved) {
       advanceAfterRedemption();
       return;
@@ -670,6 +787,7 @@ export function StepPlayer({
   };
 
   const buttonLabel = (() => {
+    if (state.redemptionArmed) return "I understand";
     if (state.redemption && state.problemSolved) {
       return redemptionGoesToNextStep
         ? step.completionAction.buttonLabel
@@ -683,18 +801,21 @@ export function StepPlayer({
 
   const showButton =
     state.masteryPassed ||
-    problem.type !== "drag-to-solve" ||
+    state.redemptionArmed ||
+    !isInteractiveDemo ||
     (state.problemSolved && !isLastProblem);
   const buttonDisabled =
     !state.masteryPassed &&
+    !state.redemptionArmed &&
     problem.type === "multiple-choice" &&
     !state.selectedChoice &&
     !state.problemSolved;
 
   // Offer an explicit "I don't know" escape while the learner is still on a
-  // fresh attempt of an answerable (non-drag) problem.
+  // fresh attempt of an answerable, graded problem (never on guided demos).
   const showGiveUp =
-    problem.type !== "drag-to-solve" &&
+    !isInteractiveDemo &&
+    !isDemo &&
     buttonLabel === "Check Answer" &&
     !state.masteryPassed &&
     !state.problemSolved;
@@ -802,58 +923,99 @@ export function StepPlayer({
         </div>
       )}
 
-      <div className="mt-6">
-        <StepRenderer
-          key={`${state.stepIndex}:${state.problemIndex}:${
-            state.redemption ? "r" : "n"
-          }:${problem.id}`}
-          problem={problem}
-          numericValue={state.numericValue}
-          onNumericChange={(v) => dispatch({ type: "SET_NUMERIC", value: v })}
-          sliderValue={state.sliderValue}
-          onSliderChange={(v) => dispatch({ type: "SET_SLIDER", value: v })}
-          selectedChoice={state.selectedChoice}
-          onChoiceSelect={(id) => dispatch({ type: "SET_CHOICE", id })}
-          onDragCorrect={handleDragCorrect}
-          onDragIncorrect={handleDragIncorrect}
-          onDragReset={() => dispatch({ type: "RESET_ATTEMPT" })}
-          problemSolved={state.problemSolved}
-          showChoiceResult={state.showChoiceResult}
-          disabled={state.masteryPassed}
+      {state.helperActive && activeInteractive ? (
+        <HelperInteractive
+          key={`helper:${state.stepIndex}:${state.problemIndex}:${problem.id}`}
+          problem={activeInteractive}
+          onDismiss={() => dispatch({ type: "HELPER_DONE" })}
         />
-      </div>
+      ) : (
+        <>
+          <div className="mt-6">
+            <StepRenderer
+              key={`${state.stepIndex}:${state.problemIndex}:${
+                state.redemption ? "r" : "n"
+              }:${problem.id}`}
+              problem={problem}
+              numericValue={state.numericValue}
+              onNumericChange={(v) =>
+                dispatch({ type: "SET_NUMERIC", value: v })
+              }
+              sliderValue={state.sliderValue}
+              onSliderChange={(v) => dispatch({ type: "SET_SLIDER", value: v })}
+              selectedChoice={state.selectedChoice}
+              onChoiceSelect={(id) => dispatch({ type: "SET_CHOICE", id })}
+              onDragCorrect={handleDragCorrect}
+              onDragIncorrect={handleDragIncorrect}
+              onDragReset={() => dispatch({ type: "RESET_ATTEMPT" })}
+              problemSolved={state.problemSolved}
+              showChoiceResult={state.showChoiceResult}
+              disabled={state.masteryPassed || state.redemptionArmed}
+            />
+          </div>
 
-      {problem.type !== "drag-to-solve" && (
-        <FeedbackPanel
-          message={state.feedback?.message ?? ""}
-          isCorrect={state.feedback?.isCorrect ?? false}
-          visible={!!state.feedback}
-        />
-      )}
+          {problem.type !== "drag-to-solve" &&
+            problem.type !== "isolate-blocks" &&
+            problem.type !== "slope-race" &&
+            problem.type !== "plot-point" && (
+              <FeedbackPanel
+                message={state.feedback?.message ?? ""}
+                isCorrect={state.feedback?.isCorrect ?? false}
+                visible={!!state.feedback}
+              />
+            )}
 
-      {problem.type === "drag-to-solve" && state.feedback && !state.feedback.isCorrect && (
-        <FeedbackPanel
-          message={state.feedback.message}
-          isCorrect={false}
-          visible
-        />
+          {problem.type === "drag-to-solve" &&
+            state.feedback &&
+            !state.feedback.isCorrect && (
+              <FeedbackPanel
+                message={state.feedback.message}
+                isCorrect={false}
+                visible
+              />
+            )}
+
+          {state.hintRevealed && problemHint && (
+            <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+                aria-hidden
+              >
+                <path
+                  d="M9 18h6M10 21h4M12 3a6 6 0 00-3.6 10.8c.6.45 1 1.15 1.1 1.95h5c.1-.8.5-1.5 1.1-1.95A6 6 0 0012 3z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <div>
+                <p className="text-label font-semibold text-amber-700">Hint</p>
+                <p className="text-body text-amber-700/90">{problemHint}</p>
+              </div>
+            </div>
+          )}
+
+          {state.helperDone &&
+            !state.feedback &&
+            !state.problemSolved &&
+            !state.redemptionArmed && (
+              <p className="mt-4 text-center text-label font-medium text-primary">
+                Now give the question another try.
+              </p>
+            )}
+        </>
       )}
 
       <div className="sticky bottom-0 mt-auto flex flex-col gap-4 border-t border-border bg-bg pt-4">
-        <HintButton
-          hints={step.hints}
-          hintsRevealed={state.hintsRevealed}
-          onReveal={() => dispatch({ type: "REVEAL_HINT" })}
-          canReveal={
-            (state.attemptCounts[problem.id] ?? 0) > 0 && !state.problemSolved
-          }
-        />
         {state.answerPrompt && (
           <p className="text-center text-label font-medium text-amber-700">
             {state.answerPrompt}
           </p>
         )}
-        {showButton && (
+        {showButton && !state.helperActive && (
           <Button
             type="button"
             fullWidth
@@ -863,7 +1025,7 @@ export function StepPlayer({
             {buttonLabel}
           </Button>
         )}
-        {showGiveUp && (
+        {showGiveUp && !state.helperActive && (
           <button
             type="button"
             onClick={() => void handleGiveUp()}

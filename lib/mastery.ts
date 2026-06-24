@@ -10,6 +10,14 @@ const MASTERY_EPSILON = 0.01;
 
 /** Demo problems are guided walkthroughs and don't count toward mastery. */
 function isGraded(problem: Problem): boolean {
+  if (
+    problem.type === "isolate-blocks" ||
+    problem.type === "graph-intercept" ||
+    problem.type === "slope-race" ||
+    problem.type === "plot-point"
+  ) {
+    return false;
+  }
   return !(problem.type === "drag-to-solve" && problem.demo === true);
 }
 

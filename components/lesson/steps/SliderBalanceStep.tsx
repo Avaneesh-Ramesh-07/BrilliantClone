@@ -24,7 +24,7 @@ export function SliderBalanceStep({
     <div>
       <p className="text-body text-text">{problem.prompt}</p>
 
-      <div className="mt-6">
+      <div className="mt-4">
         <BalanceScaleVisual
           leftValue={value}
           rightValue={problem.rightValue}
@@ -34,7 +34,7 @@ export function SliderBalanceStep({
         />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <div className="flex items-center justify-between">
           <label htmlFor="x-slider" className="text-label text-muted">
             Try x =

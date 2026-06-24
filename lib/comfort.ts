@@ -1,4 +1,4 @@
-import type { AttemptRow } from "@/lib/progress";
+import { isLessonComplete, type AttemptRow } from "@/lib/progress";
 import type { Lesson, LessonProgress } from "@/types/lesson";
 
 export type ComfortLevel =
@@ -132,11 +132,18 @@ export function buildLessonMastery(
     daysSince: daysSince(lastByStep[step.id]),
   }));
 
+  // Treat a finished lesson as complete even if the learner has since moved back
+  // through it (its live status may read "in_progress"). A restart clears this.
+  const status =
+    progress && isLessonComplete(progress)
+      ? "complete"
+      : (progress?.status ?? "not_started");
+
   return {
     lessonId: lesson.id,
     title: lesson.title,
     subject: lesson.subject,
-    status: progress?.status ?? "not_started",
+    status,
     comfort: computeComfort(
       progress?.last_duration_ms ?? null,
       lesson.estimatedMinutes

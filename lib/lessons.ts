@@ -80,6 +80,25 @@ export function getAllLessons(): Lesson[] {
   return Object.values(LESSONS);
 }
 
+/** Lesson ids in their fixed curriculum order. */
+export function getLessonOrder(): string[] {
+  return Object.keys(LESSONS);
+}
+
+/** The lesson that must be completed before `id` unlocks, or null for the first. */
+export function getPreviousLessonId(id: string): string | null {
+  const order = getLessonOrder();
+  const index = order.indexOf(id);
+  return index > 0 ? order[index - 1] : null;
+}
+
+/** The lesson that follows `id` in the curriculum, or null if it's the last. */
+export function getNextLessonId(id: string): string | null {
+  const order = getLessonOrder();
+  const index = order.indexOf(id);
+  return index >= 0 && index < order.length - 1 ? order[index + 1] : null;
+}
+
 export function getStepIndexById(lesson: Lesson, stepId: string): number {
   return lesson.steps.findIndex((s) => s.id === stepId);
 }

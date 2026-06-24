@@ -2,10 +2,11 @@ import { notFound, redirect } from "next/navigation";
 import { StepPlayer } from "@/components/lesson/StepPlayer";
 import {
   getLesson,
+  getPreviousLessonId,
   selectLessonRun,
   selectRedemptionProblems,
 } from "@/lib/lessons";
-import { getLessonProgress } from "@/lib/progress";
+import { getLessonProgress, hasEverCompleted } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
 
 interface LessonPageProps {
@@ -24,6 +25,20 @@ export default async function LessonPage({ params }: LessonPageProps) {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  // Gate: a lesson is locked until the previous lesson in the curriculum is
+  // complete. Direct navigation to a locked lesson bounces back home.
+  const previousLessonId = getPreviousLessonId(lesson.id);
+  if (previousLessonId) {
+    const previousProgress = await getLessonProgress(
+      supabase,
+      user.id,
+      previousLessonId
+    );
+    if (!hasEverCompleted(previousProgress)) {
+      redirect("/home");
+    }
+  }
 
   const progress = await getLessonProgress(supabase, user.id, lesson.id);
   const lessonRun = selectLessonRun(lesson);

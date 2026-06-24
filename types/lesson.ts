@@ -55,6 +55,10 @@ export interface NumericInputProblem {
   type: "numeric-input";
   prompt: string;
   answer: number;
+  /** One conceptual nudge revealed after a wrong attempt. Never the answer. */
+  hint?: string;
+  /** Per-question override of the step's reinforcement interactive. */
+  interactive?: InteractiveHelper;
   feedback: ProblemFeedback;
 }
 
@@ -69,6 +73,10 @@ export interface MultipleChoiceProblem {
   type: "multiple-choice";
   prompt: string;
   options: MultipleChoiceOption[];
+  /** One conceptual nudge revealed after a wrong attempt. Never the answer. */
+  hint?: string;
+  /** Per-question override of the step's reinforcement interactive. */
+  interactive?: InteractiveHelper;
   feedback: ProblemFeedback;
 }
 
@@ -104,15 +112,121 @@ export interface SliderBalanceProblem {
   leftLabel: string;
   rightLabel: string;
   rightValue: number;
+  /** One conceptual nudge revealed after a wrong attempt. Never the answer. */
+  hint?: string;
+  /** Per-question override of the step's reinforcement interactive. */
+  interactive?: InteractiveHelper;
   feedback: ProblemFeedback;
 }
+
+/**
+ * A guided "building blocks" demo for isolating a variable. The equation
+ * `coefficient·variable + constant = rightValue` is shown as physical blocks
+ * and solved one move at a time:
+ *   - subtract move (when constant !== 0): drag the constant blocks to the
+ *     trash to remove them from both sides.
+ *   - divide move (when coefficient !== 1): tap "Divide both sides by N" to
+ *     split each side into equal groups.
+ * Two-step equations chain both moves (subtract first, then divide).
+ */
+export interface IsolateBlocksProblem {
+  id: string;
+  type: "isolate-blocks";
+  demo?: boolean;
+  /** Goal framing, e.g. "Get x by itself on the left side." */
+  prompt: string;
+  /** The question posed to the learner for the first move. */
+  question: string;
+  variable: string;
+  /** Number multiplying the variable. Defaults to 1 (no division needed). */
+  coefficient?: number;
+  /** Constant added on the left. May be 0 (no subtraction needed). */
+  constant: number;
+  rightValue: number;
+  feedback: ProblemFeedback;
+}
+
+/**
+ * A guided graphing demo: a line `y = slope·x + intercept` is drawn on a
+ * coordinate grid with a ball the learner slides along it (the slider sets the
+ * ball's x). Moving the ball to the y-axis (x = targetX, default 0) reveals the
+ * y-intercept and completes the demo.
+ */
+export interface GraphInterceptProblem {
+  id: string;
+  type: "graph-intercept";
+  demo?: boolean;
+  prompt: string;
+  /** Human-readable equation, e.g. "y = 2x + 4". */
+  equationLabel: string;
+  slope: number;
+  intercept: number;
+  xMin: number;
+  xMax: number;
+  xDefault?: number;
+  /** The x the learner must slide the ball to. Defaults to 0 (the y-axis). */
+  targetX?: number;
+  feedback: ProblemFeedback;
+}
+
+/**
+ * A guided "slope race" demo: two side-by-side graphs each show a downward
+ * line with a ball at the top and a slider to adjust the slope. Pressing play
+ * releases both balls; the steeper slope reaches the bottom first. Afterwards a
+ * multiple-choice question (with "{side}" substituted by the steeper graph's
+ * side) reinforces why.
+ */
+export interface SlopeRaceProblem {
+  id: string;
+  type: "slope-race";
+  demo?: boolean;
+  prompt: string;
+  /** MC question; "{side}" is replaced with the steeper graph's side. */
+  question: string;
+  options: MultipleChoiceOption[];
+  feedback: ProblemFeedback;
+}
+
+/**
+ * A guided "plot the point" demo: the learner is shown an empty coordinate grid
+ * and clicks the point they're solving for (e.g. the y-intercept at
+ * (targetX, targetY)). Hovering the grid reveals the coordinate under the
+ * cursor. Clicking the target point completes the demo.
+ */
+export interface PlotPointProblem {
+  id: string;
+  type: "plot-point";
+  demo?: boolean;
+  prompt: string;
+  targetX: number;
+  targetY: number;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  feedback: ProblemFeedback;
+}
+
+/**
+ * The self-contained interactives that can be surfaced to reinforce a concept
+ * when a learner is struggling with a graded question. These manage their own
+ * state and signal completion via `onCorrect`; they are NOT graded problems.
+ */
+export type InteractiveHelper =
+  | IsolateBlocksProblem
+  | PlotPointProblem
+  | SlopeRaceProblem;
 
 export type Problem =
   | ConceptProblem
   | NumericInputProblem
   | MultipleChoiceProblem
   | DragToSolveProblem
-  | SliderBalanceProblem;
+  | SliderBalanceProblem
+  | IsolateBlocksProblem
+  | GraphInterceptProblem
+  | SlopeRaceProblem
+  | PlotPointProblem;
 
 export interface StepCompletionAction {
   buttonLabel: string;
@@ -132,6 +246,12 @@ export interface Step {
   skipMasteryGate?: boolean;
   isLastStep?: boolean;
   hints: string[];
+  /**
+   * Reinforcement interactive for this step's concept. Surfaced when a learner
+   * misses a graded question again after seeing its hint. Individual questions
+   * may override this with their own `interactive`.
+   */
+  interactive?: InteractiveHelper;
   completionAction: StepCompletionAction;
   /**
    * Number of problems to present from the `problems` bank. The first problem
@@ -161,6 +281,8 @@ export interface LessonProgress {
   status: LessonStatus;
   current_step_index: number;
   completed_at?: string | null;
+  /** Durable "finished at least once" flag; kept through restarts to keep later lessons unlocked. */
+  ever_completed?: boolean;
   /** Total active solve time (ms) of the most recent completed run. */
   last_duration_ms?: number | null;
 }

@@ -104,6 +104,43 @@ export function GridPlotVisual({ visual, animation }: GridPlotVisualProps) {
           stroke="var(--color-muted)"
           strokeWidth="1"
         />
+        <line
+          x1={toX(0)}
+          y1={PADDING}
+          x2={toX(0)}
+          y2={HEIGHT - PADDING}
+          stroke="var(--color-muted)"
+          strokeWidth="1"
+        />
+
+        {/* Axis labels */}
+        <text
+          x={WIDTH - PADDING + 2}
+          y={toY(0) - 6}
+          textAnchor="end"
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            fontStyle: "italic",
+            fill: "var(--color-text)",
+          }}
+        >
+          x
+        </text>
+        <text
+          x={toX(0) + 7}
+          y={PADDING}
+          textAnchor="start"
+          dominantBaseline="hanging"
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            fontStyle: "italic",
+            fill: "var(--color-text)",
+          }}
+        >
+          y
+        </text>
 
         {showLeft && (
           <polyline

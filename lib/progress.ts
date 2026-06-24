@@ -6,6 +6,25 @@ const DEFAULT_PROGRESS: LessonProgress = {
   current_step_index: 0,
 };
 
+/**
+ * Whether the lesson is currently in a finished state. Based on `completed_at`,
+ * which survives moving back through a finished lesson and exiting, but is
+ * cleared on restart (so a restarted lesson reads as a fresh run). Used for the
+ * Home "completed" card, the congrats screen, and the mastery status.
+ */
+export function isLessonComplete(progress: LessonProgress): boolean {
+  return progress.completed_at != null;
+}
+
+/**
+ * Whether the learner has finished this lesson at least once, ever. This is
+ * durable — it is never cleared, including on restart — so later lessons the
+ * learner unlocked stay unlocked even after they restart an earlier lesson.
+ */
+export function hasEverCompleted(progress: LessonProgress): boolean {
+  return progress.ever_completed === true;
+}
+
 export async function getLessonProgress(
   supabase: SupabaseClient,
   userId: string,
@@ -13,7 +32,9 @@ export async function getLessonProgress(
 ): Promise<LessonProgress> {
   const { data } = await supabase
     .from("lesson_progress")
-    .select("status, current_step_index, completed_at, last_duration_ms")
+    .select(
+      "status, current_step_index, completed_at, ever_completed, last_duration_ms"
+    )
     .eq("user_id", userId)
     .eq("lesson_id", lessonId)
     .maybeSingle();
@@ -24,6 +45,7 @@ export async function getLessonProgress(
     status: data.status as LessonProgress["status"],
     current_step_index: data.current_step_index,
     completed_at: data.completed_at,
+    ever_completed: data.ever_completed ?? false,
     last_duration_ms: data.last_duration_ms,
   };
 }
@@ -106,6 +128,8 @@ export async function completeLesson(
   const payload = {
     status: "complete" as const,
     completed_at: new Date().toISOString(),
+    // Durable: once true it is never unset, keeping later lessons unlocked.
+    ever_completed: true,
     updated_at: new Date().toISOString(),
     last_duration_ms: totalDurationMs,
   };
@@ -141,11 +165,13 @@ export async function restartLesson(
   const payload = {
     status: "in_progress" as const,
     current_step_index: 0,
-    completed_at: null,
     updated_at: new Date().toISOString(),
-    // Start a fresh run: reset the timer and clear the prior total.
-    started_at: new Date().toISOString(),
+    // Treat this as a fresh run: clear the completion marker, timer total, and
+    // start a new timer. We deliberately do NOT touch `ever_completed`, so any
+    // later lessons the learner already unlocked stay unlocked.
+    completed_at: null,
     last_duration_ms: null,
+    started_at: new Date().toISOString(),
   };
 
   if (existing) {
@@ -219,7 +245,9 @@ export async function getAllLessonProgress(
 ): Promise<Record<string, LessonProgress>> {
   const { data } = await supabase
     .from("lesson_progress")
-    .select("lesson_id, status, current_step_index, completed_at, last_duration_ms")
+    .select(
+      "lesson_id, status, current_step_index, completed_at, ever_completed, last_duration_ms"
+    )
     .eq("user_id", userId);
 
   const map: Record<string, LessonProgress> = {};
@@ -228,6 +256,7 @@ export async function getAllLessonProgress(
       status: row.status as LessonProgress["status"],
       current_step_index: row.current_step_index as number,
       completed_at: row.completed_at as string | null,
+      ever_completed: (row.ever_completed as boolean | null) ?? false,
       last_duration_ms: row.last_duration_ms as number | null,
     };
   }

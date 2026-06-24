@@ -56,6 +56,18 @@
       "fallbackMessage": "Let's revisit what x means before we start moving terms.",
       "partialMasteryMessage": "Watch your step — you missed one in the last section.",
       "hints": ["How can we get x alone on one side?"],
+      "interactive": {
+        "id": "step-2-helper",
+        "type": "isolate-blocks",
+        "prompt": "Get the variable x by itself on the left side.",
+        "question": "Here's x + 3 = 7 shown as blocks. How can we clear the +3 to leave x alone on the left?",
+        "variable": "x",
+        "constant": 3,
+        "rightValue": 7,
+        "feedback": {
+          "correct": "Nice — dragging the +3 to the trash (and removing 3 from the right to stay balanced) isolates x, giving x = 4. The same move solves your question."
+        }
+      },
       "completionAction": {
         "buttonLabel": "Next Step →",
         "nextStepId": "step-3"
@@ -64,35 +76,15 @@
       "problems": [
         {
           "id": "p2a",
-          "type": "drag-to-solve",
+          "type": "isolate-blocks",
           "demo": true,
-          "prompt": "Drag the +3 across the = to isolate x.",
-          "equation": {
-            "left": ["x", "+3"],
-            "right": ["7"]
-          },
-          "targetTile": "+3",
-          "targetSide": "right",
-          "solution": {
-            "left": ["x"],
-            "right": ["7", "-3"]
-          },
-          "answer": 4,
-          "visual": {
-            "type": "grid-plot",
-            "leftLine": { "label": "y = x + 3", "fn": "x + 3" },
-            "rightLine": { "label": "y = 7", "fn": "7" },
-            "solution": 4
-          },
-          "animation": {
-            "gridAnimatesIn": true,
-            "greenVerticalLine": true,
-            "pulseIntersection": [4, 7]
-          },
+          "prompt": "Get the variable x all by itself on the left side.",
+          "question": "We have x + 3 = 7, shown as blocks. How can we affect the +3 to leave x alone on the left?",
+          "variable": "x",
+          "constant": 3,
+          "rightValue": 7,
           "feedback": {
-            "correct": "Subtracting 3 from both sides isolates x. The grid shows why: x = 4 is the only point where both lines meet.",
-            "incorrect_moved_x": "Move the constant, not the variable. x is what you're solving for — leave it on the left.",
-            "incorrect_moved_right": "The 7 is already alone on the right. Drag the +3 across to get x by itself."
+            "correct": "Correct! Dragging the +3 to the trash removes it from the left — and to keep the equation balanced we remove 3 from the right too. That isolates the variable, leaving x = 4."
           }
         },
         {
@@ -100,6 +92,7 @@
           "type": "numeric-input",
           "prompt": "Now try on your own. Solve: x + 5 = 12. What is x?",
           "answer": 7,
+          "hint": "x has 5 added to it. What operation undoes adding — done to both sides?",
           "feedback": {
             "correct": "Yes — subtracting 5 from both sides gives x = 7. Same move, different numbers.",
             "incorrect": "Subtract 5 from both sides. If x + 5 = 12, then x = 12 − 5."
@@ -110,6 +103,7 @@
           "type": "numeric-input",
           "prompt": "Solve: x + 8 = 15. What is x?",
           "answer": 7,
+          "hint": "Something is being added to x. Undo it with the opposite operation on both sides.",
           "feedback": {
             "correct": "Right — subtract 8 from both sides, so x = 7.",
             "incorrect": "Subtract 8 from both sides. If x + 8 = 15, then x = 15 − 8."
@@ -120,6 +114,7 @@
           "type": "numeric-input",
           "prompt": "Solve: x + 2 = 9. What is x?",
           "answer": 7,
+          "hint": "To isolate x, do the opposite of adding — to both sides of the equation.",
           "feedback": {
             "correct": "Yes — subtract 2 from both sides to get x = 7.",
             "incorrect": "Subtract 2 from both sides. If x + 2 = 9, then x = 9 − 2."
@@ -130,6 +125,7 @@
           "type": "numeric-input",
           "prompt": "Solve: x + 6 = 10. What is x?",
           "answer": 4,
+          "hint": "Whatever is added to x, subtract it from both sides to keep things balanced.",
           "feedback": {
             "correct": "Right — subtract 6 from both sides, so x = 4.",
             "incorrect": "Subtract 6 from both sides. If x + 6 = 10, then x = 10 − 6."
@@ -140,6 +136,7 @@
           "type": "numeric-input",
           "prompt": "Solve: x + 4 = 11. What is x?",
           "answer": 7,
+          "hint": "Get x alone by undoing the addition on both sides.",
           "feedback": {
             "correct": "Yes — subtract 4 from both sides to get x = 7.",
             "incorrect": "Subtract 4 from both sides. If x + 4 = 11, then x = 11 − 4."
@@ -150,6 +147,7 @@
           "type": "numeric-input",
           "prompt": "Solve: x + 9 = 13. What is x?",
           "answer": 4,
+          "hint": "Cancel the number added to x by subtracting it from both sides.",
           "feedback": {
             "correct": "Right — subtract 9 from both sides, so x = 4.",
             "incorrect": "Subtract 9 from both sides. If x + 9 = 13, then x = 13 − 9."
@@ -169,6 +167,19 @@
         "What number is multiplying x?",
         "Divide both sides by that number to cancel it out."
       ],
+      "interactive": {
+        "id": "step-3-helper",
+        "type": "isolate-blocks",
+        "prompt": "Get a single x by itself on the left side.",
+        "question": "Here's 2x = 10 as blocks — two x's balance ten blocks. x is multiplied by 2, so how do we get one x alone?",
+        "variable": "x",
+        "coefficient": 2,
+        "constant": 0,
+        "rightValue": 10,
+        "feedback": {
+          "correct": "Right — dividing both sides by 2 splits each side into equal groups, leaving x = 5. Divide by whatever multiplies x in your question."
+        }
+      },
       "completionAction": {
         "buttonLabel": "Next Step →",
         "nextStepId": "step-4"
@@ -177,32 +188,16 @@
       "problems": [
         {
           "id": "p3a",
-          "type": "drag-to-solve",
+          "type": "isolate-blocks",
           "demo": true,
-          "prompt": "Tap \"Divide both sides by 2\" to isolate x. The right side becomes the fraction 10⁄2.",
-          "equation": {
-            "left": ["2x", "÷2"],
-            "right": ["10"]
-          },
-          "targetTile": "÷2",
-          "targetSide": "right",
-          "solution": {
-            "left": ["x"],
-            "right": ["10", "÷2"]
-          },
-          "answer": 5,
-          "visual": {
-            "type": "grid-plot",
-            "leftLine": { "label": "y = 2x", "fn": "2 * x" },
-            "rightLine": { "label": "y = 10", "fn": "10" },
-            "solution": 5,
-            "verticalLine": true
-          },
-          "animation": { "greenVerticalLine": true },
+          "prompt": "Get a single x by itself on the left side.",
+          "question": "We have 2x = 10, shown as blocks — two x's balance ten blocks. x is multiplied by 2, so how do we undo that to get one x alone?",
+          "variable": "x",
+          "coefficient": 2,
+          "constant": 0,
+          "rightValue": 10,
           "feedback": {
-            "correct": "Dividing both sides by 2 makes the fraction 10⁄2 = 5. The grid confirms it: x = 5 is where y = 2x meets y = 10.",
-            "incorrect_moved_x": "Leave x on the left and divide both sides by 2.",
-            "incorrect_wrong_tile": "Divide both sides by 2 so the right side becomes the fraction 10⁄2."
+            "correct": "Correct! Dividing both sides by 2 splits each side into two equal groups and keeps one. That leaves x = 5."
           }
         },
         {
@@ -210,6 +205,7 @@
           "type": "numeric-input",
           "prompt": "Solve: 3x = 12. What is x?",
           "answer": 4,
+          "hint": "x is multiplied by 3. What operation undoes multiplication?",
           "feedback": {
             "correct": "Exactly. 12 ÷ 3 = 4, so x = 4.",
             "incorrect": "Divide both sides by 3. What is 12 ÷ 3?"
@@ -220,6 +216,7 @@
           "type": "numeric-input",
           "prompt": "Solve: 4x = 20. What is x?",
           "answer": 5,
+          "hint": "To undo multiplying by 4, do the opposite to both sides.",
           "feedback": {
             "correct": "Right. 20 ÷ 4 = 5, so x = 5.",
             "incorrect": "Divide both sides by 4. What is 20 ÷ 4?"
@@ -230,6 +227,7 @@
           "type": "numeric-input",
           "prompt": "Solve: 5x = 35. What is x?",
           "answer": 7,
+          "hint": "Multiplication is undone by division — apply it to both sides.",
           "feedback": {
             "correct": "Right. 35 ÷ 5 = 7, so x = 7.",
             "incorrect": "Divide both sides by 5. What is 35 ÷ 5?"
@@ -240,6 +238,7 @@
           "type": "numeric-input",
           "prompt": "Solve: 6x = 18. What is x?",
           "answer": 3,
+          "hint": "Whatever number multiplies x, divide both sides by it.",
           "feedback": {
             "correct": "Right. 18 ÷ 6 = 3, so x = 3.",
             "incorrect": "Divide both sides by 6. What is 18 ÷ 6?"
@@ -259,6 +258,19 @@
         "Deal with the number being added or subtracted first.",
         "After that, divide both sides by the number in front of x."
       ],
+      "interactive": {
+        "id": "step-4-helper",
+        "type": "isolate-blocks",
+        "prompt": "Get a single x by itself on the left side.",
+        "question": "Here's 2x + 3 = 11 as blocks. Undo the addition first — how can we clear the +3 from the left?",
+        "variable": "x",
+        "coefficient": 2,
+        "constant": 3,
+        "rightValue": 11,
+        "feedback": {
+          "correct": "Two moves in order: remove the +3 from both sides to get 2x = 8, then divide both sides by 2 → x = 4. Same order works on your question."
+        }
+      },
       "completionAction": {
         "buttonLabel": "Next Step →",
         "nextStepId": "step-5"
@@ -267,43 +279,16 @@
       "problems": [
         {
           "id": "p4a",
-          "type": "drag-to-solve",
+          "type": "isolate-blocks",
           "demo": true,
-          "prompt": "Solve 2x + 3 = 11. Move the constant across first, then divide both sides by 2.",
-          "equation": {
-            "left": ["2x", "+3"],
-            "right": ["11"]
-          },
-          "moves": [
-            {
-              "targetTile": "+3",
-              "targetSide": "right",
-              "resultLeft": ["2x"],
-              "resultRight": ["11", "-3"],
-              "intermediateLabel": "2x = 8"
-            },
-            {
-              "targetTile": "÷2",
-              "targetSide": "right",
-              "resultLeft": ["x"],
-              "resultRight": ["8", "÷2"],
-              "intermediateLabel": "x = 4",
-              "blockedUntilPreviousMove": true,
-              "bounceBackOnEarlyAttempt": true
-            }
-          ],
-          "answer": 4,
-          "visual": {
-            "type": "grid-plot",
-            "leftLine": { "label": "y = 2x + 3", "fn": "2 * x + 3" },
-            "rightLine": { "label": "y = 11", "fn": "11" },
-            "solution": 4
-          },
-          "animation": { "greenVerticalLine": true },
+          "prompt": "Get a single x by itself on the left side.",
+          "question": "We have 2x + 3 = 11, shown as blocks. Undo addition first — how can we clear the +3 from the left?",
+          "variable": "x",
+          "coefficient": 2,
+          "constant": 3,
+          "rightValue": 11,
           "feedback": {
-            "correct": "Two moves, right order. Subtract 3 first, then divide by 2. The grid shows where both sides meet at x = 4.",
-            "incorrect_wrong_order": "Undo addition and subtraction first, then multiplication and division. Move the +3 across before dividing.",
-            "incorrect_moved_x": "x stays on the left. Move the constants across the equals sign."
+            "correct": "Two moves in the right order: remove the +3 from both sides to get 2x = 8, then divide both sides by 2. That leaves x = 4."
           }
         },
         {
@@ -311,6 +296,7 @@
           "type": "numeric-input",
           "prompt": "Solve: 3x − 2 = 7. What is x?",
           "answer": 3,
+          "hint": "Two moves. Undo the adding/subtracting first, then the multiplication.",
           "feedback": {
             "correct": "Right — add 2 to both sides first (getting 3x = 9), then divide by 3. x = 3.",
             "incorrect": "Two steps: first add 2 to both sides, then divide by 3."
@@ -321,6 +307,7 @@
           "type": "numeric-input",
           "prompt": "Solve: 2x + 5 = 13. What is x?",
           "answer": 4,
+          "hint": "Clear the added/subtracted number first, then divide by the coefficient.",
           "feedback": {
             "correct": "Good. Subtract 5 first (2x = 8), then divide by 2. x = 4.",
             "incorrect": "Two steps: subtract 5 from both sides, then divide by 2."
@@ -331,6 +318,7 @@
           "type": "numeric-input",
           "prompt": "Solve: 4x + 1 = 13. What is x?",
           "answer": 3,
+          "hint": "First get rid of the constant, then deal with the number in front of x.",
           "feedback": {
             "correct": "Good. Subtract 1 first (4x = 12), then divide by 4. x = 3.",
             "incorrect": "Two steps: subtract 1 from both sides, then divide by 4."
@@ -341,6 +329,7 @@
           "type": "numeric-input",
           "prompt": "Solve: 5x − 4 = 16. What is x?",
           "answer": 4,
+          "hint": "Handle the subtraction first, then the multiplication.",
           "feedback": {
             "correct": "Right. Add 4 first (5x = 20), then divide by 5. x = 4.",
             "incorrect": "Two steps: add 4 to both sides, then divide by 5."
@@ -400,6 +389,7 @@
           "id": "p5b",
           "type": "multiple-choice",
           "prompt": "Which equation has the same solution as x − 5 = 2?",
+          "hint": "Solve x − 5 = 2 for x first, then find the option that gives the same x.",
           "options": [
             { "id": "a", "text": "x + 3 = 10", "correct": true },
             { "id": "b", "text": "x + 2 = 8", "correct": false },
@@ -415,6 +405,7 @@
           "type": "numeric-input",
           "prompt": "Solve: x − 8 = −3. What is x?",
           "answer": 5,
+          "hint": "x has 8 subtracted from it. Undo it with the opposite operation on both sides.",
           "feedback": {
             "correct": "Right — add 8 to both sides. −3 + 8 = 5, so x = 5.",
             "incorrect": "Add 8 to both sides. What is −3 + 8?"
@@ -425,6 +416,7 @@
           "type": "numeric-input",
           "prompt": "Solve: x − 3 = −7. What is x?",
           "answer": -4,
+          "hint": "Add to both sides to undo the subtraction — and watch the signs as you combine.",
           "feedback": {
             "correct": "Right — add 3 to both sides. −7 + 3 = −4, so x = −4.",
             "incorrect": "Add 3 to both sides. What is −7 + 3?"
@@ -435,6 +427,7 @@
           "type": "numeric-input",
           "prompt": "Solve: x + 6 = 1. What is x?",
           "answer": -5,
+          "hint": "Subtract from both sides; don't be surprised if the result is negative.",
           "feedback": {
             "correct": "Right — subtract 6 from both sides. 1 − 6 = −5, so x = −5.",
             "incorrect": "Subtract 6 from both sides. What is 1 − 6?"

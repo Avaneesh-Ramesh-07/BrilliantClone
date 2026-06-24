@@ -3,8 +3,12 @@ import { notFound, redirect } from "next/navigation";
 import { RestartLessonButton } from "@/components/lesson/RestartLessonButton";
 import { Button } from "@/components/ui/Button";
 import { formatDuration } from "@/lib/comfort";
-import { getLesson } from "@/lib/lessons";
-import { completeLesson, getLessonProgress } from "@/lib/progress";
+import { getLesson, getNextLessonId } from "@/lib/lessons";
+import {
+  completeLesson,
+  getLessonProgress,
+  isLessonComplete,
+} from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
 
 interface CompletePageProps {
@@ -83,14 +87,12 @@ export default async function CompletePage({ params }: CompletePageProps) {
 
   let progress = await getLessonProgress(supabase, user.id, lesson.id);
 
-  if (
-    progress.status !== "complete" &&
-    progress.current_step_index < lesson.totalSteps - 1
-  ) {
-    redirect(`/lesson/${id}`);
-  }
-
-  if (progress.status !== "complete") {
+  // If the lesson is in a finished state, always show the congrats screen —
+  // even if the learner has since moved back through the lesson.
+  if (!isLessonComplete(progress)) {
+    if (progress.current_step_index < lesson.totalSteps - 1) {
+      redirect(`/lesson/${id}`);
+    }
     await completeLesson(supabase, user.id, lesson.id);
     // Re-read so we pick up the total run time computed at completion.
     progress = await getLessonProgress(supabase, user.id, lesson.id);
@@ -99,6 +101,20 @@ export default async function CompletePage({ params }: CompletePageProps) {
   const totalMs = progress.last_duration_ms ?? null;
   const title = pickRandom(CELEBRATION_TITLES);
   const subtitle = pickRandom(CELEBRATION_SUBTITLES);
+
+  const nextLessonId = getNextLessonId(lesson.id);
+  const nextLesson = nextLessonId ? getLesson(nextLessonId) : undefined;
+  // If the next lesson is already finished, send the learner to its congrats
+  // screen instead of dropping them at its last in-progress problem.
+  const nextLessonHref =
+    nextLesson &&
+    isLessonComplete(
+      await getLessonProgress(supabase, user.id, nextLesson.id)
+    )
+      ? `/lesson/${nextLesson.id}/complete`
+      : nextLesson
+        ? `/lesson/${nextLesson.id}`
+        : undefined;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center py-12 text-center">
@@ -119,9 +135,26 @@ export default async function CompletePage({ params }: CompletePageProps) {
         </div>
       )}
 
-      <div className="mt-10 flex w-full max-w-xs flex-col gap-3">
+      {nextLesson && (
+        <div className="mt-8 w-full max-w-sm rounded-xl border border-primary/30 bg-primary-light px-5 py-4 text-left">
+          <p className="text-label text-primary">Up next</p>
+          <p className="mt-0.5 font-heading text-heading-md text-text">
+            {nextLesson.title}
+          </p>
+          <p className="mt-1 text-body text-muted">{nextLesson.description}</p>
+        </div>
+      )}
+
+      <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
+        {nextLesson && nextLessonHref && (
+          <Link href={nextLessonHref}>
+            <Button fullWidth>Start {nextLesson.title} →</Button>
+          </Link>
+        )}
         <Link href="/home">
-          <Button fullWidth>Back to Home</Button>
+          <Button fullWidth variant={nextLesson ? "secondary" : "primary"}>
+            Back to Home
+          </Button>
         </Link>
         <RestartLessonButton lessonId={lesson.id} userId={user.id} />
       </div>

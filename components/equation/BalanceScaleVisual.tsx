@@ -19,9 +19,9 @@ export function BalanceScaleVisual({
   const tilt = Math.max(-16, Math.min(16, diff * 1.8));
 
   return (
-    <div className="mx-auto w-full max-w-[280px]">
+    <div className="mx-auto w-full max-w-[240px]">
       <svg
-        viewBox="0 0 280 200"
+        viewBox="0 110 280 120"
         className="w-full"
         aria-label={`Balance scale: left ${leftValue}, right ${rightValue}`}
       >
