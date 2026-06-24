@@ -65,6 +65,7 @@
         {
           "id": "p2a",
           "type": "drag-to-solve",
+          "demo": true,
           "prompt": "Drag the +3 across the = to isolate x.",
           "equation": {
             "left": ["x", "+3"],
@@ -157,6 +158,7 @@
         {
           "id": "p3a",
           "type": "drag-to-solve",
+          "demo": true,
           "prompt": "Tap \"Divide both sides by 2\" to isolate x. The right side becomes the fraction 10⁄2.",
           "equation": {
             "left": ["2x", "÷2"],
@@ -246,6 +248,7 @@
         {
           "id": "p4a",
           "type": "drag-to-solve",
+          "demo": true,
           "prompt": "Solve 2x + 3 = 11. Move the constant across first, then divide both sides by 2.",
           "equation": {
             "left": ["2x", "+3"],
@@ -347,6 +350,7 @@
         {
           "id": "p5a",
           "type": "drag-to-solve",
+          "demo": true,
           "prompt": "Drag −4 across the = to isolate x.",
           "equation": {
             "left": ["x", "−4"],

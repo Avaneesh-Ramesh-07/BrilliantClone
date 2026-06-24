@@ -13,7 +13,7 @@ export async function getLessonProgress(
 ): Promise<LessonProgress> {
   const { data } = await supabase
     .from("lesson_progress")
-    .select("status, current_step_index, completed_at")
+    .select("status, current_step_index, completed_at, last_duration_ms")
     .eq("user_id", userId)
     .eq("lesson_id", lessonId)
     .maybeSingle();
@@ -24,6 +24,7 @@ export async function getLessonProgress(
     status: data.status as LessonProgress["status"],
     current_step_index: data.current_step_index,
     completed_at: data.completed_at,
+    last_duration_ms: data.last_duration_ms,
   };
 }
 
@@ -56,8 +57,31 @@ export async function updateStepIndex(
       lesson_id: lessonId,
       status: "in_progress",
       current_step_index: stepIndex,
+      started_at: new Date().toISOString(),
     });
   }
+}
+
+/** Sums active solve time (ms) for the current run, i.e. attempts since `since`. */
+async function sumRunDuration(
+  supabase: SupabaseClient,
+  userId: string,
+  lessonId: string,
+  since: string | null
+): Promise<number> {
+  let query = supabase
+    .from("step_attempts")
+    .select("duration_ms")
+    .eq("user_id", userId)
+    .eq("lesson_id", lessonId);
+
+  if (since) query = query.gte("attempted_at", since);
+
+  const { data } = await query;
+  return (data ?? []).reduce(
+    (sum, row) => sum + ((row.duration_ms as number | null) ?? 0),
+    0
+  );
 }
 
 export async function completeLesson(
@@ -67,15 +91,23 @@ export async function completeLesson(
 ): Promise<void> {
   const { data: existing } = await supabase
     .from("lesson_progress")
-    .select("id")
+    .select("id, started_at")
     .eq("user_id", userId)
     .eq("lesson_id", lessonId)
     .maybeSingle();
+
+  const totalDurationMs = await sumRunDuration(
+    supabase,
+    userId,
+    lessonId,
+    (existing?.started_at as string | null) ?? null
+  );
 
   const payload = {
     status: "complete" as const,
     completed_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    last_duration_ms: totalDurationMs,
   };
 
   if (existing) {
@@ -111,6 +143,9 @@ export async function restartLesson(
     current_step_index: 0,
     completed_at: null,
     updated_at: new Date().toISOString(),
+    // Start a fresh run: reset the timer and clear the prior total.
+    started_at: new Date().toISOString(),
+    last_duration_ms: null,
   };
 
   if (existing) {
@@ -137,6 +172,8 @@ export async function recordStepAttempt(
     problemId: string;
     correct: boolean;
     hintsUsed: number;
+    /** Active time on the problem in ms. Internal analytics only. */
+    durationMs?: number;
   }
 ): Promise<void> {
   await supabase.from("step_attempts").insert({
@@ -146,33 +183,55 @@ export async function recordStepAttempt(
     problem_id: params.problemId,
     correct: params.correct,
     hints_used: params.hintsUsed,
+    duration_ms: params.durationMs ?? null,
   });
 }
 
+export interface AttemptRow {
+  lesson_id: string;
+  step_id: string;
+  correct: boolean;
+  duration_ms: number | null;
+  attempted_at: string;
+}
+
 /**
- * Returns the most recent attempt timestamp (ISO string) for each step the user
- * has practiced in a lesson, keyed by step_id. Used to show "days since you
- * practiced X" analytics on the home screen.
+ * Returns every step attempt for a user (most recent first), across all
+ * lessons. Used to build the mastery overview (last-practiced + comfort).
  */
-export async function getSkillActivity(
+export async function getAllStepAttempts(
   supabase: SupabaseClient,
-  userId: string,
-  lessonId: string
-): Promise<Record<string, string>> {
+  userId: string
+): Promise<AttemptRow[]> {
   const { data } = await supabase
     .from("step_attempts")
-    .select("step_id, attempted_at")
+    .select("lesson_id, step_id, correct, duration_ms, attempted_at")
     .eq("user_id", userId)
-    .eq("lesson_id", lessonId)
     .order("attempted_at", { ascending: false });
 
-  const lastByStep: Record<string, string> = {};
+  return (data ?? []) as AttemptRow[];
+}
+
+/** Returns lesson progress for every lesson the user has touched, keyed by lesson_id. */
+export async function getAllLessonProgress(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Record<string, LessonProgress>> {
+  const { data } = await supabase
+    .from("lesson_progress")
+    .select("lesson_id, status, current_step_index, completed_at, last_duration_ms")
+    .eq("user_id", userId);
+
+  const map: Record<string, LessonProgress> = {};
   for (const row of data ?? []) {
-    if (!(row.step_id in lastByStep)) {
-      lastByStep[row.step_id] = row.attempted_at as string;
-    }
+    map[row.lesson_id as string] = {
+      status: row.status as LessonProgress["status"],
+      current_step_index: row.current_step_index as number,
+      completed_at: row.completed_at as string | null,
+      last_duration_ms: row.last_duration_ms as number | null,
+    };
   }
-  return lastByStep;
+  return map;
 }
 
 export function getCompletedStepCount(progress: LessonProgress): number {

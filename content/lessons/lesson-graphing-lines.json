@@ -26,6 +26,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-2"
       },
+      "present": 1,
       "problems": [
         {
           "id": "p1a",
@@ -35,6 +36,16 @@
           "feedback": {
             "correct": "Right! The constant +4 is our b, meaning the line crosses the y-axis at (0, 4).",
             "incorrect": "Not quite. Look at the number at the very end of the equation. That constant is your y-intercept."
+          }
+        },
+        {
+          "id": "p1b",
+          "type": "numeric-input",
+          "prompt": "Look at the equation: y = 5x - 3. What is the y-value where this line crosses the vertical y-axis?",
+          "answer": -3,
+          "feedback": {
+            "correct": "Right — the constant -3 is b, so the line crosses the y-axis at (0, -3).",
+            "incorrect": "The y-intercept is the constant at the very end of the equation: -3."
           }
         }
       ]
@@ -55,6 +66,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-3"
       },
+      "present": 2,
       "problems": [
         {
           "id": "p2a",
@@ -75,6 +87,16 @@
             "correct": "Great job. The y-intercept is at (0, 5).",
             "incorrect": "Remember, the y-intercept is the constant value at the end. Here, it is +5."
           }
+        },
+        {
+          "id": "p2c",
+          "type": "numeric-input",
+          "prompt": "For the line y = 4x + 1, what is the y-coordinate of its y-intercept, the point (0, _)?",
+          "answer": 1,
+          "feedback": {
+            "correct": "Great — the y-intercept is at (0, 1).",
+            "incorrect": "The y-intercept is the constant term at the end of the equation, +1."
+          }
         }
       ]
     },
@@ -94,6 +116,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-4"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p3a",
@@ -124,6 +147,16 @@
             "correct": "Correct! The denominator (bottom number) is 2, so you run 2 units right.",
             "incorrect": "The bottom number of the fraction is your run. Check the slope fraction again."
           }
+        },
+        {
+          "id": "p3d",
+          "type": "numeric-input",
+          "prompt": "For the line y = (3/4)x + 2, how many units do you run (move right) to reach the next point?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Correct — the denominator 4 is the run.",
+            "incorrect": "The bottom number of the slope fraction is the run: 4."
+          }
         }
       ]
     },
@@ -143,6 +176,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-5"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p4a",
@@ -167,11 +201,21 @@
         {
           "id": "p4c",
           "type": "numeric-input",
-          "prompt": "For the same line y = (3/2)x + 2, what will be the final x-coordinate of that second point after you 'Run'?",
+          "prompt": "For the line y = (3/2)x + 2 you start at (0, 2). The slope is 3/2, so the run is 2. After running right by the run from the y-axis, what is the x-coordinate of the second point?",
           "answer": 2,
           "feedback": {
-            "correct": "Exactly. You ran 2 units right from the y-axis, landing on x = 2. Your second point is (2, 5).",
-            "incorrect": "Since you started on the y-axis (x=0), moving right by your 'Run' value of 2 puts you at what x value?"
+            "correct": "Exactly. You ran 2 units right from the y-axis (x = 0), landing on x = 2.",
+            "incorrect": "Since you start on the y-axis at x = 0, moving right by the run of 2 puts you at what x value?"
+          }
+        },
+        {
+          "id": "p4d",
+          "type": "numeric-input",
+          "prompt": "You are graphing y = 3x + 1, starting at (0, 1). The slope is 3 (rise 3, run 1). After you rise, what is the y-coordinate of the second point?",
+          "answer": 4,
+          "feedback": {
+            "correct": "Nice — 1 + 3 = 4, so the second point is (1, 4).",
+            "incorrect": "Add the rise of 3 to your starting y of 1: 1 + 3 = _"
           }
         }
       ]
@@ -193,6 +237,7 @@
         "buttonLabel": "Finish Lesson →",
         "route": "/lesson/[id]/complete"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p5a",
@@ -238,6 +283,16 @@
           "feedback": {
             "correct": "Excellent. 1 - 2 = -1. Your next point coordinates will be (1, -1).",
             "incorrect": "Think of subtraction: you start at +1 on the vertical axis and count down 2 spaces. Where do you land?"
+          }
+        },
+        {
+          "id": "p5d",
+          "type": "numeric-input",
+          "prompt": "You graph y = -3x + 2, starting at (0, 2). With a negative slope you fall 3 units. What is your new y-coordinate?",
+          "answer": -1,
+          "feedback": {
+            "correct": "Right — 2 - 3 = -1.",
+            "incorrect": "Count down 3 from your starting y of 2: 2 - 3 = _"
           }
         }
       ]

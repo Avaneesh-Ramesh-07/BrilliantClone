@@ -33,7 +33,9 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const protectedPaths =
-    pathname.startsWith("/home") || pathname.startsWith("/lesson");
+    pathname.startsWith("/home") ||
+    pathname.startsWith("/lesson") ||
+    pathname.startsWith("/mastery");
   const authPaths =
     pathname === "/login" ||
     pathname === "/signup" ||

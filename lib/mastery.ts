@@ -1,4 +1,9 @@
-import type { Step, MasteryResult } from "@/types/lesson";
+import type { Problem, Step, MasteryResult } from "@/types/lesson";
+
+/** Demo problems are guided walkthroughs and don't count toward mastery. */
+function isGraded(problem: Problem): boolean {
+  return !(problem.type === "drag-to-solve" && problem.demo === true);
+}
 
 /**
  * Returns true when the step can no longer reach its mastery threshold given
@@ -12,7 +17,7 @@ export function isMasteryImpossible(
 ): boolean {
   if (step.skipMasteryGate) return false;
 
-  const ids = step.problems.map((p) => p.id);
+  const ids = step.problems.filter(isGraded).map((p) => p.id);
   const total = ids.length;
   if (total === 0) return false;
 
@@ -38,7 +43,7 @@ export function computeMastery(
     return { passed: true, rate: 1 };
   }
 
-  const problemIds = step.problems.map((p) => p.id);
+  const problemIds = step.problems.filter(isGraded).map((p) => p.id);
   const totalProblems = problemIds.length;
 
   if (totalProblems === 0) {

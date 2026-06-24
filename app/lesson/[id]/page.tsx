@@ -1,6 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { StepPlayer } from "@/components/lesson/StepPlayer";
-import { getLesson, selectLessonRun } from "@/lib/lessons";
+import {
+  getLesson,
+  selectLessonRun,
+  selectRedemptionProblems,
+} from "@/lib/lessons";
 import { getLessonProgress } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,10 +27,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   const progress = await getLessonProgress(supabase, user.id, lesson.id);
   const lessonRun = selectLessonRun(lesson);
+  const redemptionProblems = selectRedemptionProblems(lesson, lessonRun);
 
   return (
     <StepPlayer
       lesson={lessonRun}
+      redemptionProblems={redemptionProblems}
       userId={user.id}
       initialStepIndex={progress.current_step_index}
     />

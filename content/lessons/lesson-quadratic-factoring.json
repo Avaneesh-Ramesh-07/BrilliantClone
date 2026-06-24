@@ -26,6 +26,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-2"
       },
+      "present": 1,
       "problems": [
         {
           "id": "p1a",
@@ -35,6 +36,16 @@
           "feedback": {
             "correct": "Right! Because 9 - 9 = 0. This gives us one of our potential answers.",
             "incorrect": "What number makes the expression zero? To cancel out a -9, you need its opposite."
+          }
+        },
+        {
+          "id": "p1b",
+          "type": "numeric-input",
+          "prompt": "Solve for x: If (x + 6) = 0, what must x equal?",
+          "answer": -6,
+          "feedback": {
+            "correct": "Right — because -6 + 6 = 0.",
+            "incorrect": "To cancel out a +6, x must be its opposite, -6."
           }
         }
       ]
@@ -55,6 +66,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-3"
       },
+      "present": 2,
       "problems": [
         {
           "id": "p2a",
@@ -69,11 +81,21 @@
         {
           "id": "p2b",
           "type": "numeric-input",
-          "prompt": "Now finish solving those factors: What are the two values for x that solve (x - 2)(x - 7) = 0? (Enter the smaller number first)",
+          "prompt": "Solve (x - 2)(x - 7) = 0 using the Zero Product Property. What are the two values for x? (Enter the smaller number first.)",
           "answer": 2,
           "feedback": {
             "correct": "Spot on. x = 2 turns the first factor to zero, and x = 7 turns the second factor to zero.",
             "incorrect": "Check your signs. If (x - 2) = 0, adding 2 to both sides gives a positive 2."
+          }
+        },
+        {
+          "id": "p2c",
+          "type": "numeric-input",
+          "prompt": "Solve (x - 3)(x + 8) = 0 using the Zero Product Property. What is the smaller of the two solutions?",
+          "answer": -8,
+          "feedback": {
+            "correct": "Spot on — x = 3 and x = -8, so the smaller is -8.",
+            "incorrect": "Set each factor to zero: x - 3 = 0 gives 3, and x + 8 = 0 gives -8."
           }
         }
       ]
@@ -94,6 +116,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-4"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p3a",
@@ -124,6 +147,16 @@
             "correct": "Correct! 2 and 4 fit perfectly.",
             "incorrect": "Test your factor pairings for 8 until you find a set that sums up to 6."
           }
+        },
+        {
+          "id": "p3d",
+          "type": "numeric-input",
+          "prompt": "What two numbers multiply to make 12 and add up to make 8? Enter the smaller one.",
+          "answer": 2,
+          "feedback": {
+            "correct": "Yes — 2 and 6 multiply to 12 and add up to 8.",
+            "incorrect": "Check the factor pairs of 12: which pair sums to 8?"
+          }
         }
       ]
     },
@@ -143,6 +176,7 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-5"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p4a",
@@ -157,7 +191,7 @@
         {
           "id": "p4b",
           "type": "numeric-input",
-          "prompt": "Solve the quadratic equation: x^2 + 3x + 2 = 0. What is the lowest value solution for x?",
+          "prompt": "Solve the quadratic equation x^2 + 3x + 2 = 0. What is the lowest value solution for x?",
           "answer": -2,
           "feedback": {
             "correct": "Excellent. The factors are (x+1)(x+2)=0, so the roots are -1 and -2.",
@@ -167,11 +201,21 @@
         {
           "id": "p4c",
           "type": "numeric-input",
-          "prompt": "For that same equation (x^2 + 3x + 2 = 0), what is the other solution for x?",
+          "prompt": "Solve x^2 + 3x + 2 = 0. It factors into (x + 1)(x + 2) = 0. What is the greater of its two roots?",
           "answer": -1,
           "feedback": {
-            "correct": "Perfect. The two solutions are x = -2 and x = -1.",
-            "incorrect": "The other factor was (x + 1) = 0. Solve for x."
+            "correct": "Perfect. (x + 1)(x + 2) = 0 gives roots -1 and -2; the greater is -1.",
+            "incorrect": "Set (x + 1) = 0 and solve: x = -1."
+          }
+        },
+        {
+          "id": "p4d",
+          "type": "numeric-input",
+          "prompt": "Solve x^2 + 6x + 8 = 0. It factors into (x + 2)(x + 4) = 0. What is the greater of the two roots?",
+          "answer": -2,
+          "feedback": {
+            "correct": "Perfect — the roots are -2 and -4, so the greater is -2.",
+            "incorrect": "Set (x + 2) = 0 and solve: x = -2."
           }
         }
       ]
@@ -193,6 +237,7 @@
         "buttonLabel": "Finish Lesson →",
         "route": "/lesson/[id]/complete"
       },
+      "present": 3,
       "problems": [
         {
           "id": "p5a",
@@ -249,11 +294,21 @@
         {
           "id": "p5c",
           "type": "numeric-input",
-          "prompt": "Solve for the final positive root of the equation: x^2 - 3x - 10 = 0.",
+          "prompt": "Solve x^2 - 3x - 10 = 0. What is its positive root?",
           "answer": 5,
           "feedback": {
-            "correct": "Splendid. Since the factor pair structure is (x - 5)(x + 2) = 0, the positive root resolves as x = 5.",
-            "incorrect": "Your factors are (x - 5) and (x + 2). Set (x - 5) = 0 and isolate your variable."
+            "correct": "Splendid. The factors are (x - 5)(x + 2) = 0, so the positive root resolves as x = 5.",
+            "incorrect": "The factors are (x - 5) and (x + 2). Set (x - 5) = 0 and isolate your variable."
+          }
+        },
+        {
+          "id": "p5d",
+          "type": "numeric-input",
+          "prompt": "Solve x^2 + 2x - 15 = 0. What is its positive root?",
+          "answer": 3,
+          "feedback": {
+            "correct": "Right — it factors to (x + 5)(x - 3) = 0, so the positive root is 3.",
+            "incorrect": "The factors are (x + 5)(x - 3). Set (x - 3) = 0 to get the positive root."
           }
         }
       ]

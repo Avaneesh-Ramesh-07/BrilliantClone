@@ -1,30 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountActions } from "@/components/home/AccountActions";
 import { StreakBadge } from "@/components/home/StreakBadge";
 import { LessonCard } from "@/components/home/LessonCard";
-import { SkillActivity } from "@/components/home/SkillActivity";
-import type { SkillActivityItem } from "@/components/home/SkillActivity";
 import { getAllLessons } from "@/lib/lessons";
-import {
-  getLessonProgress,
-  getProfile,
-  getSkillActivity,
-  getStreak,
-} from "@/lib/progress";
+import { getLessonProgress, getProfile, getStreak } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
-
-function daysSince(iso: string | undefined): number | null {
-  if (!iso) return null;
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return null;
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const startOfThen = new Date(iso);
-  startOfThen.setHours(0, 0, 0, 0);
-  return Math.round(
-    (startOfToday.getTime() - startOfThen.getTime()) / 86400000
-  );
-}
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -47,20 +28,6 @@ export default async function HomePage() {
 
   const firstName = profile?.display_name?.split(" ")[0] ?? "Student";
   const primaryLesson = lessons[0];
-
-  const skillActivity: SkillActivityItem[] = primaryLesson
-    ? await (async () => {
-        const activity = await getSkillActivity(
-          supabase,
-          user.id,
-          primaryLesson.id
-        );
-        return primaryLesson.steps.map((step) => ({
-          skill: step.title,
-          daysSince: daysSince(activity[step.id]),
-        }));
-      })()
-    : [];
 
   return (
     <main className="py-8">
@@ -93,7 +60,33 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <SkillActivity items={skillActivity} />
+      <section className="mt-6">
+        <Link
+          href="/mastery"
+          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md"
+        >
+          <div>
+            <p className="text-body font-medium text-text">Your mastery</p>
+            <p className="text-label text-muted">
+              See your skills, recent practice, and comfort by lesson
+            </p>
+          </div>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className="h-5 w-5 shrink-0 text-muted"
+            aria-hidden
+          >
+            <path
+              d="M9 18l6-6-6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
+      </section>
     </main>
   );
 }

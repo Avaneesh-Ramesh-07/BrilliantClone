@@ -50,6 +50,34 @@ export function selectLessonRun(lesson: Lesson): Lesson {
   };
 }
 
+/**
+ * Picks one "redemption" problem per step: a problem from the full bank that
+ * isn't part of the presented run, so a learner who slips below mastery gets a
+ * fresh question. Falls back to the last presented problem (or the anchor) when
+ * the bank has no spare. Keyed by step id.
+ */
+export function selectRedemptionProblems(
+  fullLesson: Lesson,
+  run: Lesson
+): Record<string, Problem> {
+  const map: Record<string, Problem> = {};
+
+  for (const step of fullLesson.steps) {
+    const runStep = run.steps.find((s) => s.id === step.id);
+    const shownIds = new Set((runStep?.problems ?? []).map((p) => p.id));
+    const unseen = step.problems.filter((p) => !shownIds.has(p.id));
+
+    const pick =
+      (unseen.length > 0 ? shuffle(unseen)[0] : undefined) ??
+      runStep?.problems[runStep.problems.length - 1] ??
+      step.problems[step.problems.length - 1];
+
+    if (pick) map[step.id] = pick;
+  }
+
+  return map;
+}
+
 export function getAllLessons(): Lesson[] {
   return Object.values(LESSONS);
 }

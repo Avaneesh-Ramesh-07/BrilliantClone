@@ -75,6 +75,12 @@ export interface MultipleChoiceProblem {
 export interface DragToSolveProblem {
   id: string;
   type: "drag-to-solve";
+  /**
+   * When true, this is a guided demonstration rather than a graded question. It
+   * is shown with a "Demo" badge, excluded from mastery scoring, and never
+   * triggers regression/redemption.
+   */
+  demo?: boolean;
   prompt: string;
   equation: EquationState;
   targetTile?: string;
@@ -155,6 +161,8 @@ export interface LessonProgress {
   status: LessonStatus;
   current_step_index: number;
   completed_at?: string | null;
+  /** Total active solve time (ms) of the most recent completed run. */
+  last_duration_ms?: number | null;
 }
 
 export interface MasteryResult {
