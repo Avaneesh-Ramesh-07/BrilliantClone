@@ -280,7 +280,16 @@ export function StepPlayer({
     [supabase, userId, lesson.id]
   );
 
+  const didMountRef = useRef(false);
   useEffect(() => {
+    // Skip the initial mount: the starting step comes from the server, and every
+    // in-lesson transition (advance, back, fallback, exit) persists explicitly.
+    // Auto-saving on mount would overwrite real progress if the page ever
+    // rendered a stale step index (e.g. from the client Router Cache).
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
     persistStepIndex(state.stepIndex);
   }, [state.stepIndex, persistStepIndex]);
 
@@ -355,6 +364,18 @@ export function StepPlayer({
     persistStepIndex(prevIndex);
     dispatch({ type: "PREV_STEP", prevIndex });
   }, [state.stepIndex, persistStepIndex]);
+
+  // Leave the lesson and return home, saving the current step so the learner
+  // resumes where they left off. We flush the (debounced) save immediately so
+  // progress is persisted even if they navigate away right away, then refresh
+  // the Router Cache so Home and the lesson page re-fetch the saved step
+  // instead of serving a stale cached render (which would reset progress).
+  const exitLesson = useCallback(async () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    await updateStepIndex(supabase, userId, lesson.id, state.stepIndex);
+    router.refresh();
+    router.push("/home");
+  }, [supabase, userId, lesson.id, state.stepIndex, router]);
 
   const goToNextStep = useCallback(async () => {
     if (isLastStep) {
@@ -640,6 +661,23 @@ export function StepPlayer({
               total={lesson.totalSteps}
             />
           </div>
+          <button
+            type="button"
+            onClick={() => void exitLesson()}
+            aria-label="Exit lesson and save progress"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-label font-semibold text-muted transition-colors hover:border-border hover:bg-border/40 hover:text-text"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden>
+              <path
+                d="M16 17l5-5-5-5M21 12H9M12 19H6a2 2 0 01-2-2V7a2 2 0 012-2h6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Exit
+          </button>
         </div>
       </div>
 

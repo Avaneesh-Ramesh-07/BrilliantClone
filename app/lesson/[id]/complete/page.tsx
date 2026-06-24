@@ -12,6 +12,28 @@ interface CompletePageProps {
   params: Promise<{ id: string }>;
 }
 
+const CELEBRATION_MESSAGES = [
+  "Awesome job today! I'd be **line** if I said I wasn't proud of your progress!!",
+  "Way to go! You're on the true path to being an Algebra Warrior!!",
+  "Amazing job! Congrats on finishing <lesson name>",
+  "Woah! I don't know very many people with your alge-brains!! Congrats on completing the lesson!!",
+];
+
+/** Substitutes the lesson name and renders **bold** segments of a message. */
+function renderCelebration(template: string, lessonName: string) {
+  const withName = template.replace(/<lesson name>/gi, lessonName);
+  return withName.split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
+    const bold = part.match(/^\*\*([^*]+)\*\*$/);
+    return bold ? (
+      <strong key={i} className="font-semibold text-text">
+        {bold[1]}
+      </strong>
+    ) : (
+      <span key={i}>{part}</span>
+    );
+  });
+}
+
 export default async function CompletePage({ params }: CompletePageProps) {
   const { id } = await params;
   const lesson = getLesson(id);
@@ -41,16 +63,20 @@ export default async function CompletePage({ params }: CompletePageProps) {
   }
 
   const totalMs = progress.last_duration_ms ?? null;
+  const celebration =
+    CELEBRATION_MESSAGES[
+      Math.floor(Math.random() * CELEBRATION_MESSAGES.length)
+    ];
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center py-12 text-center">
       <CompletionConfetti />
-      <p className="text-heading-lg">Congrats! 🎉</p>
+      <p className="text-heading-lg">🎉</p>
       <h1 className="mt-4 font-heading text-heading-lg text-text">
-        You finished 1/1 lessons!
+        Congrats, you&apos;re an expert at {lesson.title}!
       </h1>
       <p className="mt-4 max-w-sm text-body text-muted">
-        You have successfully mastered {lesson.title.toLowerCase()}.
+        {renderCelebration(celebration, lesson.title)}
       </p>
 
       {totalMs !== null && (
