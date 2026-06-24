@@ -804,6 +804,9 @@ export function StepPlayer({
 
       <div className="mt-6">
         <StepRenderer
+          key={`${state.stepIndex}:${state.problemIndex}:${
+            state.redemption ? "r" : "n"
+          }:${problem.id}`}
           problem={problem}
           numericValue={state.numericValue}
           onNumericChange={(v) => dispatch({ type: "SET_NUMERIC", value: v })}
