@@ -206,6 +206,14 @@ export interface EliminateBlocksProblem {
   /** Positive constant added on the left (the "+N" to eliminate). */
   constant: number;
   rightValue: number;
+  /**
+   * Optional override for the wrong-answer distractor button. When omitted, the
+   * default is an "add" distractor ("Add {constant} to both sides"). Set
+   * `kind: "divide"` (used by the two-step combo) to present a "Divide both
+   * sides by {coefficient}" trap whose wrong-state panel shows how dividing
+   * before clearing the constant leaves ugly fractions.
+   */
+  distractor?: { label: string; kind: "add" | "divide" };
   feedback: ProblemFeedback;
 }
 

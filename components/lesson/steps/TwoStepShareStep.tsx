@@ -43,6 +43,10 @@ export function TwoStepShareStep({
     coefficient,
     constant,
     rightValue,
+    distractor: {
+      label: `Divide both sides by ${coefficient}`,
+      kind: "divide",
+    },
     feedback: {
       correct: `Now the equation is ${coefficient}${variable} = ${afterConstant}.`,
     },
@@ -114,9 +118,34 @@ export function TwoStepShareStep({
       </div>
 
       {stage === "done" && (
-        <div className="mt-4 rounded-lg border border-success/40 bg-success/10 px-4 py-3">
-          <p className="text-body text-success">{problem.feedback.correct}</p>
-        </div>
+        <>
+          <div className="mt-4 rounded-lg border border-success/40 bg-success/10 px-4 py-3">
+            <p className="text-body text-success">{problem.feedback.correct}</p>
+          </div>
+
+          <div className="mt-4 rounded-xl border-2 border-primary/40 bg-primary-light px-4 py-3">
+            <p className="text-label font-semibold text-primary">
+              The strategy: undo addition/subtraction FIRST, then
+              multiplication/division.
+            </p>
+            <ol className="mt-2 flex flex-col gap-2">
+              <li className="flex items-start gap-2 text-body text-text">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-label font-semibold text-white">
+                  1
+                </span>
+                <span>
+                  Eliminate the +{constant} (subtract it from both sides).
+                </span>
+              </li>
+              <li className="flex items-start gap-2 text-body text-text">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-label font-semibold text-white">
+                  2
+                </span>
+                <span>Divide both sides by {coefficient}.</span>
+              </li>
+            </ol>
+          </div>
+        </>
       )}
     </div>
   );
