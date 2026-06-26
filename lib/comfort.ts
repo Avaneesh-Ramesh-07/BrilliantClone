@@ -1,12 +1,8 @@
 import { isLessonComplete, type AttemptRow } from "@/lib/progress";
 import type { Lesson, LessonProgress } from "@/types/lesson";
+import type { ComfortLevel } from "@/types/practice";
 
-export type ComfortLevel =
-  | "not-started"
-  | "needs-practice"
-  | "developing"
-  | "comfortable"
-  | "very-comfortable";
+export type { ComfortLevel };
 
 export interface ComfortMetric {
   level: ComfortLevel;

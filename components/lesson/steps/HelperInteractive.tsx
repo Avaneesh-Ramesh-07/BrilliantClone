@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { BalanceChoiceStep } from "@/components/lesson/steps/BalanceChoiceStep";
+import { EliminateBlocksStep } from "@/components/lesson/steps/EliminateBlocksStep";
 import { IsolateBlocksStep } from "@/components/lesson/steps/IsolateBlocksStep";
+import { PizzaShareStep } from "@/components/lesson/steps/PizzaShareStep";
 import { PlotPointStep } from "@/components/lesson/steps/PlotPointStep";
 import { SlopeRaceStep } from "@/components/lesson/steps/SlopeRaceStep";
+import { TwoStepShareStep } from "@/components/lesson/steps/TwoStepShareStep";
 import { Button } from "@/components/ui/Button";
 import type { InteractiveHelper } from "@/types/lesson";
 
@@ -43,6 +47,18 @@ export function HelperInteractive({ problem, onDismiss }: HelperInteractiveProps
 
       {problem.type === "isolate-blocks" && (
         <IsolateBlocksStep problem={problem} onCorrect={markDone} />
+      )}
+      {problem.type === "eliminate-blocks" && (
+        <EliminateBlocksStep problem={problem} onCorrect={markDone} />
+      )}
+      {problem.type === "pizza-share" && (
+        <PizzaShareStep problem={problem} onCorrect={markDone} />
+      )}
+      {problem.type === "two-step-share" && (
+        <TwoStepShareStep problem={problem} onCorrect={markDone} />
+      )}
+      {problem.type === "balance-choice" && (
+        <BalanceChoiceStep problem={problem} onCorrect={markDone} />
       )}
       {problem.type === "plot-point" && (
         <PlotPointStep problem={problem} onCorrect={markDone} />

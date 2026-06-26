@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { revalidateProgressViews } from "@/app/actions";
+import { AnnotatedFraming } from "@/components/lesson/AnnotatedFraming";
 import { FeedbackPanel } from "@/components/lesson/FeedbackPanel";
 import { StepProgressBar } from "@/components/lesson/StepProgressBar";
 import { StepRenderer } from "@/components/lesson/StepRenderer";
@@ -88,6 +89,7 @@ type Action =
       firstAttempts: Record<string, boolean>;
     }
   | { type: "NEXT_PROBLEM" }
+  | { type: "GOTO_PROBLEM"; problemIndex: number }
   | { type: "SET_NUMERIC"; value: string }
   | { type: "SET_SLIDER"; value: number }
   | { type: "SET_CHOICE"; id: string }
@@ -157,7 +159,8 @@ function reducer(state: EngineState, action: Action): EngineState {
           [action.problemId]: count,
         },
         firstAttempts:
-          count === 1
+          (action.feedback.isCorrect || count >= 2) &&
+          !(action.problemId in state.firstAttempts)
             ? {
                 ...state.firstAttempts,
                 [action.problemId]: action.feedback.isCorrect,
@@ -222,6 +225,13 @@ function reducer(state: EngineState, action: Action): EngineState {
         redemptionArmed: false,
         problemIndex: state.problemIndex + 1,
       };
+    case "GOTO_PROBLEM":
+      return {
+        ...state,
+        ...problemDefaults(),
+        redemptionArmed: false,
+        problemIndex: action.problemIndex,
+      };
     case "SET_NUMERIC":
       return { ...state, numericValue: action.value, answerPrompt: null };
     case "SET_SLIDER":
@@ -285,7 +295,8 @@ function validateProblem(
         isCorrect: correct,
       };
     }
-    case "multiple-choice": {
+    case "multiple-choice":
+    case "pick-graph": {
       if (!selectedChoice) return null;
       const option = problem.options.find((o) => o.id === selectedChoice);
       const correct = option?.correct ?? false;
@@ -343,17 +354,41 @@ export function StepPlayer({
   const isDemo =
     (problem.type === "drag-to-solve" ||
       problem.type === "isolate-blocks" ||
+      problem.type === "eliminate-blocks" ||
+      problem.type === "pizza-share" ||
+      problem.type === "two-step-share" ||
+      problem.type === "balance-choice" ||
+      problem.type === "variable-box" ||
       problem.type === "graph-intercept" ||
       problem.type === "slope-race" ||
-      problem.type === "plot-point") &&
+      problem.type === "plot-point" ||
+      problem.type === "parabola-balls" ||
+      problem.type === "factor-quadratic" ||
+      problem.type === "power-toggle" ||
+      problem.type === "parabola-a-slider" ||
+      problem.type === "vertex-formula") &&
     problem.demo === true;
   // Interactive demos drive their own primary action (drag / tap / play /
   // click), so the bottom "Check Answer" button only appears once solved.
+  // vertex-pick is graded but also self-driven via clicks, so it belongs here
+  // too (no "Check Answer" button — the click is the answer).
   const isInteractiveDemo =
     problem.type === "drag-to-solve" ||
     problem.type === "isolate-blocks" ||
+    problem.type === "eliminate-blocks" ||
+    problem.type === "pizza-share" ||
+    problem.type === "two-step-share" ||
+    problem.type === "balance-choice" ||
+    problem.type === "variable-box" ||
     problem.type === "slope-race" ||
-    problem.type === "plot-point";
+    problem.type === "plot-point" ||
+    problem.type === "parabola-balls" ||
+    problem.type === "factor-quadratic" ||
+    problem.type === "power-toggle" ||
+    problem.type === "parabola-a-slider" ||
+    problem.type === "vertex-pick" ||
+    problem.type === "graph-line" ||
+    problem.type === "vertex-formula";
 
   // The reinforcement interactive for this question (per-question override, else
   // the step's interactive) and the question's conceptual hint, if any.
@@ -364,6 +399,38 @@ export function StepPlayer({
     "hint" in problem && typeof problem.hint === "string"
       ? problem.hint
       : undefined;
+
+  // Retrieval-practice throwback: a low-stakes recall question that only surfaces
+  // *after* the learner answers a real question correctly (see resolveForwardIndex
+  // — it's skipped after a wrong/retried/redeemed question). Excluded from mastery
+  // and the redemption flow; a miss just reveals the answer and continues.
+  // Redemption problems are never throwbacks.
+  const throwbackMeta =
+    !state.redemption && "throwback" in problem ? problem.throwback : undefined;
+  const isThrowback = throwbackMeta !== undefined;
+
+  // Resolve the index to land on when advancing forward from `fromIndex`. A
+  // throwback is only shown when the question immediately before it was answered
+  // correctly on the first try (firstAttempts === true); otherwise it's skipped.
+  // Throwbacks are never the last problem (see selectLessonRun), so this never
+  // runs past the end of the step.
+  const resolveForwardIndex = useCallback(
+    (fromIndex: number, attempts: Record<string, boolean>): number => {
+      let idx = fromIndex + 1;
+      while (idx < step.problems.length) {
+        const candidate = step.problems[idx];
+        const candidateIsThrowback =
+          "throwback" in candidate && candidate.throwback !== undefined;
+        if (!candidateIsThrowback) break;
+        const prev = step.problems[idx - 1];
+        const earned = prev ? attempts[prev.id] === true : false;
+        if (earned) break;
+        idx += 1;
+      }
+      return idx;
+    },
+    [step.problems]
+  );
 
   const persistStepIndex = useCallback(
     (index: number) => {
@@ -514,7 +581,16 @@ export function StepPlayer({
     // Mid-step redemption: treat the missed question as recovered and continue.
     const originProblem = step.problems[origin];
     const repaired = { ...state.firstAttempts, [originProblem.id]: true };
-    const nextIndex = origin + 1;
+    // Skip any throwback that follows the redeemed question — it was originally
+    // missed, so the learner doesn't earn the post-correct throwback.
+    let nextIndex = origin + 1;
+    while (nextIndex <= step.problems.length - 1) {
+      const candidate = step.problems[nextIndex];
+      const candidateIsThrowback =
+        "throwback" in candidate && candidate.throwback !== undefined;
+      if (!candidateIsThrowback) break;
+      nextIndex += 1;
+    }
     if (nextIndex <= step.problems.length - 1) {
       dispatch({
         type: "REDEEM_NEXT_PROBLEM",
@@ -579,11 +655,35 @@ export function StepPlayer({
     if (!result) return;
 
     const isFirst = (state.attemptCounts[problem.id] ?? 0) === 0;
-    dispatch({ type: "SUBMIT", feedback: result, problemId: problem.id });
+    const priorCount = state.attemptCounts[problem.id] ?? 0;
+    const isFirstMiss = !result.isCorrect && priorCount === 0;
+    const hasHint =
+      "hint" in problem &&
+      typeof problem.hint === "string" &&
+      problem.hint.trim().length > 0;
+    // On a first miss, withhold the full solution and nudge toward the hint so
+    // the learner gets a free second chance.
+    const submitFeedback = isFirstMiss
+      ? {
+          message: hasHint
+            ? "Not quite — check the hint below and try again."
+            : "Not quite — take another look and try again.",
+          isCorrect: false,
+        }
+      : result;
+    dispatch({ type: "SUBMIT", feedback: submitFeedback, problemId: problem.id });
     await persistAttempt(result.isCorrect, state.hintsRevealed, problem.id, step.id);
 
     if (result.isCorrect && isFirst) {
       await updateStreak(supabase, userId);
+    }
+
+    if (isThrowback) {
+      // Retrieval practice: never mastery/redemption. On the first miss, reveal the
+      // hint and let the learner try again; the second miss shows the full
+      // explanation and an "I understand" button (handled in handlePrimary/buttonLabel).
+      if (isFirstMiss && hasHint) dispatch({ type: "REVEAL_HINT" });
+      return;
     }
 
     if (state.redemption) {
@@ -595,9 +695,9 @@ export function StepPlayer({
 
     if (result.isCorrect) {
       if (isLastProblem) {
-        const updated = isFirst
-          ? { ...state.firstAttempts, [problem.id]: true }
-          : state.firstAttempts;
+        // A correct answer earns credit regardless of attempt number (the first
+        // miss only revealed a hint and was never counted wrong).
+        const updated = { ...state.firstAttempts, [problem.id]: true };
         afterCorrectLastProblem(updated);
       }
       return;
@@ -617,6 +717,7 @@ export function StepPlayer({
     state.redemption,
     isLastProblem,
     isDemo,
+    isThrowback,
     step.id,
     persistAttempt,
     supabase,
@@ -640,8 +741,31 @@ export function StepPlayer({
     }
     const result: FeedbackState = { message: incorrectMsg, isCorrect: false };
 
-    dispatch({ type: "SUBMIT", feedback: result, problemId: problem.id });
+    const priorCount = state.attemptCounts[problem.id] ?? 0;
+    const isFirstMiss = priorCount === 0;
+    const hasHint =
+      "hint" in problem &&
+      typeof problem.hint === "string" &&
+      problem.hint.trim().length > 0;
+    // The first "I don't know" reveals the hint instead of the solution and is
+    // not counted wrong; only the second one shows the full explanation.
+    const submitFeedback: FeedbackState = isFirstMiss
+      ? {
+          message: hasHint
+            ? "Not quite — check the hint below and try again."
+            : "Not quite — take another look and try again.",
+          isCorrect: false,
+        }
+      : result;
+    dispatch({ type: "SUBMIT", feedback: submitFeedback, problemId: problem.id });
     await persistAttempt(false, state.hintsRevealed, problem.id, step.id);
+
+    if (isThrowback) {
+      // Retrieval miss: first "I don't know" reveals the hint and allows a retry;
+      // the second shows the full explanation and an "I understand" button.
+      if (isFirstMiss && hasHint) dispatch({ type: "REVEAL_HINT" });
+      return;
+    }
 
     if (state.redemption) {
       failToFallback();
@@ -655,6 +779,7 @@ export function StepPlayer({
     state.hintsRevealed,
     state.redemption,
     isDemo,
+    isThrowback,
     step.id,
     persistAttempt,
     failToFallback,
@@ -683,7 +808,7 @@ export function StepPlayer({
       if (isLastProblem) {
         const updated = {
           ...state.firstAttempts,
-          [problem.id]: isFirst ? true : (state.firstAttempts[problem.id] ?? false),
+          [problem.id]: true,
         };
         afterCorrectLastProblem(updated);
       }
@@ -758,6 +883,24 @@ export function StepPlayer({
       return;
     }
 
+    // Throwback flow: a wrong first attempt earns a retry (with the hint shown);
+    // a correct answer, or a second wrong attempt (after the in-depth explanation),
+    // advances. Throwbacks never trigger the redemption flow.
+    if (isThrowback && state.feedback) {
+      const throwbackAttempts = state.attemptCounts[problem.id] ?? 0;
+      if (!state.feedback.isCorrect && throwbackAttempts < 2) {
+        dispatch({ type: "RESET_ATTEMPT" });
+        attemptStartRef.current = Date.now();
+        return;
+      }
+      if (!isLastProblem) {
+        dispatch({ type: "NEXT_PROBLEM" });
+      } else {
+        await goToNextStep();
+      }
+      return;
+    }
+
     if (state.redemption && state.problemSolved) {
       advanceAfterRedemption();
       return;
@@ -769,7 +912,16 @@ export function StepPlayer({
     }
 
     if (state.problemSolved && !isLastProblem) {
-      dispatch({ type: "NEXT_PROBLEM" });
+      // Advance, skipping a follow-up throwback unless this question was answered
+      // correctly on the first try.
+      const next = resolveForwardIndex(state.problemIndex, state.firstAttempts);
+      if (next > step.problems.length - 1) {
+        // Defensive: everything after this was a skipped throwback — finish the
+        // step (throwbacks are positioned to never be last, so this is rare).
+        afterCorrectLastProblem(state.firstAttempts);
+      } else {
+        dispatch({ type: "GOTO_PROBLEM", problemIndex: next });
+      }
       return;
     }
 
@@ -787,6 +939,10 @@ export function StepPlayer({
   };
 
   const buttonLabel = (() => {
+    if (isThrowback && state.feedback) {
+      if (state.feedback.isCorrect) return "Continue →";
+      return (state.attemptCounts[problem.id] ?? 0) >= 2 ? "I understand" : "Try Again";
+    }
     if (state.redemptionArmed) return "I understand";
     if (state.redemption && state.problemSolved) {
       return redemptionGoesToNextStep
@@ -807,7 +963,7 @@ export function StepPlayer({
   const buttonDisabled =
     !state.masteryPassed &&
     !state.redemptionArmed &&
-    problem.type === "multiple-choice" &&
+    (problem.type === "multiple-choice" || problem.type === "pick-graph") &&
     !state.selectedChoice &&
     !state.problemSolved;
 
@@ -886,9 +1042,21 @@ export function StepPlayer({
       )}
 
       <h1 className="mt-6 font-heading text-heading-md text-text">
-        {step.title}
+        {isThrowback ? "Quick throwback" : step.title}
       </h1>
-      <p className="mt-3 text-body text-muted">{step.conceptFraming}</p>
+      {isThrowback ? (
+        <p className="mt-3 text-body text-muted">
+          A quick recall from earlier — bringing it back is how it sticks. This
+          one isn&apos;t graded.
+        </p>
+      ) : (
+        (!step.framingDemoOnly || isDemo) &&
+        (step.framing ? (
+          <AnnotatedFraming framing={step.framing} />
+        ) : (
+          <p className="mt-3 text-body text-muted">{step.conceptFraming}</p>
+        ))
+      )}
 
       {isDemo && !state.redemption && (
         <div className="mt-6 inline-flex items-center gap-1.5 self-start rounded-full border border-primary/30 bg-primary-light px-3 py-1 text-label font-semibold text-primary">
@@ -899,6 +1067,21 @@ export function StepPlayer({
             />
           </svg>
           Demo — walkthrough
+        </div>
+      )}
+
+      {isThrowback && (
+        <div className="mt-6 inline-flex items-center gap-1.5 self-start rounded-full border border-violet-300 bg-violet-50 px-3 py-1 text-label font-semibold text-violet-700">
+          <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden>
+            <path
+              d="M3 3v5h5M3.05 13a9 9 0 1 0 2.6-7.06L3 8"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Throwback{throwbackMeta?.source ? ` · ${throwbackMeta.source}` : ""}
         </div>
       )}
 
@@ -927,7 +1110,17 @@ export function StepPlayer({
         <HelperInteractive
           key={`helper:${state.stepIndex}:${state.problemIndex}:${problem.id}`}
           problem={activeInteractive}
-          onDismiss={() => dispatch({ type: "HELPER_DONE" })}
+          onDismiss={() => {
+            // Finishing the reinforcement interactive takes the learner straight
+            // into the redemption question. ENTER_REDEMPTION clears helperActive
+            // (via problemDefaults) so the question actually replaces the demo.
+            dispatch({
+              type: "ENTER_REDEMPTION",
+              message: REDEMPTION_BANNER,
+              originIndex: state.problemIndex,
+            });
+            attemptStartRef.current = Date.now();
+          }}
         />
       ) : (
         <>
@@ -956,8 +1149,20 @@ export function StepPlayer({
 
           {problem.type !== "drag-to-solve" &&
             problem.type !== "isolate-blocks" &&
+            problem.type !== "eliminate-blocks" &&
+            problem.type !== "pizza-share" &&
+            problem.type !== "two-step-share" &&
+            problem.type !== "balance-choice" &&
+            problem.type !== "variable-box" &&
             problem.type !== "slope-race" &&
-            problem.type !== "plot-point" && (
+            problem.type !== "plot-point" &&
+            problem.type !== "parabola-balls" &&
+            problem.type !== "factor-quadratic" &&
+            problem.type !== "power-toggle" &&
+            problem.type !== "parabola-a-slider" &&
+            problem.type !== "vertex-pick" &&
+            problem.type !== "graph-line" &&
+            problem.type !== "vertex-formula" && (
               <FeedbackPanel
                 message={state.feedback?.message ?? ""}
                 isCorrect={state.feedback?.isCorrect ?? false}
@@ -965,7 +1170,8 @@ export function StepPlayer({
               />
             )}
 
-          {problem.type === "drag-to-solve" &&
+          {(problem.type === "drag-to-solve" ||
+            problem.type === "vertex-pick") &&
             state.feedback &&
             !state.feedback.isCorrect && (
               <FeedbackPanel

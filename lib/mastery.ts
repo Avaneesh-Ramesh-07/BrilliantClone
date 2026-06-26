@@ -9,12 +9,26 @@ import type { Problem, Step, MasteryResult } from "@/types/lesson";
 const MASTERY_EPSILON = 0.01;
 
 /** Demo problems are guided walkthroughs and don't count toward mastery. */
-function isGraded(problem: Problem): boolean {
+export function isGraded(problem: Problem): boolean {
+  // Throwbacks are low-stakes retrieval practice, not part of this step's grade.
+  if ("throwback" in problem && problem.throwback !== undefined) {
+    return false;
+  }
   if (
     problem.type === "isolate-blocks" ||
+    problem.type === "eliminate-blocks" ||
+    problem.type === "pizza-share" ||
+    problem.type === "two-step-share" ||
+    problem.type === "balance-choice" ||
+    problem.type === "variable-box" ||
     problem.type === "graph-intercept" ||
     problem.type === "slope-race" ||
-    problem.type === "plot-point"
+    problem.type === "plot-point" ||
+    problem.type === "parabola-balls" ||
+    problem.type === "factor-quadratic" ||
+    problem.type === "power-toggle" ||
+    problem.type === "parabola-a-slider" ||
+    problem.type === "vertex-formula"
   ) {
     return false;
   }

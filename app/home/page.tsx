@@ -73,7 +73,33 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mt-6">
+      <section className="mt-6 flex flex-col gap-4">
+        <Link
+          href="/practice"
+          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md"
+        >
+          <div>
+            <p className="text-body font-medium text-text">Sandbox</p>
+            <p className="text-label text-muted">
+              Endless mixed questions — spot the mistake, order the steps, odd one out
+            </p>
+          </div>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className="h-5 w-5 shrink-0 text-muted"
+            aria-hidden
+          >
+            <path
+              d="M9 18l6-6-6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
+
         <Link
           href="/mastery"
           className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md"

@@ -1,14 +1,28 @@
 "use client";
 
 import type { Problem } from "@/types/lesson";
+import { MathText } from "./MathText";
 import { ConceptStep } from "./steps/ConceptStep";
 import { DragToSolveStep } from "./steps/DragToSolveStep";
+import { EliminateBlocksStep } from "./steps/EliminateBlocksStep";
+import { FactorQuadraticStep } from "./steps/FactorQuadraticStep";
 import { GraphInterceptStep } from "./steps/GraphInterceptStep";
+import { GraphLineStep } from "./steps/GraphLineStep";
 import { IsolateBlocksStep } from "./steps/IsolateBlocksStep";
 import { MultipleChoiceStep } from "./steps/MultipleChoiceStep";
+import { ParabolaBallsStep } from "./steps/ParabolaBallsStep";
+import { ParabolaSliderStep } from "./steps/ParabolaSliderStep";
+import { PickGraphStep } from "./steps/PickGraphStep";
+import { PizzaShareStep } from "./steps/PizzaShareStep";
+import { BalanceChoiceStep } from "./steps/BalanceChoiceStep";
+import { VariableBoxStep } from "./steps/VariableBoxStep";
+import { VertexFormulaStep } from "./steps/VertexFormulaStep";
 import { PlotPointStep } from "./steps/PlotPointStep";
+import { PowerToggleStep } from "./steps/PowerToggleStep";
+import { TwoStepShareStep } from "./steps/TwoStepShareStep";
 import { SliderBalanceStep } from "./steps/SliderBalanceStep";
 import { SlopeRaceStep } from "./steps/SlopeRaceStep";
+import { VertexPickStep } from "./steps/VertexPickStep";
 
 interface StepRendererProps {
   problem: Problem;
@@ -47,7 +61,9 @@ export function StepRenderer({
     case "numeric-input":
       return (
         <div>
-          <p className="text-body text-text">{problem.prompt}</p>
+          <p className="text-body text-text">
+            <MathText text={problem.prompt} />
+          </p>
           <div className="mt-4">
             <input
               type="number"
@@ -100,6 +116,46 @@ export function StepRenderer({
           disabled={disabled || problemSolved}
         />
       );
+    case "eliminate-blocks":
+      return (
+        <EliminateBlocksStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "pizza-share":
+      return (
+        <PizzaShareStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "two-step-share":
+      return (
+        <TwoStepShareStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "balance-choice":
+      return (
+        <BalanceChoiceStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "variable-box":
+      return (
+        <VariableBoxStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
     case "graph-intercept":
       return (
         <GraphInterceptStep
@@ -125,6 +181,74 @@ export function StepRenderer({
         <PlotPointStep
           problem={problem}
           onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "parabola-balls":
+      return (
+        <ParabolaBallsStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "factor-quadratic":
+      return (
+        <FactorQuadraticStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "power-toggle":
+      return (
+        <PowerToggleStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled}
+        />
+      );
+    case "parabola-a-slider":
+      return (
+        <ParabolaSliderStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled}
+        />
+      );
+    case "vertex-pick":
+      return (
+        <VertexPickStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          onIncorrect={onDragIncorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "pick-graph":
+      return (
+        <PickGraphStep
+          problem={problem}
+          onSelect={onChoiceSelect}
+          disabled={disabled || problemSolved}
+          showResult={showChoiceResult}
+          selectedId={selectedChoice}
+        />
+      );
+    case "vertex-formula":
+      return (
+        <VertexFormulaStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "graph-line":
+      return (
+        <GraphLineStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          onIncorrect={onDragIncorrect}
           disabled={disabled || problemSolved}
         />
       );

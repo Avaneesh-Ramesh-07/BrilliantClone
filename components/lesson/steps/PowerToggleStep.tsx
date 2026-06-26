@@ -1,95 +1,51 @@
 "use client";
 
-import { useState } from "react";
-import type { MultipleChoiceProblem } from "@/types/lesson";
-import { evalExpression } from "@/lib/expression";
+import { useRef, useState } from "react";
+import type { PowerToggleProblem } from "@/types/lesson";
+import { Button } from "@/components/ui/Button";
 import { curveSegments } from "@/lib/plot";
-import { MathText } from "@/components/lesson/MathText";
 
-interface MultipleChoiceStepProps {
-  problem: MultipleChoiceProblem;
-  onSelect: (optionId: string) => void;
+interface PowerToggleStepProps {
+  problem: PowerToggleProblem;
+  onCorrect: (feedback: string) => void;
   disabled?: boolean;
-  showResult?: boolean;
-  selectedId?: string | null;
 }
 
-export function MultipleChoiceStep({
+type Power = 1 | 2;
+
+export function PowerToggleStep({
   problem,
-  onSelect,
+  onCorrect,
   disabled,
-  showResult,
-  selectedId,
-}: MultipleChoiceStepProps) {
-  const [localSelected, setLocalSelected] = useState<string | null>(null);
-  const active = selectedId ?? localSelected;
+}: PowerToggleStepProps) {
+  const { xMin, xMax, yMin, yMax } = problem;
+  const coefficient = problem.coefficient ?? 1;
 
-  const selectedOption = active
-    ? problem.options.find((o) => o.id === active) ?? null
-    : null;
-  const showGraph =
-    !!problem.graphOnSelect &&
-    !!selectedOption &&
-    typeof selectedOption.fn === "string" &&
-    selectedOption.fn.length > 0;
+  const notifiedRef = useRef(false);
 
-  return (
-    <div>
-      <p className="text-body text-text">
-        <MathText text={problem.prompt} />
-      </p>
-      <div className="mt-4 flex flex-col gap-2">
-        {problem.options.map((option) => {
-          const isSelected = active === option.id;
-          const showCorrect = showResult && option.correct;
-          const showWrong = showResult && isSelected && !option.correct;
+  const [power, setPower] = useState<Power>(1);
+  const [viewed, setViewed] = useState<Record<Power, boolean>>({
+    1: true,
+    2: false,
+  });
+  const [completed, setCompleted] = useState(false);
 
-          return (
-            <button
-              key={option.id}
-              type="button"
-              disabled={disabled}
-              onClick={() => {
-                setLocalSelected(option.id);
-                onSelect(option.id);
-              }}
-              className={`min-h-[44px] rounded-lg border px-4 py-3 text-left text-body transition-colors ${
-                showCorrect
-                  ? "border-success bg-success/10 text-success"
-                  : showWrong
-                    ? "border-error bg-error/10 text-error"
-                    : isSelected
-                      ? "border-primary bg-primary-light text-text"
-                      : "border-border bg-surface text-text hover:border-primary"
-              }`}
-            >
-              <MathText text={option.text} />
-            </button>
-          );
-        })}
-      </div>
+  function selectPower(next: Power) {
+    if (disabled) return;
+    setPower(next);
+    setViewed((prev) => {
+      if (prev[next]) return prev;
+      const updated = { ...prev, [next]: true };
+      if (updated[1] && updated[2] && !notifiedRef.current) {
+        notifiedRef.current = true;
+        setCompleted(true);
+        onCorrect(problem.feedback.correct);
+      }
+      return updated;
+    });
+  }
 
-      {showGraph && selectedOption && (
-        <EquationGraph
-          fn={selectedOption.fn as string}
-          label={selectedOption.text}
-          bounds={problem.graph ?? { xMin: -6, xMax: 6, yMin: -6, yMax: 6 }}
-        />
-      )}
-    </div>
-  );
-}
-
-interface EquationGraphProps {
-  fn: string;
-  label: string;
-  bounds: { xMin: number; xMax: number; yMin: number; yMax: number };
-}
-
-function EquationGraph({ fn, label, bounds }: EquationGraphProps) {
-  const { xMin, xMax, yMin, yMax } = bounds;
-
-  // --- Grid geometry (matches PlotPointStep) ------------------------------
+  // --- Grid geometry ------------------------------------------------------
   const xUnits = xMax - xMin;
   const yUnits = yMax - yMin;
   const cell = Math.min(300 / xUnits, 300 / yUnits);
@@ -107,7 +63,7 @@ function EquationGraph({ fn, label, bounds }: EquationGraphProps) {
   for (let i = Math.ceil(yMin); i <= Math.floor(yMax); i++) yTicks.push(i);
 
   const curve = curveSegments(
-    (x) => evalExpression(fn, x),
+    (x) => coefficient * Math.pow(x, power),
     xMin,
     xMax,
     yMin,
@@ -115,6 +71,11 @@ function EquationGraph({ fn, label, bounds }: EquationGraphProps) {
     sx,
     sy
   );
+
+  const caption =
+    power === 1
+      ? "Linear (highest power of x is 1) — a straight line."
+      : "Quadratic (highest power of x is 2) — a U-shaped curve called a parabola.";
 
   const labelStyle = { fontSize: 9, fill: "var(--color-muted)" } as const;
   const axisLabelStyle = {
@@ -125,15 +86,35 @@ function EquationGraph({ fn, label, bounds }: EquationGraphProps) {
   } as const;
 
   return (
-    <>
-      <p className="mt-4 text-label text-muted">Graph of {label}</p>
-      <div className="mt-2 flex justify-center">
+    <div>
+      <p className="text-body text-text">{problem.prompt}</p>
+
+      <div className="mt-4 flex gap-2">
+        <Button
+          type="button"
+          variant={power === 1 ? "primary" : "secondary"}
+          onClick={() => selectPower(1)}
+          disabled={disabled}
+        >
+          Power = 1 (linear)
+        </Button>
+        <Button
+          type="button"
+          variant={power === 2 ? "primary" : "secondary"}
+          onClick={() => selectPower(2)}
+          disabled={disabled}
+        >
+          Power = 2 (quadratic)
+        </Button>
+      </div>
+
+      <div className="relative mt-4 flex justify-center">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full"
           style={{ maxWidth: W }}
           role="img"
-          aria-label={`Graph of ${label}`}
+          aria-label="Graph of y equals coefficient times x to the chosen power"
         >
           {xTicks.map((tx) => (
             <line
@@ -204,7 +185,7 @@ function EquationGraph({ fn, label, bounds }: EquationGraphProps) {
             y
           </text>
 
-          {/* plotted curve */}
+          {/* plotted function */}
           {curve.map((pts, i) => (
             <polyline
               key={`seg${i}`}
@@ -216,6 +197,14 @@ function EquationGraph({ fn, label, bounds }: EquationGraphProps) {
           ))}
         </svg>
       </div>
-    </>
+
+      <p className="mt-2 text-label text-muted">{caption}</p>
+
+      {completed && (
+        <div className="mt-4 rounded-lg border border-success/40 bg-success/10 px-4 py-3">
+          <p className="text-body text-success">{problem.feedback.correct}</p>
+        </div>
+      )}
+    </div>
   );
 }

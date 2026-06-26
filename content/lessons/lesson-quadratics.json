@@ -1,0 +1,1380 @@
+{
+  "id": "lesson-quadratics",
+  "title": "Quadratic Equations",
+  "subject": "Algebra",
+  "description": "Recognize quadratics, learn their standard form, find their minimum/maximum and solutions, and factor them to reveal their zeros.",
+  "estimatedMinutes": 30,
+  "totalSteps": 8,
+  "masteryRule": {
+    "description": "After all problems in a step are submitted, compute first-attempt correctness. If below masteryThreshold, send the student to fallbackStepId and show fallbackMessage.",
+    "nextButtonVisibleOnlyAfterMastery": true
+  },
+  "_newProblemTypes": {
+    "power-toggle": "Linear-vs-quadratic demo. Plots y = coefficient·xⁿ and lets the learner toggle the exponent n between 1 (a straight line) and 2 (a parabola). Calls onCorrect once both powers have been viewed. demo:true (not graded).",
+    "parabola-a-slider": "Concave up/down demo. Plots y = a·x² + b·x + c with b,c fixed and a slider for a across negative and positive values. Calls onCorrect once the learner has tried both a positive and a negative a. demo:true (not graded).",
+    "vertex-pick": "GRADED click problem. Draws y = a·x²+b·x+c and the learner clicks the minimum (target 'min') or maximum (target 'max'), or presses 'There is no minimum/maximum'. A min exists only when a>0; a max only when a<0. Self-driven via onCorrect/onIncorrect; this IS graded.",
+    "parabola-balls": "Animated physics demo. Renders y = a x^2 + b x + c and rolls/drops balls under gravity. mode='settle-min' (a>0): balls released at the ends roll down and settle at the vertex (minimum). mode='drop-max' (a<0): balls drop onto the curve and only the one at the vertex (maximum) stays. mode='settle-roots': balls settle where the curve crosses the x-axis (solutions). demo:true (not graded).",
+    "factor-quadratic": "Interactive factoring demo. Shows the expanded quadratic with a 'Factor' button; dragging the factors back together multiplies them. demo:true (not graded)."
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "title": "Linear vs. Quadratic",
+      "concept": "Telling linear and quadratic equations apart",
+      "conceptFraming": "A linear equation (highest power of x is 1) graphs as a straight line. A quadratic has an x² term, so it curves into a U-shaped parabola. Use the demo to feel the difference.",
+      "framingDemoOnly": true,
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-1",
+      "fallbackMessage": "Let's look again at what makes an equation quadratic — the x² term.",
+      "hints": [],
+      "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-2" },
+      "anchors": 3,
+      "present": 6,
+      "throwbacks": [
+        {
+          "id": "tb-qd-s1-1",
+          "type": "numeric-input",
+          "throwback": { "source": "Graphing Lines" },
+          "prompt": "Throwback from Graphing Lines: what is the slope of y = 3x + 2?",
+          "answer": 3,
+          "feedback": { "correct": "Right — the slope is 3.", "incorrect": "The slope is the coefficient of x, which is 3." }
+        },
+        {
+          "id": "tb-qd-s1-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Graphing Lines" },
+          "prompt": "Throwback from Graphing Lines: what is the y-intercept of y = 2x + 5?",
+          "answer": 5,
+          "feedback": { "correct": "Right — the y-intercept is 5, the point (0, 5).", "incorrect": "In y = mx + b the y-intercept is b, which is 5." }
+        },
+        {
+          "id": "tb-qd-s1-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Solving Equations" },
+          "prompt": "Throwback from Solving Equations: solve x + 4 = 9.",
+          "answer": 5,
+          "feedback": { "correct": "Right — x = 5.", "incorrect": "Subtract 4 from both sides: x = 9 − 4 = 5." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q1demo",
+          "type": "power-toggle",
+          "demo": true,
+          "prompt": "Toggle the power of x between 1 and 2 and watch the graph. Notice how power 1 draws a straight line (linear), while power 2 bends into a U-shaped curve (quadratic).",
+          "coefficient": 1,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "See the difference? Power 1 gives a straight line — that's linear. Power 2 curves into a parabola — that's quadratic."
+          }
+        },
+        {
+          "id": "q1a",
+          "type": "multiple-choice",
+          "graphOnSelect": true,
+          "graph": { "xMin": -6, "xMax": 6, "yMin": -6, "yMax": 6 },
+          "prompt": "Which of these is a quadratic equation? Tap an option to see what it looks like on the graph.",
+          "hint": "Look for the term with x raised to the power of 2 — its graph curves instead of staying straight.",
+          "options": [
+            { "id": "a", "text": "y = 3x − 5", "correct": false, "fn": "3*x - 5" },
+            { "id": "b", "text": "y = x² + 2x − 1", "correct": true, "fn": "x*x + 2*x - 1" },
+            { "id": "c", "text": "y = 7x", "correct": false, "fn": "7*x" }
+          ],
+          "feedback": {
+            "correct": "Right — y = x² + 2x − 1 has an x² term, so its highest power of x is 2. Its graph curves into a parabola.",
+            "incorrect": "A quadratic must contain an x² term — and its graph curves. The straight-line graphs are linear."
+          }
+        },
+        {
+          "id": "q1b",
+          "type": "multiple-choice",
+          "graphOnSelect": true,
+          "graph": { "xMin": -6, "xMax": 6, "yMin": -6, "yMax": 6 },
+          "prompt": "Which equation graphs as a straight line? Tap an option to see its graph.",
+          "hint": "A straight line has no x² term — its biggest power of x is 1.",
+          "options": [
+            { "id": "a", "text": "y = x² − 9", "correct": false, "fn": "x*x - 9" },
+            { "id": "b", "text": "y = −2x + 4", "correct": true, "fn": "-2*x + 4" },
+            { "id": "c", "text": "y = 2x² + x", "correct": false, "fn": "2*x*x + x" }
+          ],
+          "feedback": {
+            "correct": "Yes — y = −2x + 4 is linear (highest power of x is 1), so it graphs as a straight line.",
+            "incorrect": "A straight line is linear: no x² term. The x² equations curve into parabolas."
+          }
+        },
+        {
+          "id": "q1c",
+          "type": "multiple-choice",
+          "prompt": "Which of these is NOT quadratic?",
+          "hint": "Two of these are degree 2. Find the one whose highest power of x is only 1.",
+          "options": [
+            { "id": "a", "text": "y = x² − 4", "correct": false },
+            { "id": "b", "text": "y = 5x − 8", "correct": true },
+            { "id": "c", "text": "y = 3x² + 2x + 1", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — y = 5x − 8 has no x² term, so it is linear, not quadratic.",
+            "incorrect": "The non-quadratic one has no x² term. Check each equation's highest power of x."
+          }
+        },
+        {
+          "id": "q1e",
+          "type": "multiple-choice",
+          "prompt": "Which of these is a quadratic equation?",
+          "hint": "Only one option has an x² term — that is the quadratic.",
+          "options": [
+            { "id": "a", "text": "y = 4x + 1", "correct": false },
+            { "id": "b", "text": "y = x² − 5x + 6", "correct": true },
+            { "id": "c", "text": "y = −2x", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — y = x² − 5x + 6 contains an x² term, so it is quadratic.",
+            "incorrect": "Scan for the x² term. The equations without one are linear."
+          }
+        },
+        {
+          "id": "q1f",
+          "type": "multiple-choice",
+          "prompt": "Which equation graphs as a parabola?",
+          "hint": "Parabolas are produced only by equations that include an x² term.",
+          "options": [
+            { "id": "a", "text": "y = 2x² − 3", "correct": true },
+            { "id": "b", "text": "y = x + 7", "correct": false },
+            { "id": "c", "text": "y = −4x + 2", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Yes — y = 2x² − 3 has an x² term, so it graphs as a U-shaped parabola.",
+            "incorrect": "A parabola needs an x² term. The straight-line equations are linear."
+          }
+        },
+        {
+          "id": "q1g",
+          "type": "multiple-choice",
+          "prompt": "Which of these is NOT quadratic?",
+          "hint": "Two of these are degree 2. Find the one whose highest power of x is 1.",
+          "options": [
+            { "id": "a", "text": "y = 2x² + 3x", "correct": false },
+            { "id": "b", "text": "y = x² − 1", "correct": false },
+            { "id": "c", "text": "y = 6x + 2", "correct": true }
+          ],
+          "feedback": {
+            "correct": "Correct — y = 6x + 2 has no x² term, so it is linear, not quadratic.",
+            "incorrect": "Look for the equation missing an x² term — that one is linear."
+          }
+        },
+        {
+          "id": "q1h",
+          "type": "multiple-choice",
+          "prompt": "Which equation is linear (highest power of x is 1)?",
+          "hint": "A linear equation has no x² term.",
+          "options": [
+            { "id": "a", "text": "y = x² + x", "correct": false },
+            { "id": "b", "text": "y = −3x + 5", "correct": true },
+            { "id": "c", "text": "y = 4x² − 7", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — y = −3x + 5 has no x² term, so its highest power of x is 1: it is linear.",
+            "incorrect": "The linear equation is the one with no x² term. The others are quadratics."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-2",
+      "title": "The Standard Form of a Quadratic",
+      "concept": "Every quadratic can be written as ax² + bx + c",
+      "conceptFraming": "Quadratics are written in standard form: y = ax² + bx + c.",
+      "framing": {
+        "lead": "Quadratics are written in standard form. Hover each coefficient to see its job.",
+        "equation": [
+          { "text": "y = " },
+          { "text": "a", "note": "Coefficient of x². Sets how narrow or wide the parabola is and which way it opens — and it can never be 0." },
+          { "text": "x² + " },
+          { "text": "b", "note": "Coefficient of x. Works with a to shift the vertex left or right." },
+          { "text": "x + " },
+          { "text": "c", "note": "The constant term — the y-intercept, where the parabola crosses the y-axis." }
+        ]
+      },
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-2",
+      "fallbackMessage": "Let's revisit standard form, ax² + bx + c, and what each letter stands for.",
+      "hints": [],
+      "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-3" },
+      "present": 5,
+      "throwbacks": [
+        {
+          "id": "tb-qd-s2-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 1 · Linear vs. Quadratic" },
+          "prompt": "Throwback: which equation is quadratic?",
+          "options": [
+            { "id": "a", "text": "y = x² − 4", "correct": true },
+            { "id": "b", "text": "y = 3x + 1", "correct": false },
+            { "id": "c", "text": "y = 7x", "correct": false }
+          ],
+          "feedback": { "correct": "Yes — it has an x² term.", "incorrect": "y = x² − 4 is quadratic — it's the only one with an x² term." }
+        },
+        {
+          "id": "tb-qd-s2-2",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 1 · Linear vs. Quadratic" },
+          "prompt": "Throwback: which equation graphs as a straight line?",
+          "options": [
+            { "id": "a", "text": "y = −2x + 4", "correct": true },
+            { "id": "b", "text": "y = x² + 1", "correct": false },
+            { "id": "c", "text": "y = 3x² − 5", "correct": false }
+          ],
+          "feedback": { "correct": "Right — it's linear, so it graphs as a straight line.", "incorrect": "y = −2x + 4 has no x² term, so it's linear and graphs as a straight line." }
+        },
+        {
+          "id": "tb-qd-s2-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Graphing Lines" },
+          "prompt": "Throwback from Graphing Lines: what is the y-intercept of y = 4x − 3?",
+          "answer": -3,
+          "feedback": { "correct": "Right — the y-intercept is −3.", "incorrect": "In y = mx + b the y-intercept is b, which is −3." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q2a",
+          "type": "multiple-choice",
+          "prompt": "In the standard form y = `a`x² + `b`x + `c`, which letter is the coefficient of x²?",
+          "hint": "It's the number sitting directly in front of the x² term.",
+          "options": [
+            { "id": "a", "text": "`a`", "correct": true },
+            { "id": "b", "text": "`b`", "correct": false },
+            { "id": "c", "text": "`c`", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — a is the coefficient of x² in y = ax² + bx + c.",
+            "incorrect": "Match each letter to its term: a·x², b·x, and c on its own. The coefficient of x² is a."
+          }
+        },
+        {
+          "id": "q2b",
+          "type": "numeric-input",
+          "prompt": "For y = 3x² + 5x + 2, what is `a` (the coefficient of x²)?",
+          "answer": 3,
+          "hint": "a is the number multiplying x².",
+          "feedback": {
+            "correct": "Right — a = 3, the coefficient of x².",
+            "incorrect": "Look at the x² term: 3x². The coefficient a is 3."
+          }
+        },
+        {
+          "id": "q2c",
+          "type": "numeric-input",
+          "prompt": "For y = 3x² + 5x + 2, what is `b` (the coefficient of x)?",
+          "answer": 5,
+          "hint": "b is the number multiplying x (the plain x term).",
+          "feedback": {
+            "correct": "Right — b = 5, the coefficient of x.",
+            "incorrect": "Look at the x term: 5x. The coefficient b is 5."
+          }
+        },
+        {
+          "id": "q2d",
+          "type": "numeric-input",
+          "prompt": "For y = 3x² + 5x + 2, what is `c` (the constant term)?",
+          "answer": 2,
+          "hint": "c is the number with no x attached.",
+          "feedback": {
+            "correct": "Right — c = 2, the constant term.",
+            "incorrect": "The constant term has no x. Here c = 2."
+          }
+        },
+        {
+          "id": "q2e",
+          "type": "numeric-input",
+          "prompt": "For y = x² − 4x + 7, what is `b` (the coefficient of x)?",
+          "answer": -4,
+          "hint": "Keep the sign: the x term is −4x, so b is negative.",
+          "feedback": {
+            "correct": "Right — b = −4. Don't drop the minus sign.",
+            "incorrect": "The x term is −4x, so b = −4 (include the negative sign)."
+          }
+        },
+        {
+          "id": "q2f",
+          "type": "numeric-input",
+          "prompt": "For y = 2x² − 9, what is `b` (the coefficient of x)?",
+          "answer": 0,
+          "hint": "There's no plain x term shown. What does that make b?",
+          "feedback": {
+            "correct": "Right — with no x term, b = 0.",
+            "incorrect": "There is no x term, so its coefficient is b = 0."
+          }
+        },
+        {
+          "id": "q2g",
+          "type": "numeric-input",
+          "prompt": "For y = −x² + 6x, what is `c` (the constant term)?",
+          "answer": 0,
+          "hint": "There's no standalone number. What does that make c?",
+          "feedback": {
+            "correct": "Right — with no constant shown, c = 0.",
+            "incorrect": "There is no constant term, so c = 0."
+          }
+        },
+        {
+          "id": "q2h",
+          "type": "multiple-choice",
+          "prompt": "What is the constant term `c` in y = 5x² + 2x − 8?",
+          "hint": "The constant term is the one with no x — keep its sign.",
+          "options": [
+            { "id": "a", "text": "−8", "correct": true },
+            { "id": "b", "text": "8", "correct": false },
+            { "id": "c", "text": "5", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — c = −8, the constant term (with its negative sign).",
+            "incorrect": "The constant term has no x and keeps its sign: c = −8."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-3",
+      "title": "The Minimum of a Parabola",
+      "concept": "The vertex of an upward parabola is its lowest point",
+      "conceptFraming": "A parabola that opens upward (a > 0) has a lowest point — its vertex, the minimum. One that opens downward has none. Try the demos, then click each minimum (or say it has none).",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-3",
+      "fallbackMessage": "Let's replay the minimum demos — an upward parabola has a lowest point, a downward one doesn't.",
+      "hints": [],
+      "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-4" },
+      "anchors": 2,
+      "present": 6,
+      "throwbacks": [
+        {
+          "id": "tb-qd-s3-1",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 2 · The Standard Form of a Quadratic" },
+          "prompt": "Throwback: for y = 3x² + 5x + 2, what is `a` (the coefficient of x²)?",
+          "answer": 3,
+          "feedback": { "correct": "Right — a = 3.", "incorrect": "a is the number multiplying x²: here a = 3." }
+        },
+        {
+          "id": "tb-qd-s3-2",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 1 · Linear vs. Quadratic" },
+          "prompt": "Throwback: which equation graphs as a parabola?",
+          "options": [
+            { "id": "a", "text": "y = 2x² − 3", "correct": true },
+            { "id": "b", "text": "y = x + 7", "correct": false },
+            { "id": "c", "text": "y = −4x", "correct": false }
+          ],
+          "feedback": { "correct": "Yes — it has an x² term, so it's a parabola.", "incorrect": "Only y = 2x² − 3 has an x² term, so it's the parabola." }
+        },
+        {
+          "id": "tb-qd-s3-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Graphing Lines" },
+          "prompt": "Throwback from Graphing Lines: what is the slope of y = −4x + 1?",
+          "answer": -4,
+          "feedback": { "correct": "Right — slope is −4.", "incorrect": "The slope is the coefficient of x, which is −4." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q3demo1",
+          "type": "parabola-balls",
+          "demo": true,
+          "mode": "settle-min",
+          "prompt": "Press Play. Two balls are released at the far ends of y = x² − 4 and roll under gravity. Watch where they both settle.",
+          "equationLabel": "y = x² − 4",
+          "a": 1,
+          "b": 0,
+          "c": -4,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "ballStartXs": [-5, 5],
+          "feedback": {
+            "correct": "Both balls rolled down to the same lowest point, (0, −4). That point is the minimum, also called the vertex."
+          }
+        },
+        {
+          "id": "q3demo2",
+          "type": "parabola-a-slider",
+          "demo": true,
+          "prompt": "Drag the slider to change a. Start positive (concave up — it has a minimum), then push a below zero and watch the parabola flip upside-down (concave down — no minimum).",
+          "b": 0,
+          "c": -2,
+          "aMin": -2,
+          "aMax": 2,
+          "aDefault": 1,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "When a > 0 the parabola is concave up and has a minimum. When a < 0 it's concave down — it opens downward and has no minimum."
+          }
+        },
+        {
+          "id": "q3v1",
+          "type": "vertex-pick",
+          "prompt": "Click the minimum (lowest point) of y = x² − 4. If it has no minimum, use the button below.",
+          "a": 1,
+          "b": 0,
+          "c": -4,
+          "target": "min",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the minimum is the bottom of the U, at (0, −4).",
+            "incorrect": "The minimum is the single lowest point of an upward parabola. Try again."
+          }
+        },
+        {
+          "id": "q3v2",
+          "type": "vertex-pick",
+          "prompt": "Click the minimum of y = x² − 2x − 3. If it has no minimum, use the button below.",
+          "a": 1,
+          "b": -2,
+          "c": -3,
+          "target": "min",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the lowest point of this upward parabola is the vertex at (1, −4).",
+            "incorrect": "This parabola opens upward, so it has a lowest point. Find the bottom of the curve."
+          }
+        },
+        {
+          "id": "q3v3",
+          "type": "vertex-pick",
+          "prompt": "Click the minimum of y = x² + 4x + 3. If it has no minimum, use the button below.",
+          "a": 1,
+          "b": 4,
+          "c": 3,
+          "target": "min",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the minimum (vertex) sits at (−2, −1).",
+            "incorrect": "It opens upward, so look for the lowest point of the curve."
+          }
+        },
+        {
+          "id": "q3v4",
+          "type": "vertex-pick",
+          "prompt": "Click the minimum of y = −x² + 3. If it has no minimum, use the button below.",
+          "a": -1,
+          "b": 0,
+          "c": 3,
+          "target": "min",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — this parabola opens downward (a < 0), so it has no minimum; it falls forever on both sides.",
+            "incorrect": "This parabola opens downward. Does a downward-opening parabola have a lowest point?"
+          }
+        },
+        {
+          "id": "q3v5",
+          "type": "vertex-pick",
+          "prompt": "Click the minimum of y = −x² + 2x + 1. If it has no minimum, use the button below.",
+          "a": -1,
+          "b": 2,
+          "c": 1,
+          "target": "min",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — a < 0 means it opens downward, so there's no minimum.",
+            "incorrect": "Check the sign of the x² coefficient. A downward parabola has no lowest point."
+          }
+        },
+        {
+          "id": "q3v6",
+          "type": "vertex-pick",
+          "prompt": "Click the minimum of y = x² + 2x − 3. If it has no minimum, use the button below.",
+          "a": 1,
+          "b": 2,
+          "c": -3,
+          "target": "min",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the minimum (vertex) is at (−1, −4).",
+            "incorrect": "It opens upward, so find the lowest point of the U."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-4",
+      "title": "The Maximum of a Parabola",
+      "concept": "The vertex of a downward parabola is its highest point",
+      "conceptFraming": "A parabola that opens downward (a < 0) has a highest point — its vertex, the maximum. One that opens upward has none. Watch the demo, then click each maximum (or say it has none).",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-4",
+      "fallbackMessage": "Let's replay the maximum demo — a downward parabola has a peak, an upward one doesn't.",
+      "hints": [],
+      "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-5" },
+      "anchors": 1,
+      "present": 6,
+      "throwbacks": [
+        {
+          "id": "tb-qd-s4-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 3 · The Minimum of a Parabola" },
+          "prompt": "Throwback: a parabola has a minimum (lowest point) when…",
+          "options": [
+            { "id": "a", "text": "a > 0 (it opens upward)", "correct": true },
+            { "id": "b", "text": "a < 0 (it opens downward)", "correct": false },
+            { "id": "c", "text": "a = 0", "correct": false }
+          ],
+          "feedback": { "correct": "Right — when a > 0 it opens upward and has a minimum.", "incorrect": "A minimum exists when a > 0, so the parabola opens upward." }
+        },
+        {
+          "id": "tb-qd-s4-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 2 · The Standard Form of a Quadratic" },
+          "prompt": "Throwback: for y = x² − 4x + 7, what is `b` (the coefficient of x)?",
+          "answer": -4,
+          "feedback": { "correct": "Right — b = −4.", "incorrect": "The x term is −4x, so b = −4 (keep the negative sign)." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q4demo",
+          "type": "parabola-balls",
+          "demo": true,
+          "mode": "drop-max",
+          "prompt": "Press Play. Balls drop under gravity onto y = −x² + 4 at several x-positions. Watch which one balances and stays on the curve.",
+          "equationLabel": "y = −x² + 4",
+          "a": -1,
+          "b": 0,
+          "c": 4,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "ballStartXs": [-4, -2, 0, 2, 4],
+          "feedback": {
+            "correct": "Only the ball dropped at the peak, (0, 4), balanced and stayed. That peak is the maximum (vertex)."
+          }
+        },
+        {
+          "id": "q4v1",
+          "type": "vertex-pick",
+          "prompt": "Click the maximum (highest point) of y = −x² + 4. If it has no maximum, use the button below.",
+          "a": -1,
+          "b": 0,
+          "c": 4,
+          "target": "max",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the maximum is the top of the arch, at (0, 4).",
+            "incorrect": "The maximum is the single highest point of a downward parabola. Try again."
+          }
+        },
+        {
+          "id": "q4v2",
+          "type": "vertex-pick",
+          "prompt": "Click the maximum of y = −x² + 2x + 3. If it has no maximum, use the button below.",
+          "a": -1,
+          "b": 2,
+          "c": 3,
+          "target": "max",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the peak (vertex) of this downward parabola is at (1, 4).",
+            "incorrect": "It opens downward, so look for the highest point of the arch."
+          }
+        },
+        {
+          "id": "q4v3",
+          "type": "vertex-pick",
+          "prompt": "Click the maximum of y = −x² − 2x + 3. If it has no maximum, use the button below.",
+          "a": -1,
+          "b": -2,
+          "c": 3,
+          "target": "max",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the maximum (vertex) is at (−1, 4).",
+            "incorrect": "It opens downward, so find the top of the arch."
+          }
+        },
+        {
+          "id": "q4v4",
+          "type": "vertex-pick",
+          "prompt": "Click the maximum of y = x² − 3. If it has no maximum, use the button below.",
+          "a": 1,
+          "b": 0,
+          "c": -3,
+          "target": "max",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — this parabola opens upward (a > 0), so it has no maximum; it rises forever on both sides.",
+            "incorrect": "This parabola opens upward. Does an upward-opening parabola have a highest point?"
+          }
+        },
+        {
+          "id": "q4v5",
+          "type": "vertex-pick",
+          "prompt": "Click the maximum of y = x² + 2. If it has no maximum, use the button below.",
+          "a": 1,
+          "b": 0,
+          "c": 2,
+          "target": "max",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — a > 0 means it opens upward, so there's no maximum.",
+            "incorrect": "Check the sign of the x² coefficient. An upward parabola has no highest point."
+          }
+        },
+        {
+          "id": "q4v6",
+          "type": "vertex-pick",
+          "prompt": "Click the maximum of y = −x² + 4x − 1. If it has no maximum, use the button below.",
+          "a": -1,
+          "b": 4,
+          "c": -1,
+          "target": "max",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the maximum (vertex) is at (2, 3).",
+            "incorrect": "It opens downward, so look for the highest point of the curve."
+          }
+        },
+        {
+          "id": "q4v7",
+          "type": "vertex-pick",
+          "prompt": "Click the maximum of y = −x² − 4x − 1. If it has no maximum, use the button below.",
+          "a": -1,
+          "b": -4,
+          "c": -1,
+          "target": "max",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — the maximum (vertex) is at (−2, 3).",
+            "incorrect": "It opens downward, so find the top of the arch."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-5",
+      "title": "Finding the Vertex with x = −b/2a",
+      "concept": "The x-coordinate of the vertex is x = −b/(2a)",
+      "conceptFraming": "The x-coordinate of the vertex is always x = −b / (2a).",
+      "framing": {
+        "lead": "The vertex's x-coordinate comes straight from a and b. Hover the parts of the formula.",
+        "equation": [
+          { "text": "x = " },
+          { "text": "−b", "note": "The negative of b, the coefficient of x." },
+          { "text": " / " },
+          { "text": "2a", "note": "Two times a, the coefficient of x²." }
+        ],
+        "note": "This works whether the vertex is a minimum or a maximum."
+      },
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-5",
+      "fallbackMessage": "Let's practice the vertex formula again: x = −b / (2a).",
+      "hints": [],
+      "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-6" },
+      "present": 5,
+      "anchors": 1,
+      "throwbacks": [
+        {
+          "id": "tb-qd-s5-1",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 2 · The Standard Form of a Quadratic" },
+          "prompt": "Throwback: for y = 2x² − 8x + 3, what is `b` (the coefficient of x)?",
+          "answer": -8,
+          "feedback": { "correct": "Right — b = −8.", "incorrect": "The x term is −8x, so b = −8 (keep the negative sign)." }
+        },
+        {
+          "id": "tb-qd-s5-2",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 4 · The Maximum of a Parabola" },
+          "prompt": "Throwback: a parabola has a maximum (highest point) when…",
+          "options": [
+            { "id": "a", "text": "a < 0 (it opens downward)", "correct": true },
+            { "id": "b", "text": "a > 0 (it opens upward)", "correct": false },
+            { "id": "c", "text": "a = 1 always", "correct": false }
+          ],
+          "feedback": { "correct": "Right — when a < 0 it opens downward and has a maximum.", "incorrect": "A maximum exists when a < 0, so the parabola opens downward." }
+        },
+        {
+          "id": "tb-qd-s5-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 2 · The Standard Form of a Quadratic" },
+          "prompt": "Throwback: for y = 3x² + 5x + 2, what is `c` (the constant term)?",
+          "answer": 2,
+          "feedback": { "correct": "Right — c = 2.", "incorrect": "The constant term has no x: here c = 2." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q5demo",
+          "type": "vertex-formula",
+          "demo": true,
+          "prompt": "Build the vertex formula by dragging in the right values.",
+          "question": "The x-coordinate of the vertex is x = −b / (2a). Drag the value of b and the value of a from y = 2x² − 8x + 3 into the formula. Drop the correct numbers and it simplifies straight to the vertex.",
+          "a": 2,
+          "b": -8,
+          "c": 3,
+          "tokens": [2, -8, 3, 8, -2, 4],
+          "feedback": {
+            "correct": "x = −(−8) / (2·2) = 8/4 = 2, and y = 2(2)² − 8(2) + 3 = −5, so the vertex is (2, −5)."
+          }
+        },
+        {
+          "id": "q5b",
+          "type": "numeric-input",
+          "prompt": "Find the x-coordinate of the vertex of y = x² − 4x + 1. (`a` = 1, `b` = −4.)",
+          "answer": 2,
+          "hint": "x = −b/(2a) = −(−4)/(2·1).",
+          "feedback": {
+            "correct": "Right — x = −(−4)/(2·1) = 4/2 = 2.",
+            "incorrect": "Plug into x = −b/(2a): −(−4)/(2·1) = 2."
+          }
+        },
+        {
+          "id": "q5c",
+          "type": "numeric-input",
+          "prompt": "Find the x-coordinate of the vertex of y = x² + 6x + 5. (`a` = 1, `b` = 6.)",
+          "answer": -3,
+          "hint": "x = −b/(2a) = −6/(2·1).",
+          "feedback": {
+            "correct": "Right — x = −6/2 = −3.",
+            "incorrect": "Plug into x = −b/(2a): −6/(2·1) = −3."
+          }
+        },
+        {
+          "id": "q5d",
+          "type": "numeric-input",
+          "prompt": "Find the x-coordinate of the vertex of y = 2x² − 8x + 3. (`a` = 2, `b` = −8.)",
+          "answer": 2,
+          "hint": "x = −b/(2a) = −(−8)/(2·2).",
+          "feedback": {
+            "correct": "Right — x = 8/4 = 2.",
+            "incorrect": "Plug into x = −b/(2a): −(−8)/(2·2) = 8/4 = 2."
+          }
+        },
+        {
+          "id": "q5e",
+          "type": "numeric-input",
+          "prompt": "Find the x-coordinate of the vertex of y = −x² + 4x. (`a` = −1, `b` = 4.)",
+          "answer": 2,
+          "hint": "x = −b/(2a) = −4/(2·−1).",
+          "feedback": {
+            "correct": "Right — x = −4/(−2) = 2. The formula works for maxima too.",
+            "incorrect": "Plug into x = −b/(2a): −4/(2·−1) = −4/−2 = 2."
+          }
+        },
+        {
+          "id": "q5f",
+          "type": "numeric-input",
+          "prompt": "Find the x-coordinate of the vertex of y = x² + 2x − 7. (`a` = 1, `b` = 2.)",
+          "answer": -1,
+          "hint": "x = −b/(2a) = −2/(2·1).",
+          "feedback": {
+            "correct": "Right — x = −2/2 = −1.",
+            "incorrect": "Plug into x = −b/(2a): −2/(2·1) = −1."
+          }
+        },
+        {
+          "id": "q5g",
+          "type": "numeric-input",
+          "prompt": "Find the x-coordinate of the vertex of y = 3x² − 12x + 1. (`a` = 3, `b` = −12.)",
+          "answer": 2,
+          "hint": "x = −b/(2a) = −(−12)/(2·3).",
+          "feedback": {
+            "correct": "Right — x = 12/6 = 2.",
+            "incorrect": "Plug into x = −b/(2a): −(−12)/(2·3) = 12/6 = 2."
+          }
+        },
+        {
+          "id": "q5h",
+          "type": "numeric-input",
+          "prompt": "Find the x-coordinate of the vertex of y = −2x² − 8x + 5. (`a` = −2, `b` = −8.)",
+          "answer": -2,
+          "hint": "x = −b/(2a) = −(−8)/(2·−2).",
+          "feedback": {
+            "correct": "Right — x = 8/(−4) = −2.",
+            "incorrect": "Plug into x = −b/(2a): −(−8)/(2·−2) = 8/−4 = −2."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-6",
+      "title": "Solutions (Where the Parabola Crosses the X-Axis)",
+      "concept": "Solutions are the x-values where y = 0",
+      "conceptFraming": "The solutions (roots or zeros) are the x-values where y = 0 — exactly where the parabola crosses the x-axis. Watch the balls settle on those crossings.",
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-6",
+      "fallbackMessage": "Let's revisit where the parabola crosses the x-axis — those crossings are the solutions.",
+      "hints": [],
+      "interactive": {
+        "id": "step-6-helper",
+        "type": "plot-point",
+        "prompt": "Click one of the points where y = x² − 4 crosses the x-axis (a solution).",
+        "targetX": 2,
+        "targetY": 0,
+        "xMin": -6,
+        "xMax": 6,
+        "yMin": -6,
+        "yMax": 6,
+        "feedback": {
+          "correct": "Yes — the curve crosses the x-axis at (2, 0) (and also (−2, 0)). Those x-values, 2 and −2, are the solutions.",
+          "incorrect": "A solution is where the parabola meets the x-axis (y = 0). For y = x² − 4 that's at x = 2 and x = −2."
+        }
+      },
+      "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-7" },
+      "present": 6,
+      "throwbacks": [
+        {
+          "id": "tb-qd-s6-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 1 · Linear vs. Quadratic" },
+          "prompt": "Throwback: which equation is quadratic?",
+          "options": [
+            { "id": "a", "text": "y = x² − 5x + 6", "correct": true },
+            { "id": "b", "text": "y = 4x + 1", "correct": false },
+            { "id": "c", "text": "y = −2x", "correct": false }
+          ],
+          "feedback": { "correct": "Yes — it has an x² term.", "incorrect": "y = x² − 5x + 6 is quadratic — it's the only one with an x² term." }
+        },
+        {
+          "id": "tb-qd-s6-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Solving Equations" },
+          "prompt": "Throwback from Solving Equations: solve 2x + 1 = 7.",
+          "answer": 3,
+          "feedback": { "correct": "Right — x = 3.", "incorrect": "Subtract 1 (6) then divide by 2: x = 3." }
+        },
+        {
+          "id": "tb-qd-s6-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 2 · The Standard Form of a Quadratic" },
+          "prompt": "Throwback: for y = 5x² + 2x − 8, what is `c` (the constant term)?",
+          "answer": -8,
+          "feedback": { "correct": "Right — c = −8.", "incorrect": "The constant term keeps its sign: c = −8." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q6a",
+          "type": "parabola-balls",
+          "demo": true,
+          "mode": "settle-roots",
+          "prompt": "Press Play. The balls roll down y = x² − 4 and settle where the curve meets the x-axis.",
+          "equationLabel": "y = x² − 4",
+          "a": 1,
+          "b": 0,
+          "c": -4,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "ballStartXs": [-5, 5],
+          "feedback": {
+            "correct": "The balls settled at x = −2 and x = 2 — the points where the parabola crosses the x-axis. Those are the solutions of x² − 4 = 0."
+          }
+        },
+        {
+          "id": "q6b",
+          "type": "plot-point",
+          "demo": true,
+          "prompt": "Click a point where y = x² − 4 crosses the x-axis (one of its solutions).",
+          "targetX": -2,
+          "targetY": 0,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Right — (−2, 0) is one crossing; (2, 0) is the other. The solutions are x = −2 and x = 2.",
+            "incorrect": "A solution sits on the x-axis (y = 0). For y = x² − 4 the crossings are at x = −2 and x = 2."
+          }
+        },
+        {
+          "id": "q6c",
+          "type": "multiple-choice",
+          "prompt": "A parabola crosses the x-axis at x = −2 and x = 2. What are its solutions?",
+          "hint": "The solutions are exactly the x-values of the crossing points.",
+          "options": [
+            { "id": "a", "text": "x = −2 and x = 2", "correct": true },
+            { "id": "b", "text": "y = −2 and y = 2", "correct": false },
+            { "id": "c", "text": "x = 0 and x = 4", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — the solutions are the x-values of the crossings: x = −2 and x = 2.",
+            "incorrect": "Solutions are x-values where the curve meets the x-axis. Read off the x-coordinates of the crossings."
+          }
+        },
+        {
+          "id": "q6d",
+          "type": "numeric-input",
+          "prompt": "A parabola crosses the x-axis at x = −3 and x = 1. Enter the positive solution.",
+          "answer": 1,
+          "hint": "The solutions are the two crossing x-values. Which one is greater than zero?",
+          "feedback": {
+            "correct": "Right — the positive solution is x = 1.",
+            "incorrect": "The crossings are x = −3 and x = 1. The positive one is 1."
+          }
+        },
+        {
+          "id": "q6e",
+          "type": "numeric-input",
+          "prompt": "A parabola crosses the x-axis at x = −5 and x = 2. Enter the negative solution.",
+          "answer": -5,
+          "hint": "The solutions are the two crossing x-values. Which one is less than zero?",
+          "feedback": {
+            "correct": "Right — the negative solution is x = −5.",
+            "incorrect": "The crossings are x = −5 and x = 2. The negative one is −5."
+          }
+        },
+        {
+          "id": "q6f",
+          "type": "multiple-choice",
+          "prompt": "A parabola crosses the x-axis at x = 0 and x = 6. What are its solutions?",
+          "hint": "Read the x-coordinates of the two crossing points directly.",
+          "options": [
+            { "id": "a", "text": "x = 0 and x = 6", "correct": true },
+            { "id": "b", "text": "x = 6 and x = −6", "correct": false },
+            { "id": "c", "text": "y = 0 and y = 6", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — the solutions are x = 0 and x = 6, the x-values where the curve meets the x-axis.",
+            "incorrect": "The solutions are the x-values of the crossings: x = 0 and x = 6."
+          }
+        },
+        {
+          "id": "q6g",
+          "type": "numeric-input",
+          "prompt": "A parabola crosses the x-axis at x = −4 and x = 4. Enter the positive solution.",
+          "answer": 4,
+          "hint": "Pick the crossing x-value that is greater than zero.",
+          "feedback": {
+            "correct": "Right — the positive solution is x = 4.",
+            "incorrect": "The crossings are x = −4 and x = 4. The positive one is 4."
+          }
+        },
+        {
+          "id": "q6h",
+          "type": "multiple-choice",
+          "prompt": "A parabola crosses the x-axis at x = −1 and x = 5. What are its solutions?",
+          "hint": "The solutions are just the x-values of the crossings.",
+          "options": [
+            { "id": "a", "text": "x = −1 and x = 5", "correct": true },
+            { "id": "b", "text": "x = 1 and x = 5", "correct": false },
+            { "id": "c", "text": "x = −1 and x = −5", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — the solutions are x = −1 and x = 5.",
+            "incorrect": "Read the x-coordinates of the crossings, keeping the signs: x = −1 and x = 5."
+          }
+        },
+        {
+          "id": "q6i",
+          "type": "numeric-input",
+          "prompt": "A parabola crosses the x-axis at x = 3 and x = 7. Enter the smaller solution.",
+          "answer": 3,
+          "hint": "Both crossings are positive — which x-value is smaller?",
+          "feedback": {
+            "correct": "Right — the smaller solution is x = 3.",
+            "incorrect": "The crossings are x = 3 and x = 7. The smaller is 3."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-7",
+      "title": "Factoring Reveals the Zeros",
+      "concept": "A factored quadratic shows its solutions directly",
+      "conceptFraming": "Factoring rewrites a quadratic as a product of two factors, which reveal its zeros.",
+      "framing": {
+        "lead": "Factoring rewrites a quadratic as two factors. Hover a factor to see the zero it gives.",
+        "equation": [
+          { "text": "x² + 5x + 6 = " },
+          { "text": "(x + 2)", "note": "Set equal to 0: x + 2 = 0 → x = −2, one of the zeros." },
+          { "text": "(x + 3)", "note": "Set equal to 0: x + 3 = 0 → x = −3, the other zero." }
+        ],
+        "note": "Multiplying the factors back out returns the original quadratic — factoring and expanding are opposites."
+      },
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-7",
+      "fallbackMessage": "Let's replay the factoring demo — a factored quadratic reveals its zeros.",
+      "hints": [],
+      "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-8" },
+      "present": 5,
+      "throwbacks": [
+        {
+          "id": "tb-qd-s7-1",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 5 · Finding the Vertex with x = −b/2a" },
+          "prompt": "Throwback: find the x-coordinate of the vertex of y = x² − 4x + 1. (`a` = 1, `b` = −4.)",
+          "answer": 2,
+          "feedback": { "correct": "Right — x = −(−4)/(2·1) = 2.", "incorrect": "Use x = −b/(2a): −(−4)/(2·1) = 2." }
+        },
+        {
+          "id": "tb-qd-s7-2",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 6 · Solutions (Where the Parabola Crosses the X-Axis)" },
+          "prompt": "Throwback: a parabola crosses the x-axis at x = −2 and x = 2. What are its solutions?",
+          "options": [
+            { "id": "a", "text": "x = −2 and x = 2", "correct": true },
+            { "id": "b", "text": "y = −2 and y = 2", "correct": false },
+            { "id": "c", "text": "x = 0 and x = 4", "correct": false }
+          ],
+          "feedback": { "correct": "Right — the solutions are the x-values of the crossings.", "incorrect": "Solutions are the x-values where the curve meets the x-axis: x = −2 and x = 2." }
+        },
+        {
+          "id": "tb-qd-s7-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Solving Equations" },
+          "prompt": "Throwback from Solving Equations: solve x + 3 = 0.",
+          "answer": -3,
+          "feedback": { "correct": "Right — x = −3.", "incorrect": "Subtract 3 from both sides: x = −3." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q7a",
+          "type": "factor-quadratic",
+          "demo": true,
+          "prompt": "Press 'Factor' to split x² + 5x + 6 into its two factors. Then drag one factor onto the other to multiply them back together.",
+          "equationLabel": "x² + 5x + 6",
+          "a": 1,
+          "b": 5,
+          "c": 6,
+          "factors": ["(x + 2)", "(x + 3)"],
+          "roots": [-2, -3],
+          "feedback": {
+            "correct": "Factoring gave (x + 2)(x + 3). Each factor equals 0 at x = −2 and x = −3 — those are the zeros. Dragging the factors together multiplied them straight back to x² + 5x + 6."
+          }
+        },
+        {
+          "id": "q7b",
+          "type": "multiple-choice",
+          "prompt": "The factored form is (x + 2)(x + 3). What are the solutions (zeros)?",
+          "hint": "Set each factor equal to 0 and solve: x + 2 = 0 and x + 3 = 0.",
+          "options": [
+            { "id": "a", "text": "x = −2 and x = −3", "correct": true },
+            { "id": "b", "text": "x = 2 and x = 3", "correct": false },
+            { "id": "c", "text": "x = 5 and x = 6", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — x + 2 = 0 gives x = −2, and x + 3 = 0 gives x = −3.",
+            "incorrect": "Set each factor to 0: x + 2 = 0 → x = −2, and x + 3 = 0 → x = −3. Watch the signs."
+          }
+        },
+        {
+          "id": "q7c",
+          "type": "numeric-input",
+          "prompt": "If (x − 4)(x + 1) = 0, enter the larger solution.",
+          "answer": 4,
+          "hint": "Set each factor to 0: x − 4 = 0 and x + 1 = 0. Which result is larger?",
+          "feedback": {
+            "correct": "Right — x − 4 = 0 gives x = 4, the larger solution (the other is x = −1).",
+            "incorrect": "x − 4 = 0 → x = 4 and x + 1 = 0 → x = −1. The larger is 4."
+          }
+        },
+        {
+          "id": "q7d",
+          "type": "numeric-input",
+          "prompt": "If (x − 5)(x + 2) = 0, enter the larger solution.",
+          "answer": 5,
+          "hint": "Set each factor to 0: x − 5 = 0 and x + 2 = 0. Which result is larger?",
+          "feedback": {
+            "correct": "Right — x − 5 = 0 gives x = 5, the larger solution (the other is x = −2).",
+            "incorrect": "x − 5 = 0 → x = 5 and x + 2 = 0 → x = −2. The larger is 5."
+          }
+        },
+        {
+          "id": "q7e",
+          "type": "multiple-choice",
+          "prompt": "The factored form is (x − 1)(x − 6). What are the solutions (zeros)?",
+          "hint": "Set each factor equal to 0: x − 1 = 0 and x − 6 = 0.",
+          "options": [
+            { "id": "a", "text": "x = 1 and x = 6", "correct": true },
+            { "id": "b", "text": "x = −1 and x = −6", "correct": false },
+            { "id": "c", "text": "x = 1 and x = −6", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — x − 1 = 0 gives x = 1, and x − 6 = 0 gives x = 6.",
+            "incorrect": "Set each factor to 0: x − 1 = 0 → x = 1, and x − 6 = 0 → x = 6. A minus inside flips the sign of the zero."
+          }
+        },
+        {
+          "id": "q7f",
+          "type": "numeric-input",
+          "prompt": "If (x + 3)(x − 2) = 0, enter the smaller solution.",
+          "answer": -3,
+          "hint": "Set each factor to 0: x + 3 = 0 and x − 2 = 0. Which result is smaller?",
+          "feedback": {
+            "correct": "Right — x + 3 = 0 gives x = −3, the smaller solution (the other is x = 2).",
+            "incorrect": "x + 3 = 0 → x = −3 and x − 2 = 0 → x = 2. The smaller is −3."
+          }
+        },
+        {
+          "id": "q7g",
+          "type": "multiple-choice",
+          "prompt": "The factored form is (x + 4)(x − 4). What are the solutions (zeros)?",
+          "hint": "Set each factor equal to 0: x + 4 = 0 and x − 4 = 0.",
+          "options": [
+            { "id": "a", "text": "x = −4 and x = 4", "correct": true },
+            { "id": "b", "text": "x = 4 and x = 4", "correct": false },
+            { "id": "c", "text": "x = −4 and x = −4", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — x + 4 = 0 gives x = −4, and x − 4 = 0 gives x = 4.",
+            "incorrect": "Set each factor to 0: x + 4 = 0 → x = −4, and x − 4 = 0 → x = 4."
+          }
+        },
+        {
+          "id": "q7h",
+          "type": "numeric-input",
+          "prompt": "If (x − 7)(x + 1) = 0, enter the larger solution.",
+          "answer": 7,
+          "hint": "Set each factor to 0: x − 7 = 0 and x + 1 = 0. Which result is larger?",
+          "feedback": {
+            "correct": "Right — x − 7 = 0 gives x = 7, the larger solution (the other is x = −1).",
+            "incorrect": "x − 7 = 0 → x = 7 and x + 1 = 0 → x = −1. The larger is 7."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-8",
+      "title": "The Factoring Rule",
+      "concept": "Find two numbers that multiply to A·C and add to B",
+      "conceptFraming": "To factor Ax² + Bx + C, find two numbers that multiply to A·C and add to B.",
+      "framing": {
+        "lead": "To factor Ax² + Bx + C, find two numbers with a special pair of properties. Hover them.",
+        "equation": [
+          { "text": "multiply to " },
+          { "text": "A·C", "note": "The product of the x² coefficient (A) and the constant (C). When A = 1, this is just C." },
+          { "text": "  and add to " },
+          { "text": "B", "note": "The middle coefficient — the coefficient of x." }
+        ],
+        "note": "Start with A = 1, then build up to A greater than 1."
+      },
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-7",
+      "fallbackMessage": "Let's lock in factoring with A = 1 before tackling a leading coefficient.",
+      "isLastStep": true,
+      "hints": [],
+      "completionAction": {
+        "buttonLabel": "Finish Lesson →",
+        "route": "/lesson/[id]/complete"
+      },
+      "throwbacks": [
+        {
+          "id": "tb-qd-s8-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 7 · Factoring Reveals the Zeros" },
+          "prompt": "Throwback: the factored form is (x + 2)(x + 3). What are the solutions (zeros)?",
+          "options": [
+            { "id": "a", "text": "x = −2 and x = −3", "correct": true },
+            { "id": "b", "text": "x = 2 and x = 3", "correct": false },
+            { "id": "c", "text": "x = 5 and x = 6", "correct": false }
+          ],
+          "feedback": { "correct": "Right — x + 2 = 0 gives x = −2 and x + 3 = 0 gives x = −3.", "incorrect": "Set each factor to 0: x = −2 and x = −3." }
+        },
+        {
+          "id": "tb-qd-s8-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 7 · Factoring Reveals the Zeros" },
+          "prompt": "Throwback: if (x − 4)(x + 1) = 0, enter the larger solution.",
+          "answer": 4,
+          "feedback": { "correct": "Right — x − 4 = 0 gives x = 4, the larger solution.", "incorrect": "x − 4 = 0 → x = 4 and x + 1 = 0 → x = −1. The larger is 4." }
+        },
+        {
+          "id": "tb-qd-s8-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 2 · The Standard Form of a Quadratic" },
+          "prompt": "Throwback: for y = 3x² + 5x + 2, what is `c` (the constant term)?",
+          "answer": 2,
+          "feedback": { "correct": "Right — c = 2.", "incorrect": "The constant term has no x: here c = 2." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q8a",
+          "type": "numeric-input",
+          "prompt": "Factor x² + 5x + 6 (here `A` = 1, so `A·C` = 6). Find two numbers that multiply to 6 and add to 5. Enter the smaller number.",
+          "answer": 2,
+          "hint": "List the factor pairs of 6 (1·6, 2·3) and check which pair adds to 5.",
+          "feedback": {
+            "correct": "Right — 2 and 3 multiply to 6 and add to 5, so x² + 5x + 6 = (x + 2)(x + 3).",
+            "incorrect": "Factor pairs of 6: 1·6 (adds to 7) and 2·3 (adds to 5). The pair you want is 2 and 3 — the smaller is 2."
+          }
+        },
+        {
+          "id": "q8b",
+          "type": "numeric-input",
+          "prompt": "Factor x² + 7x + 12 (`A` = 1, so `A·C` = 12). Find two numbers that multiply to 12 and add to 7. Enter the smaller number.",
+          "answer": 3,
+          "hint": "Which factor pair of 12 adds up to 7?",
+          "feedback": {
+            "correct": "Right — 3 and 4 multiply to 12 and add to 7, so x² + 7x + 12 = (x + 3)(x + 4).",
+            "incorrect": "Factor pairs of 12: 2·6 (adds to 8), 3·4 (adds to 7). The pair is 3 and 4 — smaller is 3."
+          }
+        },
+        {
+          "id": "q8c",
+          "type": "multiple-choice",
+          "prompt": "Which is the correct factorization of x² + 5x + 4?",
+          "hint": "Find two numbers that multiply to 4 and add to 5.",
+          "options": [
+            { "id": "a", "text": "(x + 1)(x + 4)", "correct": true },
+            { "id": "b", "text": "(x + 2)(x + 2)", "correct": false },
+            { "id": "c", "text": "(x + 1)(x + 5)", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — 1 and 4 multiply to 4 and add to 5, so it factors to (x + 1)(x + 4).",
+            "incorrect": "You need two numbers multiplying to 4 and adding to 5: that's 1 and 4 → (x + 1)(x + 4)."
+          }
+        },
+        {
+          "id": "q8d",
+          "type": "numeric-input",
+          "prompt": "Factor x² + 8x + 15 (`A` = 1, so `A·C` = 15). Find two numbers that multiply to 15 and add to 8. Enter the smaller number.",
+          "answer": 3,
+          "hint": "List the factor pairs of 15 (1·15, 3·5) and check which adds to 8.",
+          "feedback": {
+            "correct": "Right — 3 and 5 multiply to 15 and add to 8, so x² + 8x + 15 = (x + 3)(x + 5).",
+            "incorrect": "Factor pairs of 15: 1·15 (adds to 16), 3·5 (adds to 8). The pair is 3 and 5 — smaller is 3."
+          }
+        },
+        {
+          "id": "q8e",
+          "type": "multiple-choice",
+          "prompt": "Which is the correct factorization of x² + 6x + 8?",
+          "hint": "Find two numbers that multiply to 8 and add to 6.",
+          "options": [
+            { "id": "a", "text": "(x + 2)(x + 4)", "correct": true },
+            { "id": "b", "text": "(x + 1)(x + 8)", "correct": false },
+            { "id": "c", "text": "(x + 3)(x + 5)", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — 2 and 4 multiply to 8 and add to 6, so it factors to (x + 2)(x + 4).",
+            "incorrect": "You need two numbers multiplying to 8 and adding to 6: that's 2 and 4 → (x + 2)(x + 4)."
+          }
+        },
+        {
+          "id": "q8f",
+          "type": "numeric-input",
+          "prompt": "Factor x² + 9x + 20 (`A` = 1, so `A·C` = 20). Find two numbers that multiply to 20 and add to 9. Enter the smaller number.",
+          "answer": 4,
+          "hint": "Which factor pair of 20 adds up to 9?",
+          "feedback": {
+            "correct": "Right — 4 and 5 multiply to 20 and add to 9, so x² + 9x + 20 = (x + 4)(x + 5).",
+            "incorrect": "Factor pairs of 20: 2·10 (adds to 12), 4·5 (adds to 9). The pair is 4 and 5 — smaller is 4."
+          }
+        },
+        {
+          "id": "q8g",
+          "type": "numeric-input",
+          "prompt": "Now `A` ≠ 1: factor 2x² + 7x + 3. Here `A·C` = 2·3 = 6. Find two numbers that multiply to 6 and add to 7. Enter the larger number.",
+          "answer": 6,
+          "hint": "A·C = 6 and you need them to add to 7. Try 1 and 6.",
+          "feedback": {
+            "correct": "Right — 1 and 6 multiply to 6 and add to 7. Splitting the middle term gives 2x² + x + 6x + 3 = (2x + 1)(x + 3).",
+            "incorrect": "With A·C = 6, the pair that adds to 7 is 1 and 6. The larger is 6."
+          }
+        },
+        {
+          "id": "q8h",
+          "type": "multiple-choice",
+          "prompt": "Using the two numbers 1 and 6, which is the correct factorization of 2x² + 7x + 3?",
+          "hint": "Split 7x into x + 6x, then group: 2x² + x + 6x + 3.",
+          "options": [
+            { "id": "a", "text": "(2x + 1)(x + 3)", "correct": true },
+            { "id": "b", "text": "(2x + 3)(x + 1)", "correct": false },
+            { "id": "c", "text": "(x + 1)(x + 6)", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — grouping 2x² + x + 6x + 3 gives x(2x + 1) + 3(2x + 1) = (2x + 1)(x + 3).",
+            "incorrect": "Split the middle term using 1 and 6: 2x² + x + 6x + 3, then factor by grouping to get (2x + 1)(x + 3)."
+          }
+        },
+        {
+          "id": "q8i",
+          "type": "numeric-input",
+          "prompt": "Factor 3x² + 7x + 2. Here `A·C` = 3·2 = 6. Find two numbers that multiply to 6 and add to 7. Enter the larger number.",
+          "answer": 6,
+          "hint": "A·C = 6 and they must add to 7. Which pair works?",
+          "feedback": {
+            "correct": "Right — 1 and 6 multiply to 6 and add to 7. Splitting gives 3x² + x + 6x + 2 = (3x + 1)(x + 2).",
+            "incorrect": "With A·C = 6, the pair that adds to 7 is 1 and 6. The larger is 6."
+          }
+        },
+        {
+          "id": "q8j",
+          "type": "multiple-choice",
+          "prompt": "Which is the correct factorization of 2x² + 5x + 2? (`A·C` = 4, and 1 and 4 add to 5.)",
+          "hint": "Split 5x into x + 4x, then group: 2x² + x + 4x + 2.",
+          "options": [
+            { "id": "a", "text": "(2x + 1)(x + 2)", "correct": true },
+            { "id": "b", "text": "(2x + 2)(x + 1)", "correct": false },
+            { "id": "c", "text": "(x + 1)(x + 4)", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — grouping 2x² + x + 4x + 2 gives x(2x + 1) + 2(2x + 1) = (2x + 1)(x + 2).",
+            "incorrect": "Split the middle term using 1 and 4: 2x² + x + 4x + 2, then factor by grouping to get (2x + 1)(x + 2)."
+          }
+        },
+        {
+          "id": "q8k",
+          "type": "numeric-input",
+          "prompt": "Factor 2x² + 9x + 4. Here `A·C` = 2·4 = 8. Find two numbers that multiply to 8 and add to 9. Enter the larger number.",
+          "answer": 8,
+          "hint": "A·C = 8 and they must add to 9. Try 1 and 8.",
+          "feedback": {
+            "correct": "Right — 1 and 8 multiply to 8 and add to 9. Splitting gives 2x² + x + 8x + 4 = (2x + 1)(x + 4).",
+            "incorrect": "With A·C = 8, the pair that adds to 9 is 1 and 8. The larger is 8."
+          }
+        }
+      ]
+    }
+  ]
+}

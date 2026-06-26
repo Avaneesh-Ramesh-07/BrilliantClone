@@ -3,8 +3,8 @@
   "title": "Graphing Lines",
   "subject": "Algebra",
   "description": "Learn to graph linear equations using the slope and y-intercept.",
-  "estimatedMinutes": 15,
-  "totalSteps": 5,
+  "estimatedMinutes": 18,
+  "totalSteps": 6,
   "masteryRule": {
     "description": "After all problems in a step are submitted, compute first-attempt correctness. If below masteryThreshold, send the student to fallbackStepId and show fallbackMessage. Step 1 failures restart Step 1.",
     "nextButtonVisibleOnlyAfterMastery": true
@@ -41,7 +41,33 @@
         "buttonLabel": "Next Step →",
         "nextStepId": "step-2"
       },
-      "present": 2,
+      "present": 3,
+      "throwbacks": [
+        {
+          "id": "tb-gr-s1-1",
+          "type": "numeric-input",
+          "throwback": { "source": "Solving Equations" },
+          "prompt": "Throwback from Solving Equations: solve 3x = 12.  x = ?",
+          "answer": 4,
+          "feedback": { "correct": "Right — x = 4.", "incorrect": "x = 4, since 12 ÷ 3 = 4." }
+        },
+        {
+          "id": "tb-gr-s1-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Solving Equations" },
+          "prompt": "Throwback from Solving Equations: solve x + 4 = 9.  x = ?",
+          "answer": 5,
+          "feedback": { "correct": "Yes — x = 5.", "incorrect": "x = 5, since subtracting 4 from both sides gives 9 − 4 = 5." }
+        },
+        {
+          "id": "tb-gr-s1-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Solving Equations" },
+          "prompt": "Throwback from Solving Equations: solve 2x + 1 = 7.  x = ?",
+          "answer": 3,
+          "feedback": { "correct": "Correct — x = 3.", "incorrect": "x = 3: subtract 1 to get 2x = 6, then divide by 2." }
+        }
+      ],
       "problems": [
         {
           "id": "p1a",
@@ -69,6 +95,17 @@
           "feedback": {
             "correct": "Right — the constant -3 is b, so the line crosses the y-axis at (0, -3).",
             "incorrect": "The y-intercept is the constant at the very end of the equation: -3."
+          }
+        },
+        {
+          "id": "p1c",
+          "type": "numeric-input",
+          "prompt": "Look at the equation: y = -2x + 6. What is the y-value where this line crosses the vertical y-axis?",
+          "answer": 6,
+          "hint": "In y = mx + b, the y-intercept is b — the constant at the end, after the x term.",
+          "feedback": {
+            "correct": "Right — the constant 6 is b, so the line crosses the y-axis at (0, 6).",
+            "incorrect": "The y-intercept is the constant at the very end of the equation: 6."
           }
         }
       ]
@@ -105,6 +142,40 @@
         "nextStepId": "step-3"
       },
       "present": 3,
+      "throwbacks": [
+        {
+          "id": "tb-gr-s2-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 1 · The y-intercept" },
+          "prompt": "Throwback: what is the y-intercept of y = 2x + 5?",
+          "options": [
+            { "id": "a", "text": "5", "correct": true },
+            { "id": "b", "text": "2", "correct": false },
+            { "id": "c", "text": "0", "correct": false }
+          ],
+          "feedback": { "correct": "Yes — b = 5, so it crosses at (0, 5).", "incorrect": "The y-intercept is the constant, 5 — the line crosses at (0, 5)." }
+        },
+        {
+          "id": "tb-gr-s2-2",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 1 · The y-intercept" },
+          "prompt": "Throwback: what is the y-intercept of y = 4x − 7?",
+          "options": [
+            { "id": "a", "text": "−7", "correct": true },
+            { "id": "b", "text": "4", "correct": false },
+            { "id": "c", "text": "7", "correct": false }
+          ],
+          "feedback": { "correct": "Right — b = −7, so it crosses at (0, −7).", "incorrect": "The y-intercept is the constant at the end: −7." }
+        },
+        {
+          "id": "tb-gr-s2-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Solving Equations" },
+          "prompt": "Throwback from Solving Equations: solve x − 3 = 4.  x = ?",
+          "answer": 7,
+          "feedback": { "correct": "Yes — x = 7.", "incorrect": "x = 7, since adding 3 to both sides gives 4 + 3 = 7." }
+        }
+      ],
       "problems": [
         {
           "id": "p2a",
@@ -178,6 +249,36 @@
         "nextStepId": "step-4"
       },
       "present": 4,
+      "throwbacks": [
+        {
+          "id": "tb-gr-s3-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 1 · The y-intercept" },
+          "prompt": "Throwback: what is the y-intercept of y = −x + 6?",
+          "options": [
+            { "id": "a", "text": "6", "correct": true },
+            { "id": "b", "text": "−1", "correct": false },
+            { "id": "c", "text": "0", "correct": false }
+          ],
+          "feedback": { "correct": "Yes — b = 6, so it crosses at (0, 6).", "incorrect": "The y-intercept is the constant, 6 — the line crosses at (0, 6)." }
+        },
+        {
+          "id": "tb-gr-s3-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 2 · Plotting (0, b)" },
+          "prompt": "Throwback: for y = 3x − 2, the starting point is (0, b). What is that y-value b?",
+          "answer": -2,
+          "feedback": { "correct": "Right — the starting point is (0, −2).", "incorrect": "The starting point sits at the constant b = −2, so (0, −2)." }
+        },
+        {
+          "id": "tb-gr-s3-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Solving Equations" },
+          "prompt": "Throwback from Solving Equations: solve 5x = 20.  x = ?",
+          "answer": 4,
+          "feedback": { "correct": "Yes — x = 4.", "incorrect": "x = 4, since 20 ÷ 5 = 4." }
+        }
+      ],
       "problems": [
         {
           "id": "p3demo",
@@ -273,6 +374,36 @@
         "nextStepId": "step-5"
       },
       "present": 3,
+      "throwbacks": [
+        {
+          "id": "tb-gr-s4-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 1 · The y-intercept" },
+          "prompt": "Throwback: what is the y-intercept of y = (1/2)x + 8?",
+          "options": [
+            { "id": "a", "text": "8", "correct": true },
+            { "id": "b", "text": "1/2", "correct": false },
+            { "id": "c", "text": "0", "correct": false }
+          ],
+          "feedback": { "correct": "Yes — b = 8, so it crosses at (0, 8).", "incorrect": "The y-intercept is the constant, 8 — the line crosses at (0, 8)." }
+        },
+        {
+          "id": "tb-gr-s4-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 3 · Rise / Run" },
+          "prompt": "Throwback: a slope of 3/4 means rise / run. How many units do you rise?",
+          "answer": 3,
+          "feedback": { "correct": "Right — the rise is the top number, 3.", "incorrect": "The rise is the top of the fraction: 3." }
+        },
+        {
+          "id": "tb-gr-s4-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 3 · Rise / Run" },
+          "prompt": "Throwback: a slope of 5 can be written as 5/1. How many units do you run (move right)?",
+          "answer": 1,
+          "feedback": { "correct": "Yes — the run is the bottom number, 1.", "incorrect": "Written as 5/1, the run is the denominator: 1." }
+        }
+      ],
       "problems": [
         {
           "id": "p4a",
@@ -328,7 +459,6 @@
       "masteryThreshold": 0.67,
       "fallbackStepId": "step-4",
       "fallbackMessage": "Positive lines move up-and-right. Let's make sure that's comfortable before going downhill.",
-      "isLastStep": true,
       "hints": [
         "Negative slopes always have a minus sign in front of the x variable.",
         "A negative rise means counting downwards on the grid map."
@@ -349,10 +479,40 @@
         }
       },
       "completionAction": {
-        "buttonLabel": "Finish Lesson →",
-        "route": "/lesson/[id]/complete"
+        "buttonLabel": "Next Step →",
+        "nextStepId": "step-6"
       },
       "present": 3,
+      "throwbacks": [
+        {
+          "id": "tb-gr-s5-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 3 · Rise / Run" },
+          "prompt": "Throwback: which line is steeper?",
+          "options": [
+            { "id": "a", "text": "y = 5x + 1", "correct": true },
+            { "id": "b", "text": "y = 2x + 1", "correct": false },
+            { "id": "c", "text": "They are equally steep", "correct": false }
+          ],
+          "feedback": { "correct": "Right — a bigger slope means a steeper line, so y = 5x + 1 is steeper.", "incorrect": "Steepness grows with the size of the slope, so y = 5x + 1 (slope 5) is steeper than slope 2." }
+        },
+        {
+          "id": "tb-gr-s5-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 4 · Graphing the line" },
+          "prompt": "Throwback: graph y = 3x + 2 starting at (0, 2). With slope 3 you rise 3. What is the new y-coordinate?",
+          "answer": 5,
+          "feedback": { "correct": "Yes — 2 + 3 = 5.", "incorrect": "Add the rise to the start: 2 + 3 = 5." }
+        },
+        {
+          "id": "tb-gr-s5-3",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 3 · Rise / Run" },
+          "prompt": "Throwback: for a slope of 2/5, how many units do you run (move right)?",
+          "answer": 5,
+          "feedback": { "correct": "Right — the run is the bottom number, 5.", "incorrect": "The run is the denominator of the slope fraction: 5." }
+        }
+      ],
       "problems": [
         {
           "id": "p5a",
@@ -412,6 +572,122 @@
           "feedback": {
             "correct": "Right — 2 - 3 = -1.",
             "incorrect": "Count down 3 from your starting y of 2: 2 - 3 = _"
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-6",
+      "title": "Graphing Real Lines",
+      "concept": "Matching and drawing lines from their equations",
+      "conceptFraming": "Time to actually graph. First, match an equation to its picture. Then draw lines yourself: plot the y-intercept, then use the slope to place a second point.",
+      "masteryThreshold": 0.75,
+      "fallbackStepId": "step-4",
+      "fallbackMessage": "Let's revisit plotting from the intercept and slope, then graph again.",
+      "isLastStep": true,
+      "hints": [
+        "The number multiplying x is the slope; the constant is the y-intercept.",
+        "Plot the y-intercept first, then rise/run with the slope to a second point."
+      ],
+      "completionAction": {
+        "buttonLabel": "Finish Lesson →",
+        "route": "/lesson/[id]/complete"
+      },
+      "throwbacks": [
+        {
+          "id": "tb-gr-s6-1",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 1 · The y-intercept" },
+          "prompt": "Throwback: what is the y-intercept of y = 4x − 3?",
+          "answer": -3,
+          "feedback": { "correct": "Yes — b = −3, so it crosses at (0, −3).", "incorrect": "The y-intercept is the constant, −3 — the line crosses at (0, −3)." }
+        },
+        {
+          "id": "tb-gr-s6-2",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 5 · Negative slopes" },
+          "prompt": "Throwback: which line goes downhill (left to right)?",
+          "options": [
+            { "id": "a", "text": "y = −2x + 1", "correct": true },
+            { "id": "b", "text": "y = 2x + 1", "correct": false },
+            { "id": "c", "text": "y = x − 4", "correct": false }
+          ],
+          "feedback": { "correct": "Right — a negative slope falls left to right.", "incorrect": "A downhill line has a negative slope: y = −2x + 1." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "p6a",
+          "type": "pick-graph",
+          "prompt": "Pick the graph that matches the equation.",
+          "equationLabel": "y = 2x − 1",
+          "hint": "The number in front of x is the slope (steepness and direction); the constant is where the line crosses the y-axis.",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "options": [
+            { "id": "a", "slope": 2, "intercept": -1, "correct": true },
+            { "id": "b", "slope": -2, "intercept": -1, "correct": false },
+            { "id": "c", "slope": 2, "intercept": 1, "correct": false },
+            { "id": "d", "slope": 1, "intercept": -1, "correct": false }
+          ],
+          "feedback": {
+            "correct": "That's it — slope 2 (rising steeply) and crossing the y-axis at −1.",
+            "incorrect": "Check both clues: the line should rise 2 for every 1 across and cross the y-axis at −1."
+          }
+        },
+        {
+          "id": "p6b",
+          "type": "pick-graph",
+          "prompt": "Pick the graph that matches the equation.",
+          "equationLabel": "y = −x + 2",
+          "hint": "A negative slope falls from left to right; the constant is the y-intercept.",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "options": [
+            { "id": "a", "slope": -1, "intercept": 2, "correct": true },
+            { "id": "b", "slope": 1, "intercept": 2, "correct": false },
+            { "id": "c", "slope": -1, "intercept": -2, "correct": false },
+            { "id": "d", "slope": -2, "intercept": 2, "correct": false }
+          ],
+          "feedback": {
+            "correct": "Correct — it falls 1 for each step right and crosses the y-axis at 2.",
+            "incorrect": "The line should go downhill (negative slope) and cross the y-axis at +2."
+          }
+        },
+        {
+          "id": "p6c",
+          "type": "graph-line",
+          "prompt": "Graph this line: plot the y-intercept, then a second point using the slope.",
+          "equationLabel": "y = x + 2",
+          "slope": 1,
+          "intercept": 2,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Nicely graphed — intercept at (0, 2) and a slope of 1 takes you up 1, right 1.",
+            "incorrect": "Start at (0, 2), then rise 1 and run 1 to land on another point of the line."
+          }
+        },
+        {
+          "id": "p6d",
+          "type": "graph-line",
+          "prompt": "Graph this line: plot the y-intercept, then a second point using the slope.",
+          "equationLabel": "y = −2x + 1",
+          "slope": -2,
+          "intercept": 1,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
+          "feedback": {
+            "correct": "Perfect — intercept at (0, 1), then down 2 and right 1 for the next point.",
+            "incorrect": "Start at (0, 1). A slope of −2 means fall 2 for every 1 you run right."
           }
         }
       ]
