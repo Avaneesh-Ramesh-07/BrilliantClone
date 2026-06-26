@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { PickGraphProblem } from "@/types/lesson";
 import { curveSegments } from "@/lib/plot";
+import { EquationBadge } from "@/components/lesson/EquationBadge";
+import { MathText } from "@/components/lesson/MathText";
 
 interface PickGraphStepProps {
   problem: PickGraphProblem;
@@ -24,10 +26,14 @@ export function PickGraphStep({
 
   return (
     <div>
-      <p className="text-body text-text">{problem.prompt}</p>
-      <p className="mt-2 font-equation text-equation text-primary">
-        {problem.equationLabel}
+      <p className="text-body text-text">
+        <MathText text={problem.prompt} />
       </p>
+      <EquationBadge
+        equation={problem.equationLabel}
+        label="Match this equation"
+        className="mt-3"
+      />
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         {problem.options.map((option) => {

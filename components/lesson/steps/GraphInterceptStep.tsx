@@ -1,6 +1,8 @@
 "use client";
 
 import type { GraphInterceptProblem } from "@/types/lesson";
+import { EquationBadge } from "@/components/lesson/EquationBadge";
+import { MathText } from "@/components/lesson/MathText";
 
 interface GraphInterceptStepProps {
   problem: GraphInterceptProblem;
@@ -62,7 +64,9 @@ export function GraphInterceptStep({
 
   return (
     <div>
-      <p className="text-body text-text">{problem.prompt}</p>
+      <p className="text-body text-text">
+        <MathText text={problem.prompt} />
+      </p>
       <p className="mt-2 text-label text-muted">
         Slide the ball along the line to{" "}
         <span className="font-equation text-primary">x = {targetX}</span> (the
@@ -70,7 +74,13 @@ export function GraphInterceptStep({
         Check Answer.
       </p>
 
-      <div className="relative mt-5 flex justify-center">
+      <EquationBadge
+        equation={equationLabel}
+        label="The line"
+        className="mt-5"
+      />
+
+      <div className="relative mt-4 flex justify-center">
         <div className="absolute right-2 top-2 rounded-lg border border-border bg-surface px-3 py-1.5 font-equation text-equation text-text shadow-sm">
           (x = {fmt(x)}, y = {fmt(y)})
         </div>
@@ -213,10 +223,6 @@ export function GraphInterceptStep({
           />
         </svg>
       </div>
-
-      <p className="mt-4 text-center font-equation text-equation text-text">
-        {equationLabel}
-      </p>
 
       <div className="mt-4">
         <div className="flex items-center justify-between">

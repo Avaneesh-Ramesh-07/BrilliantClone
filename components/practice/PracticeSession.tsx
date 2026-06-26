@@ -247,7 +247,9 @@ export function PracticeSession({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-label text-muted">Endless practice</p>
-            <h1 className="font-heading text-heading-lg text-text">Sandbox</h1>
+            <h1 className="font-heading text-heading-lg text-text">
+              Endless Practice
+            </h1>
           </div>
           <button
             type="button"

@@ -1,10 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { revalidateProgressViews } from "@/app/actions";
 import { AnnotatedFraming } from "@/components/lesson/AnnotatedFraming";
+import { EncouragementInterstitial } from "@/components/lesson/EncouragementInterstitial";
 import { FeedbackPanel } from "@/components/lesson/FeedbackPanel";
+import { MathText } from "@/components/lesson/MathText";
 import { StepProgressBar } from "@/components/lesson/StepProgressBar";
 import { StepRenderer } from "@/components/lesson/StepRenderer";
 import { HelperInteractive } from "@/components/lesson/steps/HelperInteractive";
@@ -33,8 +42,20 @@ interface StepPlayerProps {
 const REDEMPTION_BANNER =
   "Not quite — here's one more problem. Get this one right to move on.";
 
+// On practice tests, a problem's hint stays locked until the learner has spent
+// at least this long working on that specific problem. Normal lessons are
+// unaffected (hints reveal immediately on the usual wrong-answer flow).
+const PRACTICE_TEST_HINT_DELAY_MS = 30_000;
+
+// Show a brief encouragement interstitial after every Nth graded question the
+// learner advances past in a session. Engine-only / content-agnostic: derived
+// purely from runtime advances, never from lesson data.
+const ENCOURAGEMENT_EVERY = 3;
+
 interface EngineState {
   stepIndex: number;
+  /** Furthest step the learner has reached this run; gates forward navigation. */
+  maxStepIndex: number;
   problemIndex: number;
   hintsRevealed: number;
   feedback: FeedbackState | null;
@@ -81,6 +102,7 @@ type Action =
     }
   | { type: "ADVANCE_STEP"; nextIndex: number; banner?: string | null }
   | { type: "PREV_STEP"; prevIndex: number }
+  | { type: "JUMP_STEP"; index: number }
   | { type: "ARM_REDEMPTION"; originIndex: number | null }
   | { type: "ENTER_REDEMPTION"; message: string; originIndex: number | null }
   | {
@@ -130,9 +152,13 @@ function problemDefaults(): Pick<
   };
 }
 
-function createInitialState(stepIndex: number): EngineState {
+function createInitialState(
+  stepIndex: number,
+  maxStepIndex: number = stepIndex
+): EngineState {
   return {
     stepIndex,
+    maxStepIndex: Math.max(maxStepIndex, stepIndex),
     problemIndex: 0,
     ...problemDefaults(),
     firstAttempts: {},
@@ -152,7 +178,11 @@ function reducer(state: EngineState, action: Action): EngineState {
         ...state,
         feedback: action.feedback,
         problemSolved: action.feedback.isCorrect,
-        showChoiceResult: true,
+        // Don't reveal the correct choice (green) on the FIRST wrong attempt —
+        // the learner should use the hint to re-evaluate and try again. Only
+        // reveal results when they're right, or once the solution is shown
+        // (second miss).
+        showChoiceResult: action.feedback.isCorrect || count >= 2,
         answerPrompt: null,
         attemptCounts: {
           ...state.attemptCounts,
@@ -176,18 +206,23 @@ function reducer(state: EngineState, action: Action): EngineState {
       };
     case "MASTERY_FAIL":
       return {
-        ...createInitialState(action.fallbackIndex),
+        ...createInitialState(action.fallbackIndex, state.maxStepIndex),
         masteryBanner: action.message,
       };
     case "ADVANCE_STEP":
       return {
-        ...createInitialState(action.nextIndex),
+        ...createInitialState(
+          action.nextIndex,
+          Math.max(state.maxStepIndex, action.nextIndex)
+        ),
         masteryBanner: action.banner ?? null,
         firstAttempts: {},
         attemptCounts: {},
       };
     case "PREV_STEP":
-      return createInitialState(action.prevIndex);
+      return createInitialState(action.prevIndex, state.maxStepIndex);
+    case "JUMP_STEP":
+      return createInitialState(action.index, state.maxStepIndex);
     case "ARM_REDEMPTION":
       // Keep the current feedback/marking visible; just record that a redemption
       // is queued so the UI can offer an "I understand" button.
@@ -334,12 +369,35 @@ export function StepPlayer({
   // When the current attempt started, used to record solve time per attempt
   // (internal analytics only — never surfaced to the learner as a timer).
   const attemptStartRef = useRef<number>(Date.now());
+  // When the learner first landed on the *current problem* (reset per problem,
+  // NOT per attempt). Drives the practice-test hint lock.
+  const problemStartRef = useRef<number>(Date.now());
 
   const [state, dispatch] = useReducer(
     reducer,
     initialStepIndex,
     createInitialState
   );
+
+  // Session-wide count of graded questions the learner has advanced PAST. Lives
+  // outside the reducer because the reducer state is rebuilt per step
+  // (createInitialState), which would otherwise reset the cadence every step.
+  const answeredQuestionsRef = useRef(0);
+  // The actual advance to run once the learner taps "Continue" on the
+  // interstitial. Holding the raw advance (not the gated wrapper) guarantees the
+  // resume does NOT re-count or re-trigger the interstitial.
+  const pendingAdvanceRef = useRef<(() => void) | null>(null);
+  const [encouragementVisible, setEncouragementVisible] = useState(false);
+  // Monotonic index used to rotate the encouragement message.
+  const [encouragementIndex, setEncouragementIndex] = useState(0);
+
+  // Practice tests gate hints behind a 30s-per-problem timer. Detected purely
+  // from the lesson already in props (buildPracticeTestFromSpec sets this);
+  // normal lessons never match, so their hint behavior is unchanged.
+  const isPracticeTest = lesson.subject === "Practice Test";
+  // Time spent on the current problem, in ms. Only advanced for practice tests;
+  // left at 0 otherwise so non-practice lessons keep hints unlocked.
+  const [problemElapsedMs, setProblemElapsedMs] = useState(0);
 
   const step = lesson.steps[state.stepIndex];
   const redemptionProblem = redemptionProblems[step.id];
@@ -366,7 +424,8 @@ export function StepPlayer({
       problem.type === "factor-quadratic" ||
       problem.type === "power-toggle" ||
       problem.type === "parabola-a-slider" ||
-      problem.type === "vertex-formula") &&
+      problem.type === "vertex-formula" ||
+      problem.type === "quadratic-formula") &&
     problem.demo === true;
   // Interactive demos drive their own primary action (drag / tap / play /
   // click), so the bottom "Check Answer" button only appears once solved.
@@ -388,7 +447,8 @@ export function StepPlayer({
     problem.type === "parabola-a-slider" ||
     problem.type === "vertex-pick" ||
     problem.type === "graph-line" ||
-    problem.type === "vertex-formula";
+    problem.type === "vertex-formula" ||
+    problem.type === "quadratic-formula";
 
   // The reinforcement interactive for this question (per-question override, else
   // the step's interactive) and the question's conceptual hint, if any.
@@ -398,6 +458,14 @@ export function StepPlayer({
   const problemHint =
     "hint" in problem && typeof problem.hint === "string"
       ? problem.hint
+      : undefined;
+  // The full worked solution for this problem, surfaced once the problem is
+  // counted fully wrong (the second miss). Only practice-test problems populate
+  // a string `solution`; the `typeof === "string"` guard keeps drag-to-solve's
+  // EquationState `solution` out, and normal lessons (no solution) are unchanged.
+  const problemSolution =
+    "solution" in problem && typeof problem.solution === "string"
+      ? problem.solution
       : undefined;
 
   // Retrieval-practice throwback: a low-stakes recall question that only surfaces
@@ -474,6 +542,39 @@ export function StepPlayer({
     attemptStartRef.current = Date.now();
   }, [problem.id, state.stepIndex, state.problemIndex, sliderDefault]);
 
+  // Per-problem hint-unlock timer (practice tests only). Resets on every problem
+  // transition (id / step / problem index / redemption swap) and ticks until the
+  // 30s threshold is reached; the interval is cleared on unmount/transition so it
+  // never leaks. Non-practice lessons skip the interval entirely.
+  useEffect(() => {
+    problemStartRef.current = Date.now();
+    setProblemElapsedMs(0);
+    if (!isPracticeTest) return;
+    const id = setInterval(() => {
+      const elapsed = Date.now() - problemStartRef.current;
+      setProblemElapsedMs(elapsed);
+      if (elapsed >= PRACTICE_TEST_HINT_DELAY_MS) clearInterval(id);
+    }, 500);
+    return () => clearInterval(id);
+  }, [
+    isPracticeTest,
+    problem.id,
+    state.stepIndex,
+    state.problemIndex,
+    state.redemption,
+  ]);
+
+  // The hint affordance is available immediately on normal lessons; on practice
+  // tests it stays locked until the learner has worked the problem for 30s.
+  const hintUnlocked =
+    !isPracticeTest || problemElapsedMs >= PRACTICE_TEST_HINT_DELAY_MS;
+  const secondsUntilHint = hintUnlocked
+    ? 0
+    : Math.max(
+        1,
+        Math.ceil((PRACTICE_TEST_HINT_DELAY_MS - problemElapsedMs) / 1000)
+      );
+
   const persistAttempt = useCallback(
     async (correct: boolean, hintsUsed: number, problemId: string, stepId: string) => {
       // Cap at 5 minutes so an idle/backgrounded tab doesn't skew comfort stats.
@@ -531,6 +632,17 @@ export function StepPlayer({
     persistStepIndex(prevIndex);
     dispatch({ type: "PREV_STEP", prevIndex });
   }, [state.stepIndex, persistStepIndex]);
+
+  // Jump FORWARD to a step the learner has already reached this run (never past
+  // the furthest reached step). This is review navigation only and is separate
+  // from the in-step "Next Step →" completion button, which advances by mastery.
+  const canGoForward = state.stepIndex < state.maxStepIndex;
+  const goToNextReachedStep = useCallback(() => {
+    if (state.stepIndex >= state.maxStepIndex) return;
+    const nextIndex = state.stepIndex + 1;
+    persistStepIndex(nextIndex);
+    dispatch({ type: "JUMP_STEP", index: nextIndex });
+  }, [state.stepIndex, state.maxStepIndex, persistStepIndex]);
 
   // Leave the lesson and return home, saving the current step so the learner
   // resumes where they left off. We flush the (debounced) save immediately so
@@ -661,13 +773,19 @@ export function StepPlayer({
       "hint" in problem &&
       typeof problem.hint === "string" &&
       problem.hint.trim().length > 0;
+    // On practice tests the hint may still be locked behind the 30s timer; in
+    // that case don't point the learner at a hint that isn't visible yet.
+    const hintUnlockedNow =
+      !isPracticeTest ||
+      Date.now() - problemStartRef.current >= PRACTICE_TEST_HINT_DELAY_MS;
     // On a first miss, withhold the full solution and nudge toward the hint so
     // the learner gets a free second chance.
     const submitFeedback = isFirstMiss
       ? {
-          message: hasHint
-            ? "Not quite — check the hint below and try again."
-            : "Not quite — take another look and try again.",
+          message:
+            hasHint && hintUnlockedNow
+              ? "Not quite — check the hint below and try again."
+              : "Not quite — take another look and try again.",
           isCorrect: false,
         }
       : result;
@@ -718,6 +836,7 @@ export function StepPlayer({
     isLastProblem,
     isDemo,
     isThrowback,
+    isPracticeTest,
     step.id,
     persistAttempt,
     supabase,
@@ -747,13 +866,17 @@ export function StepPlayer({
       "hint" in problem &&
       typeof problem.hint === "string" &&
       problem.hint.trim().length > 0;
+    const hintUnlockedNow =
+      !isPracticeTest ||
+      Date.now() - problemStartRef.current >= PRACTICE_TEST_HINT_DELAY_MS;
     // The first "I don't know" reveals the hint instead of the solution and is
     // not counted wrong; only the second one shows the full explanation.
     const submitFeedback: FeedbackState = isFirstMiss
       ? {
-          message: hasHint
-            ? "Not quite — check the hint below and try again."
-            : "Not quite — take another look and try again.",
+          message:
+            hasHint && hintUnlockedNow
+              ? "Not quite — check the hint below and try again."
+              : "Not quite — take another look and try again.",
           isCorrect: false,
         }
       : result;
@@ -780,6 +903,7 @@ export function StepPlayer({
     state.redemption,
     isDemo,
     isThrowback,
+    isPracticeTest,
     step.id,
     persistAttempt,
     failToFallback,
@@ -870,7 +994,43 @@ export function StepPlayer({
     state.redemptionOriginIndex === null ||
     state.redemptionOriginIndex >= step.problems.length - 1;
 
+  // Gate for advancing to the next question. Counts the just-resolved question
+  // when `graded` and, every ENCOURAGEMENT_EVERY graded questions, interrupts
+  // with the encouragement interstitial BEFORE running `advance`. Never fires
+  // when the advance ends the lesson (the completion screen handles that). The
+  // raw `advance` is stashed and run on "Continue", so it can't double-count or
+  // double-fire. Non-graded advances (demos/throwbacks) run through unchanged.
+  const runGatedAdvance = useCallback(
+    (advance: () => void, opts: { graded: boolean; endsLesson: boolean }) => {
+      if (opts.graded) {
+        answeredQuestionsRef.current += 1;
+        const crossedThreshold =
+          answeredQuestionsRef.current % ENCOURAGEMENT_EVERY === 0;
+        if (crossedThreshold && !opts.endsLesson) {
+          pendingAdvanceRef.current = advance;
+          setEncouragementVisible(true);
+          return;
+        }
+      }
+      advance();
+    },
+    []
+  );
+
+  const dismissEncouragement = useCallback(() => {
+    const advance = pendingAdvanceRef.current;
+    pendingAdvanceRef.current = null;
+    setEncouragementVisible(false);
+    // Rotate to the next message for the following crossing.
+    setEncouragementIndex((i) => i + 1);
+    if (advance) advance();
+  }, []);
+
   const handlePrimary = async () => {
+    // The interstitial owns the screen while visible; ignore any stray presses
+    // on the (covered) primary button until the learner taps "Continue".
+    if (encouragementVisible) return;
+
     // A redemption is queued: let the learner acknowledge the marking on the
     // triggering question, then enter the redemption problem.
     if (state.redemptionArmed) {
@@ -907,7 +1067,13 @@ export function StepPlayer({
     }
 
     if (state.masteryPassed) {
-      goToNextStep();
+      // Finishing a step (the last graded question of the step was just solved).
+      // Gate it unless this is the final step, which leads to the completion
+      // screen. Demo-only last problems aren't counted as graded.
+      runGatedAdvance(() => void goToNextStep(), {
+        graded: !isDemo,
+        endsLesson: isLastStep,
+      });
       return;
     }
 
@@ -920,7 +1086,12 @@ export function StepPlayer({
         // step (throwbacks are positioned to never be last, so this is rare).
         afterCorrectLastProblem(state.firstAttempts);
       } else {
-        dispatch({ type: "GOTO_PROBLEM", problemIndex: next });
+        // Moving to the next problem within the step. Count it as a graded
+        // question unless the one we're leaving was a demo or throwback.
+        runGatedAdvance(
+          () => dispatch({ type: "GOTO_PROBLEM", problemIndex: next }),
+          { graded: !isDemo && !isThrowback, endsLesson: false }
+        );
       }
       return;
     }
@@ -976,6 +1147,19 @@ export function StepPlayer({
     !state.masteryPassed &&
     !state.problemSolved;
 
+  // The problem has been missed twice and is now counted fully wrong (the
+  // SUBMIT reducer records firstAttempts=false and flips showChoiceResult at
+  // count >= 2). Throwbacks and redemption problems run their own flow, so they
+  // never trigger this reveal. We only render the reveal when a detailed
+  // `solution` exists — i.e. practice tests — so normal lessons stay unchanged.
+  const fullyWrong =
+    !state.redemption &&
+    !isThrowback &&
+    !!state.feedback &&
+    !state.feedback.isCorrect &&
+    (state.attemptCounts[problem.id] ?? 0) >= 2;
+  const showRevealPanel = fullyWrong && problemSolution !== undefined;
+
   return (
     <div className="flex min-h-screen flex-col pb-28">
       <div className="sticky top-0 z-20 -mx-4 border-b border-border/60 bg-bg/85 px-4 pb-3 pt-4 backdrop-blur">
@@ -1003,6 +1187,23 @@ export function StepPlayer({
               total={lesson.totalSteps}
             />
           </div>
+          <button
+            type="button"
+            onClick={goToNextReachedStep}
+            disabled={!canGoForward}
+            aria-label="Go forward to next step you've reached"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-border/60 hover:text-text disabled:pointer-events-none disabled:opacity-30"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden>
+              <path
+                d="M9 18l6-6-6-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
           <button
             type="button"
             onClick={() => void exitLesson()}
@@ -1036,7 +1237,7 @@ export function StepPlayer({
               state.redemption ? "text-amber-700" : "text-primary"
             }`}
           >
-            {state.masteryBanner}
+            <MathText text={state.masteryBanner} />
           </p>
         </div>
       )}
@@ -1054,7 +1255,9 @@ export function StepPlayer({
         (step.framing ? (
           <AnnotatedFraming framing={step.framing} />
         ) : (
-          <p className="mt-3 text-body text-muted">{step.conceptFraming}</p>
+          <p className="mt-3 text-body text-muted">
+            <MathText text={step.conceptFraming} />
+          </p>
         ))
       )}
 
@@ -1162,7 +1365,8 @@ export function StepPlayer({
             problem.type !== "parabola-a-slider" &&
             problem.type !== "vertex-pick" &&
             problem.type !== "graph-line" &&
-            problem.type !== "vertex-formula" && (
+            problem.type !== "vertex-formula" &&
+            problem.type !== "quadratic-formula" && (
               <FeedbackPanel
                 message={state.feedback?.message ?? ""}
                 isCorrect={state.feedback?.isCorrect ?? false}
@@ -1181,7 +1385,34 @@ export function StepPlayer({
               />
             )}
 
-          {state.hintRevealed && problemHint && (
+          {/* Counted fully wrong (second miss): reveal the correct answer and a
+              detailed worked solution. For numeric problems we print the answer
+              (nothing highlights it otherwise); for multiple-choice the correct
+              option is already highlighted via showChoiceResult. Only rendered
+              when a `solution` exists, so normal lessons are unaffected. */}
+          {showRevealPanel && (
+            <div className="mt-4 rounded-lg border border-primary/30 bg-primary-light px-4 py-3">
+              {problem.type === "numeric-input" && (
+                <p className="text-body font-semibold text-primary">
+                  Correct answer: <MathText text={String(problem.answer)} />
+                </p>
+              )}
+              {problemSolution && (
+                <div
+                  className={problem.type === "numeric-input" ? "mt-3" : ""}
+                >
+                  <p className="text-label font-semibold text-primary">
+                    How to solve it
+                  </p>
+                  <p className="mt-1 whitespace-pre-line text-body text-text">
+                    <MathText text={problemSolution} />
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {state.hintRevealed && problemHint && hintUnlocked && (
             <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
               <svg
                 viewBox="0 0 24 24"
@@ -1199,8 +1430,43 @@ export function StepPlayer({
               </svg>
               <div>
                 <p className="text-label font-semibold text-amber-700">Hint</p>
-                <p className="text-body text-amber-700/90">{problemHint}</p>
+                <p className="text-body text-amber-700/90">
+                  <MathText text={problemHint} />
+                </p>
               </div>
+            </div>
+          )}
+
+          {/* Practice test: the learner has triggered the hint, but it stays
+              locked until they've spent 30s on this problem. Show a muted
+              countdown in place of the hint; it appears automatically once the
+              timer crosses the threshold (hintUnlocked flips to true). */}
+          {state.hintRevealed && problemHint && !hintUnlocked && (
+            <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-border bg-surface px-4 py-3">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-5 w-5 shrink-0 text-muted"
+                aria-hidden
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M12 7v5l3 2"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <p className="text-label font-medium text-muted">
+                Give it a real try first — hint unlocks in {secondsUntilHint}s.
+              </p>
             </div>
           )}
 
@@ -1241,6 +1507,13 @@ export function StepPlayer({
           </button>
         )}
       </div>
+
+      {encouragementVisible && (
+        <EncouragementInterstitial
+          index={encouragementIndex}
+          onContinue={dismissEncouragement}
+        />
+      )}
     </div>
   );
 }

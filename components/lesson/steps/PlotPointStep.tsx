@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import type { PlotPointProblem } from "@/types/lesson";
+import { MathText } from "@/components/lesson/MathText";
+import { curveSegments } from "@/lib/plot";
 
 interface PlotPointStepProps {
   problem: PlotPointProblem;
@@ -14,19 +16,37 @@ interface Point {
   y: number;
 }
 
+const samePoint = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
+
 export function PlotPointStep({
   problem,
   onCorrect,
   disabled,
 }: PlotPointStepProps) {
-  const { targetX, targetY, xMin, xMax, yMin, yMax } = problem;
+  const { targetX, targetY, xMin, xMax, yMin, yMax, a, b, c } = problem;
   const svgRef = useRef<SVGSVGElement>(null);
   const notifiedRef = useRef(false);
 
+  // Normalize the answer key to a list. Multi-target problems (pick BOTH roots)
+  // pass `targets`; legacy single-point problems fall back to targetX/targetY.
+  const targetList: Point[] =
+    problem.targets && problem.targets.length > 0
+      ? problem.targets
+      : [{ x: targetX, y: targetY }];
+  const requireAll = problem.requireAll ?? targetList.length > 1;
+  const totalNeeded = requireAll ? targetList.length : 1;
+
+  // Draw the quadratic when the problem provides its coefficients, so the
+  // learner reads the crossings off a visible curve (rather than a bare grid).
+  const hasCurve = a !== undefined && b !== undefined && c !== undefined;
+
   const [hover, setHover] = useState<Point | null>(null);
-  const [clicked, setClicked] = useState<Point | null>(null);
-  const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
-  const solved = result === "correct";
+  const [found, setFound] = useState<Point[]>([]);
+  const [wrong, setWrong] = useState<Point | null>(null);
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(
+    null
+  );
+  const solved = found.length >= totalNeeded;
 
   // --- Grid geometry ------------------------------------------------------
   const xUnits = xMax - xMin;
@@ -44,6 +64,18 @@ export function PlotPointStep({
   for (let i = Math.ceil(xMin); i <= Math.floor(xMax); i++) xTicks.push(i);
   const yTicks: number[] = [];
   for (let i = Math.ceil(yMin); i <= Math.floor(yMax); i++) yTicks.push(i);
+
+  const curveSegs = hasCurve
+    ? curveSegments(
+        (x) => a! * x * x + b! * x + c!,
+        xMin,
+        xMax,
+        yMin,
+        yMax,
+        sx,
+        sy
+      )
+    : [];
 
   function toData(e: React.MouseEvent): Point | null {
     const svg = svgRef.current;
@@ -69,19 +101,43 @@ export function PlotPointStep({
     if (disabled || solved) return;
     const p = toData(e);
     if (!p) return;
-    setClicked(p);
-    if (p.x === targetX && p.y === targetY) {
-      setResult("correct");
-      if (!notifiedRef.current) {
-        notifiedRef.current = true;
-        onCorrect(problem.feedback.correct);
+
+    // Already found this one? Ignore.
+    if (found.some((f) => samePoint(f, p))) return;
+
+    const isTarget = targetList.some((t) => samePoint(t, p));
+    if (isTarget) {
+      const nextFound = [...found, p];
+      setFound(nextFound);
+      setWrong(null);
+      if (nextFound.length >= totalNeeded) {
+        setMessage(null);
+        if (!notifiedRef.current) {
+          notifiedRef.current = true;
+          onCorrect(problem.feedback.correct);
+        }
+      } else {
+        const remaining = totalNeeded - nextFound.length;
+        setMessage({
+          text:
+            remaining === 1
+              ? "Found one — now pick the other crossing."
+              : `Found one — ${remaining} more to go.`,
+          error: false,
+        });
       }
     } else {
-      setResult("incorrect");
+      setWrong(p);
+      setMessage({
+        text:
+          `You clicked (${p.x}, ${p.y}). ` +
+          (problem.feedback.incorrect ?? "That isn't a crossing — try again."),
+        error: true,
+      });
     }
   }
 
-  const readout = hover ?? clicked;
+  const readout = hover ?? wrong;
   const labelStyle = { fontSize: 9, fill: "var(--color-muted)" } as const;
   const axisLabelStyle = {
     fontSize: 12,
@@ -90,16 +146,22 @@ export function PlotPointStep({
     fill: "var(--color-text)",
   } as const;
 
+  const instruction =
+    totalNeeded > 1
+      ? `Click BOTH points where the curve crosses the x-axis. (${found.length}/${totalNeeded} found)`
+      : "Hover over the grid to read off coordinates, then click the point you're plotting.";
+
   return (
     <div>
-      <p className="text-body text-text">{problem.prompt}</p>
-      <p className="mt-2 text-label text-muted">
-        Hover over the grid to read off coordinates, then click the point you&apos;re
-        plotting.
+      <p className="text-body text-text">
+        <MathText text={problem.prompt} />
+      </p>
+      <p className="mt-2 text-label normal-case tracking-normal text-muted">
+        {instruction}
       </p>
 
       <div className="relative mt-4 flex justify-center">
-        <div className="pointer-events-none absolute right-2 top-2 rounded-lg border border-border bg-surface px-3 py-1.5 font-equation text-equation text-text shadow-sm">
+        <div className="pointer-events-none absolute right-2 top-2 rounded-lg border border-border bg-surface px-3 py-1.5 font-math text-equation text-text shadow-sm">
           {readout
             ? `(x = ${readout.x}, y = ${readout.y})`
             : "Move your mouse over the grid"}
@@ -188,6 +250,19 @@ export function PlotPointStep({
             y
           </text>
 
+          {/* the quadratic curve (when coefficients are provided) */}
+          {curveSegs.map((pts, i) => (
+            <polyline
+              key={`seg${i}`}
+              points={pts}
+              fill="none"
+              stroke="var(--color-primary)"
+              strokeWidth={2.5}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          ))}
+
           {/* hover crosshair point */}
           {hover && !solved && (
             <circle
@@ -201,17 +276,26 @@ export function PlotPointStep({
             />
           )}
 
-          {/* clicked point */}
-          {clicked && (
+          {/* found target points */}
+          {found.map((f) => (
             <circle
-              cx={sx(clicked.x)}
-              cy={sy(clicked.y)}
+              key={`f${f.x},${f.y}`}
+              cx={sx(f.x)}
+              cy={sy(f.y)}
               r={7}
-              fill={
-                result === "correct"
-                  ? "var(--color-success)"
-                  : "var(--color-error)"
-              }
+              fill="var(--color-success)"
+              stroke="white"
+              strokeWidth={2}
+            />
+          ))}
+
+          {/* last wrong click */}
+          {wrong && !solved && (
+            <circle
+              cx={sx(wrong.x)}
+              cy={sy(wrong.y)}
+              r={7}
+              fill="var(--color-error)"
               stroke="white"
               strokeWidth={2}
             />
@@ -219,18 +303,24 @@ export function PlotPointStep({
         </svg>
       </div>
 
-      {result === "incorrect" && clicked && (
-        <div className="mt-4 rounded-lg border border-error/40 bg-error/5 px-4 py-3">
-          <p className="text-body text-error">
-            You clicked ({clicked.x}, {clicked.y}).{" "}
-            {problem.feedback.incorrect ??
-              "That isn't the point — try again."}
+      {message && !solved && (
+        <div
+          className={`mt-4 rounded-lg border px-4 py-3 ${
+            message.error
+              ? "border-error/40 bg-error/5"
+              : "border-primary/40 bg-primary-light"
+          }`}
+        >
+          <p className={`text-body ${message.error ? "text-error" : "text-primary"}`}>
+            <MathText text={message.text} />
           </p>
         </div>
       )}
-      {result === "correct" && (
+      {solved && (
         <div className="mt-4 rounded-lg border border-success/40 bg-success/10 px-4 py-3">
-          <p className="text-body text-success">{problem.feedback.correct}</p>
+          <p className="text-body text-success">
+            <MathText text={problem.feedback.correct} />
+          </p>
         </div>
       )}
     </div>

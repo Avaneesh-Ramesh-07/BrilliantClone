@@ -25,7 +25,7 @@ export function PracticeSummary({ request, onDone }: PracticeSummaryProps) {
   return (
     <main className="py-8">
       <header className="mb-6">
-        <p className="text-label text-muted">Sandbox</p>
+        <p className="text-label text-muted">Endless Practice</p>
         <h1 className="font-heading text-heading-lg text-text">
           Session summary
         </h1>

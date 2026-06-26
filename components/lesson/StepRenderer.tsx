@@ -17,6 +17,7 @@ import { PizzaShareStep } from "./steps/PizzaShareStep";
 import { BalanceChoiceStep } from "./steps/BalanceChoiceStep";
 import { VariableBoxStep } from "./steps/VariableBoxStep";
 import { VertexFormulaStep } from "./steps/VertexFormulaStep";
+import { QuadraticFormulaStep } from "./steps/QuadraticFormulaStep";
 import { PlotPointStep } from "./steps/PlotPointStep";
 import { PowerToggleStep } from "./steps/PowerToggleStep";
 import { TwoStepShareStep } from "./steps/TwoStepShareStep";
@@ -238,6 +239,14 @@ export function StepRenderer({
     case "vertex-formula":
       return (
         <VertexFormulaStep
+          problem={problem}
+          onCorrect={onDragCorrect}
+          disabled={disabled || problemSolved}
+        />
+      );
+    case "quadratic-formula":
+      return (
+        <QuadraticFormulaStep
           problem={problem}
           onCorrect={onDragCorrect}
           disabled={disabled || problemSolved}

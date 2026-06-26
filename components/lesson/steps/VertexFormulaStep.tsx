@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { VertexFormulaProblem } from "@/types/lesson";
+import { Fraction } from "@/components/lesson/Fraction";
 
 interface VertexFormulaStepProps {
   problem: VertexFormulaProblem;
@@ -23,6 +24,20 @@ function fmtNum(n: number): string {
 /** Wrap negatives in parentheses for substitution lines, e.g. (−8). */
 function fmtParen(n: number): string {
   return n < 0 ? `(${fmtNum(n)})` : fmtNum(n);
+}
+
+/** Format y = a·x² + b·x + c as a clean string (handles ±1 coefficients, 0 terms). */
+function formatQuadratic(a: number, b: number, c: number): string {
+  const aPart = a === 1 ? "x²" : a === -1 ? "−x²" : `${fmtNum(a)}x²`;
+  let s = `y = ${aPart}`;
+  if (b !== 0) {
+    const bMag = Math.abs(b);
+    s += ` ${b < 0 ? "−" : "+"} ${bMag === 1 ? "" : bMag}x`;
+  }
+  if (c !== 0) {
+    s += ` ${c < 0 ? "−" : "+"} ${Math.abs(c)}`;
+  }
+  return s;
 }
 
 /** Shuffle a copy of the array (Fisher–Yates). */
@@ -63,6 +78,15 @@ export function VertexFormulaStep({
   const den = 2 * a; // denominator after 2·a
   const vx = num / den;
   const vy = a * vx * vx + b * vx + c;
+
+  // Worked substitution line: plug the found x back into the original equation.
+  const aDisp = a === 1 ? "" : a === -1 ? "−" : fmtNum(a);
+  const originalEq = formatQuadratic(a, b, c);
+  const subLine =
+    `y = ${aDisp}(${fmtNum(vx)})²` +
+    (b !== 0 ? ` ${b < 0 ? "−" : "+"} ${Math.abs(b)}(${fmtNum(vx)})` : "") +
+    (c !== 0 ? ` ${c < 0 ? "−" : "+"} ${Math.abs(c)}` : "") +
+    ` = ${fmtNum(vy)}`;
 
   // Once both slots are correctly filled, stage the auto-simplify reveal.
   useEffect(() => {
@@ -187,7 +211,7 @@ export function VertexFormulaStep({
 
       <div className="mt-6 rounded-xl border border-border bg-bg/60 p-6">
         {/* Example quadratic with a and b highlighted */}
-        <div className="flex flex-wrap items-center justify-center gap-x-1 font-equation text-equation text-text">
+        <div className="flex flex-wrap items-center justify-center gap-x-1 font-math text-equation text-text">
           <span>y =</span>
           <span className="ml-1 rounded-md bg-primary-light px-1.5 font-semibold text-primary">
             {aCoeffText || "1"}
@@ -205,15 +229,23 @@ export function VertexFormulaStep({
           a is the x² coefficient, b is the x coefficient.
         </p>
 
-        {/* Formula template: x = −[ b ] / ( 2 · [ a ] ) */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 font-equation text-equation text-text">
+        {/* Formula template as a real stacked fraction: (−[b]) over (2 · [a]) */}
+        <div className="mt-6 flex items-center justify-center gap-2 font-math text-equation text-text">
           <span>x =</span>
-          <span>−</span>
-          <Slot slot="b" value={slotB} />
-          <span>/</span>
-          <span>( 2 ·</span>
-          <Slot slot="a" value={slotA} />
-          <span>)</span>
+          <Fraction
+            numerator={
+              <span className="flex items-center gap-1">
+                <span>−</span>
+                <Slot slot="b" value={slotB} />
+              </span>
+            }
+            denominator={
+              <span className="flex items-center gap-1">
+                <span>2 ·</span>
+                <Slot slot="a" value={slotA} />
+              </span>
+            }
+          />
         </div>
 
         {/* Token bank */}
@@ -253,26 +285,49 @@ export function VertexFormulaStep({
           </div>
         )}
 
-        {/* Auto-simplify reveal */}
+        {/* Step 1 — simplify the formula to get the x-coordinate */}
         {stage >= 1 && (
-          <div className="mt-7 space-y-2 text-center font-equation text-equation">
-            <p
-              className={`text-text transition-opacity duration-300 ${
-                stage >= 1 ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              x = −{fmtParen(b)} / (2 · {fmtParen(a)})
+          <div className="mt-7">
+            <p className="text-center text-label font-semibold text-primary">
+              Step 1 — find x with the formula
             </p>
-            {stage >= 2 && (
-              <p className="text-text transition-opacity duration-300">
-                x = {fmtNum(num)} / {fmtNum(den)}
-              </p>
-            )}
-            {stage >= 3 && (
-              <p className="font-semibold text-primary transition-opacity duration-300">
-                x = {fmtNum(vx)}
-              </p>
-            )}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 font-math text-equation text-text">
+              <span>x =</span>
+              <Fraction
+                numerator={<span>−{fmtParen(b)}</span>}
+                denominator={<span>2 · {fmtParen(a)}</span>}
+              />
+              {stage >= 2 && (
+                <>
+                  <span>=</span>
+                  <Fraction
+                    numerator={<span>{fmtNum(num)}</span>}
+                    denominator={<span>{fmtNum(den)}</span>}
+                  />
+                </>
+              )}
+              {stage >= 3 && (
+                <>
+                  <span>=</span>
+                  <span className="font-semibold text-primary">{fmtNum(vx)}</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2 — substitute x back into the original equation to get y */}
+        {stage >= 4 && (
+          <div className="mt-7">
+            <p className="text-center text-label font-semibold text-primary">
+              Step 2 — substitute x into the equation
+            </p>
+            <p className="mt-1 text-center text-body text-muted">
+              Now plug x = {fmtNum(vx)} back into {originalEq} to get y:
+            </p>
+            <p className="mt-2 text-center font-math text-equation text-text">
+              {subLine}
+            </p>
           </div>
         )}
 
@@ -280,12 +335,11 @@ export function VertexFormulaStep({
         {stage >= 4 && (
           <div className="mt-6 rounded-xl border border-success/40 bg-success/10 px-4 py-4 text-center">
             <p className="text-label font-semibold text-success">Vertex</p>
-            <p className="mt-1 font-equation text-2xl font-bold text-success">
+            <p className="mt-1 font-math text-2xl font-bold text-success">
               ({fmtNum(vx)}, {fmtNum(vy)})
             </p>
-            <p className="mt-1 text-label text-muted">
-              y = {fmtNum(a)}({fmtNum(vx)})² {b < 0 ? "−" : "+"} {Math.abs(b)}(
-              {fmtNum(vx)}) {c < 0 ? "−" : "+"} {Math.abs(c)} = {fmtNum(vy)}
+            <p className="mt-1 text-label normal-case tracking-normal text-muted">
+              (x from Step 1, y from Step 2)
             </p>
           </div>
         )}

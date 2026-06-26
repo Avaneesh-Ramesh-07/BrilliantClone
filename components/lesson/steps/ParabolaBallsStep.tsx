@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import type { ParabolaBallsProblem } from "@/types/lesson";
 import { curveSegments } from "@/lib/plot";
+import { MathText } from "@/components/lesson/MathText";
 
 interface ParabolaBallsStepProps {
   problem: ParabolaBallsProblem;
@@ -111,6 +112,9 @@ export function ParabolaBallsStep({
   const sx = (dx: number) => margin + (dx - xMin) * cell;
   const sy = (dy: number) => margin + (yMax - dy) * cell;
   const clampY = (y: number) => Math.max(yMin, Math.min(yMax, y));
+  // The y = 0 line acts as a floor: in settle-roots mode balls never render
+  // below it (so a slight spring overshoot can't pass through the ground).
+  const floorY = (y: number) => (mode === "settle-roots" ? Math.max(0, y) : y);
 
   const xTicks: number[] = [];
   for (let i = Math.ceil(xMin); i <= Math.floor(xMax); i++) xTicks.push(i);
@@ -309,8 +313,10 @@ export function ParabolaBallsStep({
 
   return (
     <div>
-      <p className="text-body text-text">{problem.prompt}</p>
-      <p className="mt-2 font-equation text-equation text-primary">
+      <p className="text-body text-text">
+        <MathText text={problem.prompt} />
+      </p>
+      <p className="mt-2 font-math text-equation text-primary">
         {problem.equationLabel}
       </p>
 
@@ -391,6 +397,31 @@ export function ParabolaBallsStep({
             y
           </text>
 
+          {/* Bold x-axis "floor" (y = 0) with subtle ground shading — ONLY for
+              the solutions demo, where balls come to rest ON this line at the
+              crossings. The min/max demos use the plain grid axis instead. */}
+          {mode === "settle-roots" && (
+            <>
+              <rect
+                x={margin}
+                y={sy(0)}
+                width={plotW}
+                height={Math.max(0, H - margin - sy(0))}
+                fill="var(--color-muted)"
+                opacity={0.1}
+              />
+              <line
+                x1={sx(xMin)}
+                y1={sy(0)}
+                x2={sx(xMax)}
+                y2={sy(0)}
+                stroke="var(--color-text)"
+                strokeWidth={4}
+                strokeLinecap="round"
+              />
+            </>
+          )}
+
           {/* the parabola */}
           {curveSegs.map((pts, i) => (
             <polyline
@@ -410,7 +441,7 @@ export function ParabolaBallsStep({
             <circle
               key={ball.key}
               cx={sx(ball.x)}
-              cy={sy(clampY(ball.y))}
+              cy={sy(clampY(floorY(ball.y)))}
               r={7}
               fill={
                 ball.success
@@ -448,7 +479,9 @@ export function ParabolaBallsStep({
 
       {solved && (
         <div className="mt-4 rounded-lg border border-success/40 bg-success/10 px-4 py-3">
-          <p className="text-body text-success">{problem.feedback.correct}</p>
+          <p className="text-body text-success">
+            <MathText text={problem.feedback.correct} />
+          </p>
         </div>
       )}
     </div>

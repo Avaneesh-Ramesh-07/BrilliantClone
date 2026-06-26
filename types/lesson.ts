@@ -74,6 +74,12 @@ export interface NumericInputProblem {
   answer: number;
   /** One conceptual nudge revealed after a wrong attempt. Never the answer. */
   hint?: string;
+  /**
+   * Detailed worked solution revealed only once the problem is counted fully
+   * wrong (the second miss). Distinct from the short `hint`. Populated for
+   * practice-test problems; absent on normal lessons (which stay unchanged).
+   */
+  solution?: string;
   /** Per-question override of the step's reinforcement interactive. */
   interactive?: InteractiveHelper;
   /** Present when this is a retrieval-practice throwback (see {@link ThrowbackMeta}). */
@@ -99,6 +105,12 @@ export interface MultipleChoiceProblem {
   options: MultipleChoiceOption[];
   /** One conceptual nudge revealed after a wrong attempt. Never the answer. */
   hint?: string;
+  /**
+   * Detailed worked solution revealed only once the problem is counted fully
+   * wrong (the second miss). Distinct from the short `hint`. Populated for
+   * practice-test problems; absent on normal lessons (which stay unchanged).
+   */
+  solution?: string;
   /** Per-question override of the step's reinforcement interactive. */
   interactive?: InteractiveHelper;
   /**
@@ -370,6 +382,25 @@ export interface PlotPointProblem {
   xMax: number;
   yMin: number;
   yMax: number;
+  /**
+   * Optional quadratic y = a·x² + b·x + c to DRAW on the grid, so the learner
+   * reads the crossings off a visible curve (used by the step-6 solutions
+   * problems). When omitted, only the grid is shown (legacy single-point use).
+   */
+  a?: number;
+  b?: number;
+  c?: number;
+  /**
+   * Optional multi-point answer key. When present the learner must click EVERY
+   * listed point (in any order) — used for "pick both roots". Falls back to the
+   * single {@link targetX}/{@link targetY} when omitted.
+   */
+  targets?: { x: number; y: number }[];
+  /**
+   * Require all {@link targets} before the problem is solved. Defaults to true
+   * whenever `targets` holds more than one point.
+   */
+  requireAll?: boolean;
   feedback: ProblemFeedback;
 }
 
@@ -499,6 +530,31 @@ export interface VertexFormulaProblem {
 }
 
 /**
+ * Quadratic-formula drag-and-drop demo. Shows the formula
+ * x = (−b ± √(b² − 4ac)) / (2a) with empty a, b, c slots. The learner drags the
+ * numeric values of a, b and c (from y = a·x² + b·x + c) into the slots. A wrong
+ * drop is auto-rejected with an explanation. When all three are correct it
+ * auto-substitutes, computes the discriminant, and reveals the two solutions.
+ * Self-driven demo: calls onCorrect when fully solved. Not graded.
+ */
+export interface QuadraticFormulaProblem {
+  id: string;
+  type: "quadratic-formula";
+  demo?: boolean;
+  /** Goal framing. */
+  prompt: string;
+  /** Instruction shown to the learner. */
+  question: string;
+  /** Example quadratic coefficients: a·x² + b·x + c = 0. */
+  a: number;
+  b: number;
+  c: number;
+  /** Numeric tokens for the draggable bank. Must include the values of a, b and c; the rest are distractors. All values must be distinct. */
+  tokens: number[];
+  feedback: ProblemFeedback;
+}
+
+/**
  * Graded "click the vertex" problem. The parabola y = a·x² + b·x + c is drawn on
  * a grid and the learner clicks the point that is its minimum (target "min") or
  * maximum (target "max"), or presses a "There is no minimum/maximum" button.
@@ -616,7 +672,8 @@ export type Problem =
   | VertexPickProblem
   | PickGraphProblem
   | GraphLineProblem
-  | VertexFormulaProblem;
+  | VertexFormulaProblem
+  | QuadraticFormulaProblem;
 
 export interface StepCompletionAction {
   buttonLabel: string;
@@ -630,8 +687,18 @@ export interface StepCompletionAction {
  * prose explanation can be replaced by a short line plus an interactive formula.
  */
 export interface EquationPart {
-  text: string;
+  text?: string;
   note?: string;
+  /**
+   * When set, this part renders as a true stacked fraction (numerator over a
+   * bar over denominator) instead of plain `text`. Numerator/denominator are
+   * themselves arrays of {@link EquationPart}, so each can carry its own
+   * hoverable `note`.
+   */
+  fraction?: {
+    numerator: EquationPart[];
+    denominator: EquationPart[];
+  };
 }
 
 /**

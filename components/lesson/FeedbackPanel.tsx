@@ -1,3 +1,5 @@
+import { MathText } from "./MathText";
+
 interface FeedbackPanelProps {
   message: string;
   isCorrect: boolean;
@@ -20,7 +22,9 @@ export function FeedbackPanel({
       }`}
       role="status"
     >
-      <p className="text-feedback">{message}</p>
+      <p className="text-feedback">
+        <MathText text={message} />
+      </p>
     </div>
   );
 }

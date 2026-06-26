@@ -10,6 +10,7 @@ import {
   isLessonComplete,
 } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
+import type { Lesson } from "@/types/lesson";
 
 interface CompletePageProps {
   params: Promise<{ id: string }>;
@@ -74,9 +75,6 @@ function renderCelebration(template: string, lessonName: string) {
 
 export default async function CompletePage({ params }: CompletePageProps) {
   const { id } = await params;
-  const lesson = getLesson(id);
-
-  if (!lesson) notFound();
 
   const supabase = await createClient();
   const {
@@ -85,13 +83,32 @@ export default async function CompletePage({ params }: CompletePageProps) {
 
   if (!user) redirect("/login");
 
+  // Static curriculum lessons resolve from the bundled content. AI "Sandbox"
+  // lessons aren't in that map, so fall back to the learner's own ai_lessons
+  // row (StepPlayer routes every lesson here on finish, keyed by lesson.id).
+  const staticLesson = getLesson(id);
+  let lesson = staticLesson;
+  if (!lesson) {
+    const { data: row } = await supabase
+      .from("ai_lessons")
+      .select("lesson_json")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (row) lesson = row.lesson_json as Lesson;
+  }
+
+  if (!lesson) notFound();
+
+  const isAiLesson = !staticLesson;
+
   let progress = await getLessonProgress(supabase, user.id, lesson.id);
 
   // If the lesson is in a finished state, always show the congrats screen —
   // even if the learner has since moved back through the lesson.
   if (!isLessonComplete(progress)) {
     if (progress.current_step_index < lesson.totalSteps - 1) {
-      redirect(`/lesson/${id}`);
+      redirect(isAiLesson ? `/sandbox/lesson/${id}` : `/lesson/${id}`);
     }
     await completeLesson(supabase, user.id, lesson.id);
     // Re-read so we pick up the total run time computed at completion.
@@ -102,7 +119,8 @@ export default async function CompletePage({ params }: CompletePageProps) {
   const title = pickRandom(CELEBRATION_TITLES);
   const subtitle = pickRandom(CELEBRATION_SUBTITLES);
 
-  const nextLessonId = getNextLessonId(lesson.id);
+  // AI lessons stand alone — there's no curriculum "next lesson" for them.
+  const nextLessonId = isAiLesson ? null : getNextLessonId(lesson.id);
   const nextLesson = nextLessonId ? getLesson(nextLessonId) : undefined;
   // If the next lesson is already finished, send the learner to its congrats
   // screen instead of dropping them at its last in-progress problem.

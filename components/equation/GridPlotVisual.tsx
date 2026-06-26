@@ -77,6 +77,32 @@ export function GridPlotVisual({ visual, animation }: GridPlotVisualProps) {
 
   return (
     <div className="mt-6 rounded-lg border border-border bg-surface p-3">
+      <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
+        {showLeft && (
+          <span className="inline-flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-1.5 font-math text-equation text-text shadow-sm">
+            <span
+              className="inline-block h-2.5 w-4 rounded-sm"
+              style={{ backgroundColor: "#3B5BDB" }}
+              aria-hidden
+            />
+            {visual.leftLine.label}
+          </span>
+        )}
+        {showRight && (
+          <span className="inline-flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-1.5 font-math text-equation text-text shadow-sm">
+            <span
+              className="inline-block h-2.5 w-4 rounded-sm"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(90deg, #E03131 0 4px, transparent 4px 7px)",
+              }}
+              aria-hidden
+            />
+            {visual.rightLine.label}
+          </span>
+        )}
+      </div>
+
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="mx-auto w-full max-w-[280px]"

@@ -64,6 +64,20 @@ body {
     font-weight: 400;
     font-style: italic;
   }
+
+  /*
+   * Shared "math" face used everywhere an equation appears (backtick math in
+   * MathText, EquationBadge chips, grid equation chips, the vertex fraction).
+   * A serif italic stack reads as classic math typesetting and clearly stands
+   * out from the sans-serif prose. Declared last in the utilities layer so its
+   * font-family/style win when combined with text-equation/font-equation.
+   */
+  .font-math {
+    font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", Georgia,
+      "Times New Roman", serif;
+    font-style: italic;
+    letter-spacing: 0.01em;
+  }
 }
 
 @keyframes tile-shake {

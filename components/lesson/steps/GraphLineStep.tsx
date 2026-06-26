@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import type { GraphLineProblem } from "@/types/lesson";
 import { curveSegments } from "@/lib/plot";
+import { EquationBadge } from "@/components/lesson/EquationBadge";
+import { MathText } from "@/components/lesson/MathText";
 
 interface GraphLineStepProps {
   problem: GraphLineProblem;
@@ -141,11 +143,15 @@ export function GraphLineStep({
 
   return (
     <div>
-      <p className="text-body text-text">{problem.prompt}</p>
-      <p className="mt-2 font-equation text-equation text-primary">
-        {problem.equationLabel}
+      <p className="text-body text-text">
+        <MathText text={problem.prompt} />
       </p>
-      <p className="mt-2 text-label text-muted">{instruction}</p>
+      <EquationBadge
+        equation={problem.equationLabel}
+        label="Graph this line"
+        className="mt-3"
+      />
+      <p className="mt-3 text-label text-muted">{instruction}</p>
 
       <div className="relative mt-4 flex justify-center">
         <div className="pointer-events-none absolute right-2 top-2 rounded-lg border border-border bg-surface px-3 py-1.5 font-equation text-equation text-text shadow-sm">
@@ -301,12 +307,16 @@ export function GraphLineStep({
 
       {message && !solved && (
         <div className="mt-4 rounded-lg border border-error/40 bg-error/5 px-4 py-3">
-          <p className="text-body text-error">{message}</p>
+          <p className="text-body text-error">
+            <MathText text={message} />
+          </p>
         </div>
       )}
       {solved && (
         <div className="mt-4 rounded-lg border border-success/40 bg-success/10 px-4 py-3">
-          <p className="text-body text-success">{problem.feedback.correct}</p>
+          <p className="text-body text-success">
+            <MathText text={problem.feedback.correct} />
+          </p>
         </div>
       )}
     </div>

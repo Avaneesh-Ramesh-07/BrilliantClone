@@ -22,7 +22,11 @@ Do NOT use this skill for:
 
 ---
 
+
+
 ## Roles
+
+
 
 ### Lead Agent
 
@@ -48,6 +52,8 @@ A Sub-Agent is spawned by the Lead Agent for exactly one sub-task. Each Sub-Agen
 - Halts and reports to the Lead Agent if it encounters an ambiguity it cannot resolve alone
 
 ---
+
+
 
 ## Task Plan Format
 
@@ -97,6 +103,8 @@ Dependencies: SubTask-A, SubTask-B
 
 ---
 
+
+
 ## Conflict Prevention Rules
 
 These rules are mandatory. A Sub-Agent that would violate any rule must stop and report to the Lead Agent instead.
@@ -122,11 +130,15 @@ The Lead Agent reviews each Sub-Agent's output before marking it Complete and un
 - Does the TypeScript / code compile without errors in the affected files?
 - Are there any side effects that could affect downstream Sub-Agents?
 
+
+
 ### Rule 5 — Failing Sub-Agent blocks its dependents
 
 If a Sub-Agent's output fails the review, its status is set to BLOCKED. All Sub-Tasks that depend on it are also blocked. The Lead Agent either re-runs the Sub-Agent with corrected instructions or handles the failure itself before unblocking.
 
 ---
+
+
 
 ## Scheduling Logic
 
@@ -151,7 +163,11 @@ waits for completion and review, then issues the next.
 
 ---
 
+
+
 ## Step-by-Step Execution Protocol
+
+
 
 ### Step 0 — Read and understand the full task
 
@@ -184,6 +200,8 @@ For each completed Sub-Agent:
 - If review fails: set status BLOCKED, document the issue, decide whether to re-run or fix directly
 - If review passes: set status Complete
 
+
+
 ### Step 4 — Unblock and continue
 
 Check the dependency graph. Any sub-task whose dependencies are all Complete is now eligible. Return to Step 2.
@@ -197,11 +215,15 @@ When all sub-tasks are Complete, the Lead Agent performs integration:
 - Runs any existing tests
 - Fixes any integration errors directly (does not spawn a new Sub-Agent for small fixes)
 
+
+
 ### Step 6 — Final verification
 
 The Lead Agent verifies the completed work against the original task requirements line by line. Updates `.cursor/agent-plan.md` with `Status: COMPLETE`. Reports to the user with a summary of what was built, which files were created or modified, and any known limitations.
 
 ---
+
+
 
 ## Sub-Agent Instruction Template
 
@@ -248,6 +270,8 @@ Completion Note section:
 
 ---
 
+
+
 ## Example: Applying This Skill to a Real Task
 
 **User task:** "Add a coin economy to my app. Users earn coins for correct answers. Coins are stored in Supabase. A coin counter shows in the header."
@@ -289,6 +313,8 @@ SubTask-B and SubTask-C run in parallel after SubTask-A completes. SubTask-D run
 
 ---
 
+
+
 ## What to Do When Things Go Wrong
 
 
@@ -304,6 +330,8 @@ SubTask-B and SubTask-C run in parallel after SubTask-A completes. SubTask-D run
 
 ---
 
+
+
 ## Files This Skill Creates
 
 
@@ -314,6 +342,8 @@ SubTask-B and SubTask-C run in parallel after SubTask-A completes. SubTask-D run
 
 ---
 
+
+
 ## Correctness Over Efficiency
 
-When there is any doubt about whether two sub-tasks conflict, default to sequential execution. The cost of a conflict (broken code, merge effort, wasted Sub-Agent work) is always higher than the cost of waiting one extra turn. Parallelise only when the independence of sub-tasks is certain.
+Deploy as many subagents as you deem necessary to complete the task. However, when there is any doubt about whether two sub-tasks conflict, default to sequential execution. The cost of a conflict (broken code, merge effort, wasted Sub-Agent work) is always higher than the cost of waiting one extra turn. Parallelise only when the independence of sub-tasks is certain. 

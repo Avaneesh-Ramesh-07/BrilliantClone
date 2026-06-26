@@ -4,7 +4,7 @@
   "subject": "Algebra",
   "description": "Recognize quadratics, learn their standard form, find their minimum/maximum and solutions, and factor them to reveal their zeros.",
   "estimatedMinutes": 30,
-  "totalSteps": 8,
+  "totalSteps": 9,
   "masteryRule": {
     "description": "After all problems in a step are submitted, compute first-attempt correctness. If below masteryThreshold, send the student to fallbackStepId and show fallbackMessage.",
     "nextButtonVisibleOnlyAfterMastery": true
@@ -540,11 +540,11 @@
           "throwback": { "source": "Step 3 · The Minimum of a Parabola" },
           "prompt": "Throwback: a parabola has a minimum (lowest point) when…",
           "options": [
-            { "id": "a", "text": "a > 0 (it opens upward)", "correct": true },
-            { "id": "b", "text": "a < 0 (it opens downward)", "correct": false },
+            { "id": "a", "text": "a > 0", "correct": true },
+            { "id": "b", "text": "a < 0", "correct": false },
             { "id": "c", "text": "a = 0", "correct": false }
           ],
-          "feedback": { "correct": "Right — when a > 0 it opens upward and has a minimum.", "incorrect": "A minimum exists when a > 0, so the parabola opens upward." }
+          "feedback": { "correct": "Right — a minimum exists when a > 0.", "incorrect": "A minimum exists when a > 0." }
         },
         {
           "id": "tb-qd-s4-2",
@@ -698,22 +698,29 @@
     },
     {
       "id": "step-5",
-      "title": "Finding the Vertex with x = −b/2a",
-      "concept": "The x-coordinate of the vertex is x = −b/(2a)",
-      "conceptFraming": "The x-coordinate of the vertex is always x = −b / (2a).",
+      "title": "Finding the Vertex",
+      "concept": "The x-coordinate of the vertex comes from a and b",
+      "conceptFraming": "The x-coordinate of the vertex always comes from the formula below.",
       "framing": {
         "lead": "The vertex's x-coordinate comes straight from a and b. Hover the parts of the formula.",
         "equation": [
           { "text": "x = " },
-          { "text": "−b", "note": "The negative of b, the coefficient of x." },
-          { "text": " / " },
-          { "text": "2a", "note": "Two times a, the coefficient of x²." }
+          {
+            "fraction": {
+              "numerator": [
+                { "text": "−b", "note": "The negative of b, the coefficient of x." }
+              ],
+              "denominator": [
+                { "text": "2a", "note": "Two times a, the coefficient of x²." }
+              ]
+            }
+          }
         ],
-        "note": "This works whether the vertex is a minimum or a maximum."
+        "note": "This works whether the vertex is a minimum or a maximum. Once you have x, plug it back into the equation to get y."
       },
       "masteryThreshold": 0.67,
       "fallbackStepId": "step-5",
-      "fallbackMessage": "Let's practice the vertex formula again: x = −b / (2a).",
+      "fallbackMessage": "Let's practice the vertex formula again.",
       "hints": [],
       "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-6" },
       "present": 5,
@@ -733,11 +740,11 @@
           "throwback": { "source": "Step 4 · The Maximum of a Parabola" },
           "prompt": "Throwback: a parabola has a maximum (highest point) when…",
           "options": [
-            { "id": "a", "text": "a < 0 (it opens downward)", "correct": true },
-            { "id": "b", "text": "a > 0 (it opens upward)", "correct": false },
-            { "id": "c", "text": "a = 1 always", "correct": false }
+            { "id": "a", "text": "a < 0", "correct": true },
+            { "id": "b", "text": "a > 0", "correct": false },
+            { "id": "c", "text": "a = 0", "correct": false }
           ],
-          "feedback": { "correct": "Right — when a < 0 it opens downward and has a maximum.", "incorrect": "A maximum exists when a < 0, so the parabola opens downward." }
+          "feedback": { "correct": "Right — a maximum exists when a < 0.", "incorrect": "A maximum exists when a < 0." }
         },
         {
           "id": "tb-qd-s5-3",
@@ -754,24 +761,24 @@
           "type": "vertex-formula",
           "demo": true,
           "prompt": "Build the vertex formula by dragging in the right values.",
-          "question": "The x-coordinate of the vertex is x = −b / (2a). Drag the value of b and the value of a from y = 2x² − 8x + 3 into the formula. Drop the correct numbers and it simplifies straight to the vertex.",
+          "question": "The x-coordinate of the vertex comes from the formula below. Drag the value of b and the value of a from y = 2x² − 8x + 3 into the formula, and it simplifies straight to the vertex.",
           "a": 2,
           "b": -8,
           "c": 3,
           "tokens": [2, -8, 3, 8, -2, 4],
           "feedback": {
-            "correct": "x = −(−8) / (2·2) = 8/4 = 2, and y = 2(2)² − 8(2) + 3 = −5, so the vertex is (2, −5)."
+            "correct": "That's it — dropping a and b into the formula simplifies straight to the vertex."
           }
         },
         {
           "id": "q5b",
           "type": "numeric-input",
-          "prompt": "Find the x-coordinate of the vertex of y = x² − 4x + 1. (`a` = 1, `b` = −4.)",
-          "answer": 2,
-          "hint": "x = −b/(2a) = −(−4)/(2·1).",
+          "prompt": "Find the x-coordinate of the vertex of y = x² − 6x + 1. (`a` = 1, `b` = −6.)",
+          "answer": 3,
+          "hint": "x = \\frac{−b}{2a} = \\frac{−(−6)}{2·1}.",
           "feedback": {
-            "correct": "Right — x = −(−4)/(2·1) = 4/2 = 2.",
-            "incorrect": "Plug into x = −b/(2a): −(−4)/(2·1) = 2."
+            "correct": "Right — x = −(−6)/(2·1) = 6/2 = 3.",
+            "incorrect": "Plug into x = −b/(2a): −(−6)/(2·1) = 3."
           }
         },
         {
@@ -779,7 +786,7 @@
           "type": "numeric-input",
           "prompt": "Find the x-coordinate of the vertex of y = x² + 6x + 5. (`a` = 1, `b` = 6.)",
           "answer": -3,
-          "hint": "x = −b/(2a) = −6/(2·1).",
+          "hint": "x = \\frac{−b}{2a} = \\frac{−6}{2·1}.",
           "feedback": {
             "correct": "Right — x = −6/2 = −3.",
             "incorrect": "Plug into x = −b/(2a): −6/(2·1) = −3."
@@ -788,23 +795,23 @@
         {
           "id": "q5d",
           "type": "numeric-input",
-          "prompt": "Find the x-coordinate of the vertex of y = 2x² − 8x + 3. (`a` = 2, `b` = −8.)",
-          "answer": 2,
-          "hint": "x = −b/(2a) = −(−8)/(2·2).",
+          "prompt": "Find the x-coordinate of the vertex of y = x² − 8x + 3. (`a` = 1, `b` = −8.)",
+          "answer": 4,
+          "hint": "x = \\frac{−b}{2a} = \\frac{−(−8)}{2·1}.",
           "feedback": {
-            "correct": "Right — x = 8/4 = 2.",
-            "incorrect": "Plug into x = −b/(2a): −(−8)/(2·2) = 8/4 = 2."
+            "correct": "Right — x = 8/2 = 4.",
+            "incorrect": "Plug into x = −b/(2a): −(−8)/(2·1) = 8/2 = 4."
           }
         },
         {
           "id": "q5e",
           "type": "numeric-input",
-          "prompt": "Find the x-coordinate of the vertex of y = −x² + 4x. (`a` = −1, `b` = 4.)",
-          "answer": 2,
-          "hint": "x = −b/(2a) = −4/(2·−1).",
+          "prompt": "Find the x-coordinate of the vertex of y = −x² − 8x + 1. (`a` = −1, `b` = −8.)",
+          "answer": -4,
+          "hint": "x = \\frac{−b}{2a} = \\frac{−(−8)}{2·−1}.",
           "feedback": {
-            "correct": "Right — x = −4/(−2) = 2. The formula works for maxima too.",
-            "incorrect": "Plug into x = −b/(2a): −4/(2·−1) = −4/−2 = 2."
+            "correct": "Right — x = 8/(−2) = −4. The formula works for maxima too.",
+            "incorrect": "Plug into x = −b/(2a): −(−8)/(2·−1) = 8/−2 = −4."
           }
         },
         {
@@ -812,7 +819,7 @@
           "type": "numeric-input",
           "prompt": "Find the x-coordinate of the vertex of y = x² + 2x − 7. (`a` = 1, `b` = 2.)",
           "answer": -1,
-          "hint": "x = −b/(2a) = −2/(2·1).",
+          "hint": "x = \\frac{−b}{2a} = \\frac{−2}{2·1}.",
           "feedback": {
             "correct": "Right — x = −2/2 = −1.",
             "incorrect": "Plug into x = −b/(2a): −2/(2·1) = −1."
@@ -821,23 +828,23 @@
         {
           "id": "q5g",
           "type": "numeric-input",
-          "prompt": "Find the x-coordinate of the vertex of y = 3x² − 12x + 1. (`a` = 3, `b` = −12.)",
-          "answer": 2,
-          "hint": "x = −b/(2a) = −(−12)/(2·3).",
+          "prompt": "Find the x-coordinate of the vertex of y = x² − 10x + 2. (`a` = 1, `b` = −10.)",
+          "answer": 5,
+          "hint": "x = \\frac{−b}{2a} = \\frac{−(−10)}{2·1}.",
           "feedback": {
-            "correct": "Right — x = 12/6 = 2.",
-            "incorrect": "Plug into x = −b/(2a): −(−12)/(2·3) = 12/6 = 2."
+            "correct": "Right — x = 10/2 = 5.",
+            "incorrect": "Plug into x = −b/(2a): −(−10)/(2·1) = 10/2 = 5."
           }
         },
         {
           "id": "q5h",
           "type": "numeric-input",
-          "prompt": "Find the x-coordinate of the vertex of y = −2x² − 8x + 5. (`a` = −2, `b` = −8.)",
-          "answer": -2,
-          "hint": "x = −b/(2a) = −(−8)/(2·−2).",
+          "prompt": "Find the x-coordinate of the vertex of y = x² + 10x + 3. (`a` = 1, `b` = 10.)",
+          "answer": -5,
+          "hint": "x = \\frac{−b}{2a} = \\frac{−10}{2·1}.",
           "feedback": {
-            "correct": "Right — x = 8/(−4) = −2.",
-            "incorrect": "Plug into x = −b/(2a): −(−8)/(2·−2) = 8/−4 = −2."
+            "correct": "Right — x = −10/2 = −5.",
+            "incorrect": "Plug into x = −b/(2a): −10/(2·1) = −5."
           }
         }
       ]
@@ -846,28 +853,13 @@
       "id": "step-6",
       "title": "Solutions (Where the Parabola Crosses the X-Axis)",
       "concept": "Solutions are the x-values where y = 0",
-      "conceptFraming": "The solutions (roots or zeros) are the x-values where y = 0 — exactly where the parabola crosses the x-axis. Watch the balls settle on those crossings.",
+      "conceptFraming": "The solutions of a quadratic are the x-values where y = 0 — exactly where the parabola crosses the x-axis. They're also called the roots or the zeroes (three names for the same thing). Watch the balls settle on those crossings, then read them off the curve yourself.",
       "masteryThreshold": 0.67,
       "fallbackStepId": "step-6",
       "fallbackMessage": "Let's revisit where the parabola crosses the x-axis — those crossings are the solutions.",
       "hints": [],
-      "interactive": {
-        "id": "step-6-helper",
-        "type": "plot-point",
-        "prompt": "Click one of the points where y = x² − 4 crosses the x-axis (a solution).",
-        "targetX": 2,
-        "targetY": 0,
-        "xMin": -6,
-        "xMax": 6,
-        "yMin": -6,
-        "yMax": 6,
-        "feedback": {
-          "correct": "Yes — the curve crosses the x-axis at (2, 0) (and also (−2, 0)). Those x-values, 2 and −2, are the solutions.",
-          "incorrect": "A solution is where the parabola meets the x-axis (y = 0). For y = x² − 4 that's at x = 2 and x = −2."
-        }
-      },
       "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-7" },
-      "present": 6,
+      "present": 4,
       "throwbacks": [
         {
           "id": "tb-qd-s6-1",
@@ -915,112 +907,76 @@
           "yMax": 6,
           "ballStartXs": [-5, 5],
           "feedback": {
-            "correct": "The balls settled at x = −2 and x = 2 — the points where the parabola crosses the x-axis. Those are the solutions of x² − 4 = 0."
+            "correct": "The balls settled at x = −2 and x = 2 — where the parabola crosses the x-axis. Those crossings are the solutions (also called the roots or zeroes) of x² − 4 = 0."
           }
         },
         {
           "id": "q6b",
           "type": "plot-point",
-          "demo": true,
-          "prompt": "Click a point where y = x² − 4 crosses the x-axis (one of its solutions).",
+          "prompt": "Read the graph: click BOTH points where y = x² − 4 crosses the x-axis. Those crossings are its solutions (roots / zeroes).",
           "targetX": -2,
           "targetY": 0,
+          "targets": [
+            { "x": -2, "y": 0 },
+            { "x": 2, "y": 0 }
+          ],
+          "requireAll": true,
+          "a": 1,
+          "b": 0,
+          "c": -4,
           "xMin": -6,
           "xMax": 6,
           "yMin": -6,
           "yMax": 6,
           "feedback": {
-            "correct": "Right — (−2, 0) is one crossing; (2, 0) is the other. The solutions are x = −2 and x = 2.",
-            "incorrect": "A solution sits on the x-axis (y = 0). For y = x² − 4 the crossings are at x = −2 and x = 2."
+            "correct": "Both crossings found: x = −2 and x = 2. Those are the solutions (roots / zeroes) of x² − 4 = 0.",
+            "incorrect": "A solution sits on the x-axis (y = 0). Look for where the curve crosses the x-axis."
           }
         },
         {
           "id": "q6c",
-          "type": "multiple-choice",
-          "prompt": "A parabola crosses the x-axis at x = −2 and x = 2. What are its solutions?",
-          "hint": "The solutions are exactly the x-values of the crossing points.",
-          "options": [
-            { "id": "a", "text": "x = −2 and x = 2", "correct": true },
-            { "id": "b", "text": "y = −2 and y = 2", "correct": false },
-            { "id": "c", "text": "x = 0 and x = 4", "correct": false }
+          "type": "plot-point",
+          "prompt": "Click BOTH points where y = x² − 2x − 3 crosses the x-axis — its roots.",
+          "targetX": -1,
+          "targetY": 0,
+          "targets": [
+            { "x": -1, "y": 0 },
+            { "x": 3, "y": 0 }
           ],
+          "requireAll": true,
+          "a": 1,
+          "b": -2,
+          "c": -3,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
           "feedback": {
-            "correct": "Correct — the solutions are the x-values of the crossings: x = −2 and x = 2.",
-            "incorrect": "Solutions are x-values where the curve meets the x-axis. Read off the x-coordinates of the crossings."
+            "correct": "Both roots found: x = −1 and x = 3 — the x-values where y = 0.",
+            "incorrect": "Read where the curve meets the x-axis (y = 0); there are two crossings."
           }
         },
         {
           "id": "q6d",
-          "type": "numeric-input",
-          "prompt": "A parabola crosses the x-axis at x = −3 and x = 1. Enter the positive solution.",
-          "answer": 1,
-          "hint": "The solutions are the two crossing x-values. Which one is greater than zero?",
-          "feedback": {
-            "correct": "Right — the positive solution is x = 1.",
-            "incorrect": "The crossings are x = −3 and x = 1. The positive one is 1."
-          }
-        },
-        {
-          "id": "q6e",
-          "type": "numeric-input",
-          "prompt": "A parabola crosses the x-axis at x = −5 and x = 2. Enter the negative solution.",
-          "answer": -5,
-          "hint": "The solutions are the two crossing x-values. Which one is less than zero?",
-          "feedback": {
-            "correct": "Right — the negative solution is x = −5.",
-            "incorrect": "The crossings are x = −5 and x = 2. The negative one is −5."
-          }
-        },
-        {
-          "id": "q6f",
-          "type": "multiple-choice",
-          "prompt": "A parabola crosses the x-axis at x = 0 and x = 6. What are its solutions?",
-          "hint": "Read the x-coordinates of the two crossing points directly.",
-          "options": [
-            { "id": "a", "text": "x = 0 and x = 6", "correct": true },
-            { "id": "b", "text": "x = 6 and x = −6", "correct": false },
-            { "id": "c", "text": "y = 0 and y = 6", "correct": false }
+          "type": "plot-point",
+          "prompt": "Click BOTH points where y = x² + x − 6 crosses the x-axis — its zeroes.",
+          "targetX": -3,
+          "targetY": 0,
+          "targets": [
+            { "x": -3, "y": 0 },
+            { "x": 2, "y": 0 }
           ],
+          "requireAll": true,
+          "a": 1,
+          "b": 1,
+          "c": -6,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
           "feedback": {
-            "correct": "Correct — the solutions are x = 0 and x = 6, the x-values where the curve meets the x-axis.",
-            "incorrect": "The solutions are the x-values of the crossings: x = 0 and x = 6."
-          }
-        },
-        {
-          "id": "q6g",
-          "type": "numeric-input",
-          "prompt": "A parabola crosses the x-axis at x = −4 and x = 4. Enter the positive solution.",
-          "answer": 4,
-          "hint": "Pick the crossing x-value that is greater than zero.",
-          "feedback": {
-            "correct": "Right — the positive solution is x = 4.",
-            "incorrect": "The crossings are x = −4 and x = 4. The positive one is 4."
-          }
-        },
-        {
-          "id": "q6h",
-          "type": "multiple-choice",
-          "prompt": "A parabola crosses the x-axis at x = −1 and x = 5. What are its solutions?",
-          "hint": "The solutions are just the x-values of the crossings.",
-          "options": [
-            { "id": "a", "text": "x = −1 and x = 5", "correct": true },
-            { "id": "b", "text": "x = 1 and x = 5", "correct": false },
-            { "id": "c", "text": "x = −1 and x = −5", "correct": false }
-          ],
-          "feedback": {
-            "correct": "Correct — the solutions are x = −1 and x = 5.",
-            "incorrect": "Read the x-coordinates of the crossings, keeping the signs: x = −1 and x = 5."
-          }
-        },
-        {
-          "id": "q6i",
-          "type": "numeric-input",
-          "prompt": "A parabola crosses the x-axis at x = 3 and x = 7. Enter the smaller solution.",
-          "answer": 3,
-          "hint": "Both crossings are positive — which x-value is smaller?",
-          "feedback": {
-            "correct": "Right — the smaller solution is x = 3.",
-            "incorrect": "The crossings are x = 3 and x = 7. The smaller is 3."
+            "correct": "Both zeroes found: x = −3 and x = 2 — where the parabola crosses the x-axis.",
+            "incorrect": "Find the two x-axis crossings (where y = 0)."
           }
         }
       ]
@@ -1194,18 +1150,13 @@
           { "text": "A·C", "note": "The product of the x² coefficient (A) and the constant (C). When A = 1, this is just C." },
           { "text": "  and add to " },
           { "text": "B", "note": "The middle coefficient — the coefficient of x." }
-        ],
-        "note": "Start with A = 1, then build up to A greater than 1."
+        ]
       },
       "masteryThreshold": 0.67,
       "fallbackStepId": "step-7",
-      "fallbackMessage": "Let's lock in factoring with A = 1 before tackling a leading coefficient.",
-      "isLastStep": true,
+      "fallbackMessage": "Let's lock in finding the two numbers that multiply to C and add to B.",
       "hints": [],
-      "completionAction": {
-        "buttonLabel": "Finish Lesson →",
-        "route": "/lesson/[id]/complete"
-      },
+      "completionAction": { "buttonLabel": "Next Step →", "nextStepId": "step-9" },
       "throwbacks": [
         {
           "id": "tb-qd-s8-1",
@@ -1239,24 +1190,32 @@
       "problems": [
         {
           "id": "q8a",
-          "type": "numeric-input",
-          "prompt": "Factor x² + 5x + 6 (here `A` = 1, so `A·C` = 6). Find two numbers that multiply to 6 and add to 5. Enter the smaller number.",
-          "answer": 2,
-          "hint": "List the factor pairs of 6 (1·6, 2·3) and check which pair adds to 5.",
+          "type": "factor-quadratic",
+          "demo": true,
+          "prompt": "Demo: to factor x² + 7x + 12, we look for two numbers that multiply to A·C = 12 and add to B = 7. Press 'Factor' to reveal the two factors, then drag one factor onto the other to multiply them back together.",
+          "equationLabel": "x² + 7x + 12",
+          "a": 1,
+          "b": 7,
+          "c": 12,
+          "factors": ["(x + 3)", "(x + 4)"],
+          "roots": [-3, -4],
           "feedback": {
-            "correct": "Right — 2 and 3 multiply to 6 and add to 5, so x² + 5x + 6 = (x + 2)(x + 3).",
-            "incorrect": "Factor pairs of 6: 1·6 (adds to 7) and 2·3 (adds to 5). The pair you want is 2 and 3 — the smaller is 2."
+            "correct": "3 and 4 multiply to 12 and add to 7 — that's the pair, so x² + 7x + 12 = (x + 3)(x + 4)."
           }
         },
         {
           "id": "q8b",
-          "type": "numeric-input",
-          "prompt": "Factor x² + 7x + 12 (`A` = 1, so `A·C` = 12). Find two numbers that multiply to 12 and add to 7. Enter the smaller number.",
-          "answer": 3,
-          "hint": "Which factor pair of 12 adds up to 7?",
+          "type": "multiple-choice",
+          "prompt": "Factor x² + 5x + 6 (`A` = 1, so `A·C` = 6). Which two numbers multiply to 6 and add to 5?",
+          "hint": "List the factor pairs of 6 (1·6, 2·3) and check which pair adds to 5.",
+          "options": [
+            { "id": "a", "text": "2 and 3", "correct": true },
+            { "id": "b", "text": "1 and 6", "correct": false },
+            { "id": "c", "text": "−2 and −3", "correct": false }
+          ],
           "feedback": {
-            "correct": "Right — 3 and 4 multiply to 12 and add to 7, so x² + 7x + 12 = (x + 3)(x + 4).",
-            "incorrect": "Factor pairs of 12: 2·6 (adds to 8), 3·4 (adds to 7). The pair is 3 and 4 — smaller is 3."
+            "correct": "Right — 2 and 3 multiply to 6 and add to 5, so x² + 5x + 6 = (x + 2)(x + 3).",
+            "incorrect": "You need a pair multiplying to 6 and adding to 5: that's 2 and 3 (1 and 6 adds to 7)."
           }
         },
         {
@@ -1276,13 +1235,17 @@
         },
         {
           "id": "q8d",
-          "type": "numeric-input",
-          "prompt": "Factor x² + 8x + 15 (`A` = 1, so `A·C` = 15). Find two numbers that multiply to 15 and add to 8. Enter the smaller number.",
-          "answer": 3,
+          "type": "multiple-choice",
+          "prompt": "Factor x² + 8x + 15 (`A` = 1, so `A·C` = 15). Which two numbers multiply to 15 and add to 8?",
           "hint": "List the factor pairs of 15 (1·15, 3·5) and check which adds to 8.",
+          "options": [
+            { "id": "a", "text": "3 and 5", "correct": true },
+            { "id": "b", "text": "1 and 15", "correct": false },
+            { "id": "c", "text": "2 and 13", "correct": false }
+          ],
           "feedback": {
             "correct": "Right — 3 and 5 multiply to 15 and add to 8, so x² + 8x + 15 = (x + 3)(x + 5).",
-            "incorrect": "Factor pairs of 15: 1·15 (adds to 16), 3·5 (adds to 8). The pair is 3 and 5 — smaller is 3."
+            "incorrect": "You need a pair multiplying to 15 and adding to 8: that's 3 and 5 (1 and 15 adds to 16)."
           }
         },
         {
@@ -1302,76 +1265,239 @@
         },
         {
           "id": "q8f",
-          "type": "numeric-input",
-          "prompt": "Factor x² + 9x + 20 (`A` = 1, so `A·C` = 20). Find two numbers that multiply to 20 and add to 9. Enter the smaller number.",
-          "answer": 4,
+          "type": "multiple-choice",
+          "prompt": "Factor x² + 9x + 20 (`A` = 1, so `A·C` = 20). Which two numbers multiply to 20 and add to 9?",
           "hint": "Which factor pair of 20 adds up to 9?",
+          "options": [
+            { "id": "a", "text": "4 and 5", "correct": true },
+            { "id": "b", "text": "2 and 10", "correct": false },
+            { "id": "c", "text": "1 and 20", "correct": false }
+          ],
           "feedback": {
             "correct": "Right — 4 and 5 multiply to 20 and add to 9, so x² + 9x + 20 = (x + 4)(x + 5).",
-            "incorrect": "Factor pairs of 20: 2·10 (adds to 12), 4·5 (adds to 9). The pair is 4 and 5 — smaller is 4."
+            "incorrect": "You need a pair multiplying to 20 and adding to 9: that's 4 and 5 (2 and 10 adds to 12)."
           }
         },
         {
           "id": "q8g",
-          "type": "numeric-input",
-          "prompt": "Now `A` ≠ 1: factor 2x² + 7x + 3. Here `A·C` = 2·3 = 6. Find two numbers that multiply to 6 and add to 7. Enter the larger number.",
-          "answer": 6,
-          "hint": "A·C = 6 and you need them to add to 7. Try 1 and 6.",
+          "type": "multiple-choice",
+          "prompt": "Now a constant that's negative. Factor x² − x − 6 (`A` = 1, so `A·C` = −6, and `B` = −1). Which two numbers multiply to −6 and add to −1?",
+          "hint": "A negative product means the two numbers have opposite signs. List the pairs that multiply to −6 and check which adds to −1.",
+          "options": [
+            { "id": "a", "text": "−3 and 2", "correct": true },
+            { "id": "b", "text": "3 and −2", "correct": false },
+            { "id": "c", "text": "−6 and 1", "correct": false }
+          ],
           "feedback": {
-            "correct": "Right — 1 and 6 multiply to 6 and add to 7. Splitting the middle term gives 2x² + x + 6x + 3 = (2x + 1)(x + 3).",
-            "incorrect": "With A·C = 6, the pair that adds to 7 is 1 and 6. The larger is 6."
+            "correct": "Right — −3 and 2 multiply to −6 and add to −1, so x² − x − 6 = (x − 3)(x + 2).",
+            "incorrect": "You need a pair multiplying to −6 and adding to −1: that's −3 and 2. (3 and −2 multiply to −6 but add to +1.)"
           }
         },
         {
           "id": "q8h",
           "type": "multiple-choice",
-          "prompt": "Using the two numbers 1 and 6, which is the correct factorization of 2x² + 7x + 3?",
-          "hint": "Split 7x into x + 6x, then group: 2x² + x + 6x + 3.",
+          "prompt": "You factored x² − x − 6 = (x − 3)(x + 2). Set each factor equal to 0. What are the zeroes?",
+          "hint": "Solve x − 3 = 0 and x + 2 = 0 separately. The zeroes are also called the roots, the x-intercepts, and the solutions — all the same thing.",
           "options": [
-            { "id": "a", "text": "(2x + 1)(x + 3)", "correct": true },
-            { "id": "b", "text": "(2x + 3)(x + 1)", "correct": false },
-            { "id": "c", "text": "(x + 1)(x + 6)", "correct": false }
+            { "id": "a", "text": "x = 3 and x = −2", "correct": true },
+            { "id": "b", "text": "x = −3 and x = 2", "correct": false },
+            { "id": "c", "text": "x = 3 and x = 2", "correct": false }
           ],
           "feedback": {
-            "correct": "Correct — grouping 2x² + x + 6x + 3 gives x(2x + 1) + 3(2x + 1) = (2x + 1)(x + 3).",
-            "incorrect": "Split the middle term using 1 and 6: 2x² + x + 6x + 3, then factor by grouping to get (2x + 1)(x + 3)."
+            "correct": "Right — x − 3 = 0 gives x = 3 and x + 2 = 0 gives x = −2. These zeroes ARE the roots, the x-intercepts, and the solutions — four names for the same two x-values.",
+            "incorrect": "Set each factor to 0: x − 3 = 0 → x = 3, and x + 2 = 0 → x = −2. A minus inside flips the sign of the zero."
           }
         },
         {
           "id": "q8i",
           "type": "numeric-input",
-          "prompt": "Factor 3x² + 7x + 2. Here `A·C` = 3·2 = 6. Find two numbers that multiply to 6 and add to 7. Enter the larger number.",
-          "answer": 6,
-          "hint": "A·C = 6 and they must add to 7. Which pair works?",
+          "prompt": "From x² − x − 6 = (x − 3)(x + 2), enter the positive zero (root).",
+          "answer": 3,
+          "hint": "The factor (x − 3) gives x = 3; the factor (x + 2) gives x = −2. Which one is positive?",
           "feedback": {
-            "correct": "Right — 1 and 6 multiply to 6 and add to 7. Splitting gives 3x² + x + 6x + 2 = (3x + 1)(x + 2).",
-            "incorrect": "With A·C = 6, the pair that adds to 7 is 1 and 6. The larger is 6."
+            "correct": "Right — x = 3 is the positive zero (the other root is x = −2).",
+            "incorrect": "x − 3 = 0 → x = 3 and x + 2 = 0 → x = −2. The positive one is 3."
           }
         },
         {
           "id": "q8j",
-          "type": "multiple-choice",
-          "prompt": "Which is the correct factorization of 2x² + 5x + 2? (`A·C` = 4, and 1 and 4 add to 5.)",
-          "hint": "Split 5x into x + 4x, then group: 2x² + x + 4x + 2.",
-          "options": [
-            { "id": "a", "text": "(2x + 1)(x + 2)", "correct": true },
-            { "id": "b", "text": "(2x + 2)(x + 1)", "correct": false },
-            { "id": "c", "text": "(x + 1)(x + 4)", "correct": false }
+          "type": "plot-point",
+          "prompt": "Plot the zeroes on the graph: click BOTH points where y = x² − x − 6 crosses the x-axis. You found them above — x = 3 and x = −2 — and they sit on the x-axis (y = 0).",
+          "targetX": 3,
+          "targetY": 0,
+          "targets": [
+            { "x": 3, "y": 0 },
+            { "x": -2, "y": 0 }
           ],
+          "requireAll": true,
+          "a": 1,
+          "b": -1,
+          "c": -6,
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -6,
+          "yMax": 6,
           "feedback": {
-            "correct": "Correct — grouping 2x² + x + 4x + 2 gives x(2x + 1) + 2(2x + 1) = (2x + 1)(x + 2).",
-            "incorrect": "Split the middle term using 1 and 4: 2x² + x + 4x + 2, then factor by grouping to get (2x + 1)(x + 2)."
+            "correct": "Both zeroes plotted: (3, 0) and (−2, 0). The parabola crosses the x-axis exactly at the roots you got from the factors — zeroes, roots, and x-intercepts really are the same points.",
+            "incorrect": "A zero sits on the x-axis (y = 0). Look for where the curve crosses the x-axis — at x = 3 and x = −2."
           }
         },
         {
           "id": "q8k",
-          "type": "numeric-input",
-          "prompt": "Factor 2x² + 9x + 4. Here `A·C` = 2·4 = 8. Find two numbers that multiply to 8 and add to 9. Enter the larger number.",
-          "answer": 8,
-          "hint": "A·C = 8 and they must add to 9. Try 1 and 8.",
+          "type": "multiple-choice",
+          "prompt": "The discriminant tells you how many real zeroes a quadratic ax² + bx + c has — before you even factor. Which expression is the discriminant?",
+          "hint": "It's the part underneath the square root in the quadratic formula x = (−b ± √(b² − 4ac)) / (2a).",
+          "options": [
+            { "id": "a", "text": "b² − 4ac", "correct": true },
+            { "id": "b", "text": "−b / 2a", "correct": false },
+            { "id": "c", "text": "b² + 4ac", "correct": false }
+          ],
           "feedback": {
-            "correct": "Right — 1 and 8 multiply to 8 and add to 9. Splitting gives 2x² + x + 8x + 4 = (2x + 1)(x + 4).",
-            "incorrect": "With A·C = 8, the pair that adds to 9 is 1 and 8. The larger is 8."
+            "correct": "Right — the discriminant is b² − 4ac, the expression under the square root in the quadratic formula.",
+            "incorrect": "The discriminant is the part under the square root in the quadratic formula: b² − 4ac."
+          }
+        },
+        {
+          "id": "q8l",
+          "type": "multiple-choice",
+          "prompt": "For x² − x − 6 the discriminant is b² − 4ac = (−1)² − 4·1·(−6) = 25, which is positive. What does a positive discriminant tell you about the number of real zeroes?",
+          "hint": "Discriminant > 0 → two real zeroes; = 0 → one (repeated) zero; < 0 → no real zeroes. Which case is 25?",
+          "options": [
+            { "id": "a", "text": "Two real zeroes", "correct": true },
+            { "id": "b", "text": "Exactly one real zero", "correct": false },
+            { "id": "c", "text": "No real zeroes", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — a positive discriminant means two real zeroes, which is why x² − x − 6 crosses the x-axis at two points (x = 3 and x = −2). A zero discriminant gives one repeated zero; a negative one gives no real zeroes.",
+            "incorrect": "Positive discriminant → two real zeroes; zero → one repeated zero; negative → none. Since 25 > 0, there are two real zeroes."
+          }
+        }
+      ]
+    },
+    {
+      "id": "step-9",
+      "title": "The Quadratic Formula",
+      "concept": "When a quadratic can't be factored, the quadratic formula still solves it",
+      "conceptFraming": "Some quadratics can't be factored with whole numbers. When factoring fails, the quadratic formula always finds the solutions.",
+      "framing": {
+        "lead": "When no two whole numbers work, use the quadratic formula. Hover its parts.",
+        "equation": [
+          { "text": "x = " },
+          {
+            "fraction": {
+              "numerator": [
+                { "text": "−b ± √(b² − 4ac)", "note": "The ± means there are usually two solutions — one with + and one with −. The part under the root, b² − 4ac, is called the discriminant." }
+              ],
+              "denominator": [
+                { "text": "2a", "note": "Twice the x² coefficient (a)." }
+              ]
+            }
+          }
+        ],
+        "note": "It works for every quadratic a·x² + b·x + c = 0 — even ones that don't factor."
+      },
+      "masteryThreshold": 0.67,
+      "fallbackStepId": "step-9",
+      "fallbackMessage": "Let's revisit the quadratic formula — plug a, b and c into the formula to find the solutions.",
+      "isLastStep": true,
+      "hints": [],
+      "completionAction": {
+        "buttonLabel": "Finish Lesson →",
+        "route": "/lesson/[id]/complete"
+      },
+      "present": 5,
+      "anchors": 2,
+      "throwbacks": [
+        {
+          "id": "tb-qd-s9-1",
+          "type": "multiple-choice",
+          "throwback": { "source": "Step 8 · The Factoring Rule" },
+          "prompt": "Throwback: factor x² + 5x + 6. Which two numbers multiply to 6 and add to 5?",
+          "options": [
+            { "id": "a", "text": "2 and 3", "correct": true },
+            { "id": "b", "text": "1 and 6", "correct": false },
+            { "id": "c", "text": "−2 and −3", "correct": false }
+          ],
+          "feedback": { "correct": "Right — 2 and 3 multiply to 6 and add to 5.", "incorrect": "2 and 3 multiply to 6 and add to 5." }
+        },
+        {
+          "id": "tb-qd-s9-2",
+          "type": "numeric-input",
+          "throwback": { "source": "Step 5 · Finding the Vertex" },
+          "prompt": "Throwback: for y = x² − 6x + 1, find the x-coordinate of the vertex.",
+          "answer": 3,
+          "feedback": { "correct": "Right — x = 3.", "incorrect": "x = \\frac{−b}{2a} = \\frac{6}{2} = 3." }
+        }
+      ],
+      "problems": [
+        {
+          "id": "q9a",
+          "type": "multiple-choice",
+          "prompt": "Try your best to factor x² + 5x + 2 with whole numbers. Which is correct?",
+          "hint": "Look for two whole numbers that multiply to 2 and add to 5. Do any exist?",
+          "options": [
+            { "id": "a", "text": "It can't be factored with whole numbers", "correct": true },
+            { "id": "b", "text": "(x + 1)(x + 2)", "correct": false },
+            { "id": "c", "text": "(x + 1)(x + 4)", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — no two whole numbers multiply to 2 and add to 5, so this one can't be factored. That's exactly when the quadratic formula saves the day.",
+            "incorrect": "Expand to check: (x + 1)(x + 2) = x² + 3x + 2, not x² + 5x + 2. No whole-number pair multiplies to 2 and adds to 5, so it can't be factored."
+          }
+        },
+        {
+          "id": "q9b",
+          "type": "quadratic-formula",
+          "demo": true,
+          "prompt": "Use the quadratic formula on x² + 5x + 2 by dragging a, b and c into place.",
+          "question": "For x² + 5x + 2 = 0 we have a = 1, b = 5, c = 2. Drag each value into its slot and watch the formula compute the two solutions.",
+          "a": 1,
+          "b": 5,
+          "c": 2,
+          "tokens": [1, 5, 2, -5, 3, 10],
+          "feedback": {
+            "correct": "Plugging a = 1, b = 5, c = 2 into the formula gives the two solutions shown above — real answers, even though it never factored."
+          }
+        },
+        {
+          "id": "q9c",
+          "type": "multiple-choice",
+          "prompt": "Use the quadratic formula on x² − 5x + 6 = 0 (a = 1, b = −5, c = 6). The discriminant is 1. What are the solutions?",
+          "hint": "x = \\frac{−b ± √1}{2a} = \\frac{5 ± 1}{2}.",
+          "options": [
+            { "id": "a", "text": "x = 2 and x = 3", "correct": true },
+            { "id": "b", "text": "x = −2 and x = −3", "correct": false },
+            { "id": "c", "text": "x = 1 and x = 6", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — \\frac{5 + 1}{2} = 3 and \\frac{5 − 1}{2} = 2.",
+            "incorrect": "x = \\frac{−(−5) ± √1}{2} = \\frac{5 ± 1}{2}, which gives 3 and 2."
+          }
+        },
+        {
+          "id": "q9d",
+          "type": "numeric-input",
+          "prompt": "Use the quadratic formula on x² + 2x − 8 = 0 (a = 1, b = 2, c = −8). Enter the larger solution.",
+          "answer": 2,
+          "hint": "Discriminant = 2² − 4·1·(−8) = 36, and √36 = 6. So x = \\frac{−2 ± 6}{2}.",
+          "feedback": {
+            "correct": "Right — \\frac{−2 + 6}{2} = 2 (the other solution is −4).",
+            "incorrect": "x = \\frac{−2 ± 6}{2} gives 2 and −4. The larger is 2."
+          }
+        },
+        {
+          "id": "q9e",
+          "type": "multiple-choice",
+          "prompt": "For 2x² + 4x + 1 = 0, what is the discriminant `b² − 4ac`?",
+          "hint": "a = 2, b = 4, c = 1. Compute b² − 4ac = 4² − 4·2·1.",
+          "options": [
+            { "id": "a", "text": "8", "correct": true },
+            { "id": "b", "text": "16", "correct": false },
+            { "id": "c", "text": "24", "correct": false }
+          ],
+          "feedback": {
+            "correct": "Right — 4² − 4·2·1 = 16 − 8 = 8.",
+            "incorrect": "b² − 4ac = 4² − 4·2·1 = 16 − 8 = 8."
           }
         }
       ]

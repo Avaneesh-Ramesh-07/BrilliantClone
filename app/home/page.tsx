@@ -73,13 +73,22 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div className="mt-6 flex flex-col gap-3">
+        <Link
+          href="/sandbox/practice-test"
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg border border-purple-300 bg-purple-50 px-4 font-semibold text-purple-800 transition-transform active:scale-95"
+        >
+          📝 Create practice test
+        </Link>
+      </div>
+
       <section className="mt-6 flex flex-col gap-4">
         <Link
           href="/practice"
           className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md"
         >
           <div>
-            <p className="text-body font-medium text-text">Sandbox</p>
+            <p className="text-body font-medium text-text">Endless Practice</p>
             <p className="text-label text-muted">
               Endless mixed questions — spot the mistake, order the steps, odd one out
             </p>
