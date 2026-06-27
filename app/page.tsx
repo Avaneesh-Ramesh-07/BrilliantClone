@@ -75,8 +75,10 @@ export default function LandingPage() {
 
       {/* RIGHT — light math backdrop + auth card */}
       <section className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-bg px-6 py-16 md:w-1/2 md:px-10">
-        {/* Math imagery backdrop: faint SVG/CSS equations & a parabola grid */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        {/* Math imagery backdrop: faint SVG/CSS equations & a parabola grid.
+            Hidden entirely on phone (below md) for a clean single-column layout;
+            the full animated backdrop returns at md and up. */}
+        <div className="pointer-events-none absolute inset-0 hidden md:block" aria-hidden="true">
           {/* Coordinate grid + parabola */}
           <svg
             className="absolute -right-10 top-1/2 h-[420px] w-[420px] -translate-y-1/2 text-primary/10"

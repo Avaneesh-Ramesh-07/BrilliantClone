@@ -276,6 +276,40 @@ export async function getProfile(
   return data;
 }
 
+/**
+ * Whether the learner has actually FINISHED a lesson today (server local time),
+ * based on any lesson's `lesson_progress.completed_at`. This is a real
+ * completion signal — distinct from {@link getWeeklyActivity}, which is derived
+ * from `step_attempts` and therefore reflects practice activity (which would be
+ * true for merely opening/attempting a lesson), not completion. Pass the map
+ * already loaded via {@link getAllLessonProgress} so no extra query is needed.
+ */
+export function hasCompletedLessonToday(
+  progressMap: Record<string, LessonProgress>,
+  now: Date = new Date()
+): boolean {
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0,
+    0,
+    0,
+    0
+  ).getTime();
+  const startOfTomorrow = startOfToday + 86_400_000;
+
+  for (const progress of Object.values(progressMap)) {
+    const completedAt = progress.completed_at;
+    if (!completedAt) continue;
+    const t = new Date(completedAt).getTime();
+    if (!Number.isNaN(t) && t >= startOfToday && t < startOfTomorrow) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export async function getStreak(
   supabase: SupabaseClient,
   userId: string

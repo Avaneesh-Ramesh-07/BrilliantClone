@@ -10,6 +10,7 @@ import {
   getProfile,
   getStreak,
   getWeeklyActivity,
+  hasCompletedLessonToday,
   hasEverCompleted,
 } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
@@ -68,6 +69,9 @@ export default async function HomePage() {
   });
 
   const firstName = profile?.display_name?.split(" ")[0] ?? "Student";
+  // Real "finished a lesson today" signal (a completed_at dated today), not the
+  // weekly-activity array (which is derived from practice attempts).
+  const completedToday = hasCompletedLessonToday(progressMap, now);
 
   return (
     <main className="py-8">
@@ -95,6 +99,7 @@ export default async function HomePage() {
                   streak={streak.current_streak}
                   days={weekly.days}
                   todayIndex={weekly.todayIndex}
+                  completedToday={completedToday}
                 />
               </section>
 
