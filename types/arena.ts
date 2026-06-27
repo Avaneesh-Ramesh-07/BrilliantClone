@@ -13,6 +13,10 @@ export interface ArenaSession {
   created_by: string | null;
   joined_by: string | null;
   guest_name: string | null;
+  /** The creator's (user1's) display name, denormalized onto the row at creation. */
+  creator_name: string | null;
+  /** An authenticated joiner's (user2's) display name, set on join. */
+  joiner_name: string | null;
   status: ArenaStatus;
   user1_hp: number;
   user2_hp: number;
@@ -38,6 +42,8 @@ export interface ArenaProblem {
   id: string;
   prompt: string;
   answer: number;
+  /** The algebra topic this problem was generated for (used for per-answer stats). */
+  topic: ArenaTopic;
 }
 
 /**

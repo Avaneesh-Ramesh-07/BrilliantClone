@@ -94,7 +94,7 @@ export function ArenaRoom({
     autoJoinRef.current = true;
     setJoining(true);
     void (async () => {
-      const joined = await joinAsUser(supabase, sessionId, viewerId);
+      const joined = await joinAsUser(supabase, sessionId, viewerId, viewerName);
       setJoining(false);
       if (!joined) {
         setJoinError("Could not join — this arena may already be full.");
@@ -153,7 +153,13 @@ export function ArenaRoom({
         : isCreator
           ? creatorName ?? viewerName ?? "You"
           : viewerName ?? "You";
-    const enemyName = isCreator ? session.guest_name : creatorName;
+    // Names are denormalized onto the (publicly readable) session row, so both
+    // sides resolve the real opponent name: the creator sees the guest/joiner
+    // name, the joiner sees the creator name. `creatorName` (from the viewer's
+    // own profile read) is only a fallback for the creator viewing their room.
+    const enemyName = isCreator
+      ? session.guest_name ?? session.joiner_name
+      : session.creator_name ?? creatorName;
     return (
       <ArenaMatch
         sessionId={sessionId}

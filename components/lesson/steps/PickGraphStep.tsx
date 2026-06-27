@@ -54,7 +54,7 @@ export function PickGraphStep({
                 showCorrect
                   ? "border-success bg-success/10"
                   : showWrong
-                    ? "border-error bg-error/10"
+                    ? "border-border bg-surface"
                     : isSelected
                       ? "border-primary bg-primary-light"
                       : "border-border bg-surface hover:border-primary"
@@ -69,13 +69,7 @@ export function PickGraphStep({
                   yMin: problem.yMin,
                   yMax: problem.yMax,
                 }}
-                tone={
-                  showCorrect
-                    ? "success"
-                    : showWrong
-                      ? "error"
-                      : "primary"
-                }
+                tone={showCorrect ? "success" : "primary"}
               />
             </button>
           );

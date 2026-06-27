@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import TopNav from "@/components/nav/TopNav";
 
 export const metadata: Metadata = {
   title: "AlgebraPath",
@@ -27,6 +28,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <div className="mx-auto min-h-screen w-full max-w-app px-4 pb-safe">
+          <TopNav />
           {children}
         </div>
       </body>

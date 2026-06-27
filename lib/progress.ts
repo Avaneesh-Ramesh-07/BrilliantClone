@@ -291,3 +291,94 @@ export async function getStreak(
     longest_streak: data?.longest_streak ?? 0,
   };
 }
+
+export interface WeeklyActivity {
+  /** 7 booleans, index 0 = Sunday … 6 = Saturday, true when there was activity that weekday this week. */
+  days: boolean[];
+  /** Weekday index (0 = Sunday … 6 = Saturday) for today, server local time. */
+  todayIndex: number;
+}
+
+/**
+ * Returns this week's daily activity (Sunday-indexed) based on `step_attempts`.
+ * Week starts at the most recent Sunday 00:00 in server local time.
+ */
+export async function getWeeklyActivity(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<WeeklyActivity> {
+  const now = new Date();
+  const todayIndex = now.getDay();
+  const startOfWeek = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - todayIndex,
+    0,
+    0,
+    0,
+    0
+  );
+
+  const { data } = await supabase
+    .from("step_attempts")
+    .select("attempted_at")
+    .eq("user_id", userId)
+    .gte("attempted_at", startOfWeek.toISOString());
+
+  const days = [false, false, false, false, false, false, false];
+  for (const row of data ?? []) {
+    const attemptedAt = row.attempted_at as string | null;
+    if (!attemptedAt) continue;
+    const index = new Date(attemptedAt).getDay();
+    if (index >= 0 && index <= 6) days[index] = true;
+  }
+
+  return { days, todayIndex };
+}
+
+export interface LessonStats {
+  /** Total active solve time across all attempts for this lesson (ms). */
+  timeSpentMs: number;
+  /** ISO timestamp of the most recent attempt, or null when never attempted. */
+  lastAccessedAt: string | null;
+}
+
+/**
+ * Aggregates `step_attempts` per lesson in JS from a single query. Lessons with
+ * no attempts are omitted (callers should default to `{ timeSpentMs: 0,
+ * lastAccessedAt: null }`).
+ */
+export async function getAllLessonStats(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Record<string, LessonStats>> {
+  const { data } = await supabase
+    .from("step_attempts")
+    .select("lesson_id, duration_ms, attempted_at")
+    .eq("user_id", userId);
+
+  const stats: Record<string, LessonStats> = {};
+  for (const row of data ?? []) {
+    const lessonId = row.lesson_id as string | null;
+    if (!lessonId) continue;
+
+    const durationMs = (row.duration_ms as number | null) ?? 0;
+    const attemptedAt = row.attempted_at as string | null;
+
+    const existing = stats[lessonId] ?? {
+      timeSpentMs: 0,
+      lastAccessedAt: null,
+    };
+    existing.timeSpentMs += durationMs;
+    if (
+      attemptedAt &&
+      (existing.lastAccessedAt === null ||
+        attemptedAt > existing.lastAccessedAt)
+    ) {
+      existing.lastAccessedAt = attemptedAt;
+    }
+    stats[lessonId] = existing;
+  }
+
+  return stats;
+}

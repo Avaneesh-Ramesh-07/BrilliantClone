@@ -18,6 +18,12 @@ const config: Config = {
         text: "var(--color-text)",
         muted: "var(--color-muted)",
         border: "var(--color-border)",
+        "accent-green": "var(--color-accent-green)",
+        "accent-yellow": "var(--color-accent-yellow)",
+        "accent-purple": "var(--color-accent-purple)",
+        "accent-pink": "var(--color-accent-pink)",
+        "accent-orange": "var(--color-accent-orange)",
+        "accent-cyan": "var(--color-accent-cyan)",
       },
       fontFamily: {
         heading: ["var(--font-dm-sans)", "sans-serif"],

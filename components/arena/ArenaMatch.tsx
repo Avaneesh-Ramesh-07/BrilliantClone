@@ -17,6 +17,7 @@ import {
 } from "@/lib/arena/combat";
 import { nextProblem } from "@/lib/arena/problems";
 import {
+  abandonSession,
   endSession,
   insertEvent,
   writeCombatPatch,
@@ -123,6 +124,7 @@ export function ArenaMatch({
     role === "user1" ? initialSession.user1_hp : initialSession.user2_hp
   );
   const opponentEverSeenRef = useRef(false);
+  const opponentPresentRef = useRef(false);
   const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const opponentRole: ArenaRole = role === "user1" ? "user2" : "user1";
@@ -141,10 +143,13 @@ export function ArenaMatch({
   const statusRef = useRef(session.status);
   statusRef.current = session.status;
 
+  // Read names off the live session row first so realtime updates (e.g. the
+  // moment an authed opponent joins and their name is written) flow through even
+  // if the mount-time `enemyName` prop was still null.
   const enemyDisplay =
     role === "user1"
-      ? session.guest_name ?? enemyName ?? "Opponent"
-      : enemyName ?? "Opponent";
+      ? session.guest_name ?? session.joiner_name ?? enemyName ?? "Challenger"
+      : session.creator_name ?? enemyName ?? "Challenger";
 
   // Pick the first problem on mount.
   const advance = useCallback(
@@ -177,6 +182,7 @@ export function ArenaMatch({
       const opponentPresent = Array.isArray(state[opponentRole])
         ? state[opponentRole].length > 0
         : false;
+      opponentPresentRef.current = opponentPresent;
 
       if (opponentPresent) {
         opponentEverSeenRef.current = true;
@@ -249,6 +255,37 @@ export function ArenaMatch({
     prevMyHpRef.current = myHp;
   }, [myHp]);
 
+  // ----- CHANGE 2: kill the match if BOTH players leave. -----
+  // The existing presence + DISCONNECT_GRACE_MS path lets the *remaining*
+  // player win when ONE side leaves. But if BOTH close their tabs, no client is
+  // left to end the match, so it would linger as 'active' forever. When THIS
+  // client is leaving (tab close/hide or SPA unmount) mid-match, we check
+  // whether the opponent is already gone: if so we end the match as a draw
+  // (abandoned); if they're still here, we leave it to their grace-timer win
+  // path. Unload can't await a network write, so this is best-effort — the
+  // `healStaleSessionsForUser` staleness backstop tidies up any room where the
+  // write never landed.
+  useEffect(() => {
+    const handleLeave = () => {
+      if (statusRef.current !== "active") return;
+      if (!opponentPresentRef.current) {
+        void abandonSession(supabase, sessionId);
+      }
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") handleLeave();
+    };
+    window.addEventListener("beforeunload", handleLeave);
+    window.addEventListener("pagehide", handleLeave);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", handleLeave);
+      window.removeEventListener("pagehide", handleLeave);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      handleLeave();
+    };
+  }, [supabase, sessionId]);
+
   const handleSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
@@ -288,7 +325,8 @@ export function ArenaMatch({
         sessionId,
         role,
         correct ? (outcome.blow ? "blow" : "correct") : "wrong",
-        outcome.blow ? outcome.damage : undefined
+        outcome.blow ? outcome.damage : undefined,
+        problem.topic
       );
 
       if (correct) correctCountRef.current += 1;

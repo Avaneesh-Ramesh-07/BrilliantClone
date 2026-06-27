@@ -1,16 +1,23 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AccountActions } from "@/components/home/AccountActions";
-import { StreakBadge } from "@/components/home/StreakBadge";
-import { LessonCard } from "@/components/home/LessonCard";
+import { LessonPath, type LessonPathItem } from "@/components/home/LessonPath";
+import { StreakWidget } from "@/components/home/StreakWidget";
 import { getAllLessons } from "@/lib/lessons";
 import {
-  getLessonProgress,
+  getAllLessonProgress,
+  getAllLessonStats,
   getProfile,
   getStreak,
+  getWeeklyActivity,
   hasEverCompleted,
 } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/server";
+import type { LessonProgress } from "@/types/lesson";
+
+const DEFAULT_PROGRESS: LessonProgress = {
+  status: "not_started",
+  current_step_index: 0,
+};
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -20,127 +27,69 @@ export default async function HomePage() {
 
   if (!user) redirect("/login");
 
-  const profile = await getProfile(supabase, user.id);
-  const streak = await getStreak(supabase, user.id);
+  const [profile, streak, weekly, progressMap, lessonStats] = await Promise.all([
+    getProfile(supabase, user.id),
+    getStreak(supabase, user.id),
+    getWeeklyActivity(supabase, user.id),
+    getAllLessonProgress(supabase, user.id),
+    getAllLessonStats(supabase, user.id),
+  ]);
+
   const lessons = getAllLessons();
 
-  const lessonsWithProgress = await Promise.all(
-    lessons.map(async (lesson) => ({
-      lesson,
-      progress: await getLessonProgress(supabase, user.id, lesson.id),
-    }))
-  );
+  const pathItems: LessonPathItem[] = lessons.map((lesson, index) => {
+    const progress = progressMap[lesson.id] ?? DEFAULT_PROGRESS;
+    const previous =
+      index > 0
+        ? progressMap[lessons[index - 1].id] ?? DEFAULT_PROGRESS
+        : null;
+    const locked = index > 0 && !hasEverCompleted(previous as LessonProgress);
+    const completedSteps =
+      progress.completed_at != null
+        ? lesson.totalSteps
+        : progress.current_step_index;
+    const stats = lessonStats[lesson.id];
 
-  // A lesson is locked until the lesson before it has been completed at least
-  // once (this stays unlocked even if the learner revisits the prior lesson).
-  const withLockState = lessonsWithProgress.map((entry, index) => ({
-    ...entry,
-    locked:
-      index > 0 &&
-      !hasEverCompleted(lessonsWithProgress[index - 1].progress),
-  }));
+    return {
+      lesson,
+      progress,
+      locked,
+      completedSteps,
+      timeSpentMs: stats?.timeSpentMs ?? 0,
+      lastAccessedAt: stats?.lastAccessedAt ?? null,
+    };
+  });
 
   const firstName = profile?.display_name?.split(" ")[0] ?? "Student";
+
   return (
     <main className="py-8">
-      <header className="mb-8">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-label text-muted">Welcome back</p>
-            <h1 className="font-heading text-heading-lg text-text">
-              {firstName}
-            </h1>
-          </div>
-          <AccountActions email={user.email ?? ""} />
+      <header className="mb-8 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-label text-muted">Welcome back</p>
+          <h1 className="font-heading text-heading-lg text-text">{firstName}</h1>
         </div>
-        <div className="mt-4">
-          <StreakBadge streak={streak.current_streak} />
-        </div>
+        <AccountActions email={user.email ?? ""} />
       </header>
 
-      <section>
-        <h2 className="mb-4 text-label text-muted">Your lessons</h2>
-        <div className="flex flex-col gap-4">
-          {withLockState.map(({ lesson, progress, locked }) => (
-            <LessonCard
-              key={lesson.id}
-              lesson={lesson}
-              progress={progress}
-              locked={locked}
-              userId={user.id}
-            />
-          ))}
-        </div>
+      <section className="mb-10">
+        <StreakWidget
+          streak={streak.current_streak}
+          days={weekly.days}
+          todayIndex={weekly.todayIndex}
+        />
       </section>
 
-      <div className="mt-6 flex flex-col gap-3">
-        <Link
-          href="/arena"
-          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 font-semibold text-white shadow-sm transition-transform hover:bg-red-700 active:scale-95"
-        >
-          <span aria-hidden>⚔️</span>
-          Test your skills in head-to-head
-        </Link>
-        <Link
-          href="/sandbox/practice-test"
-          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg border border-purple-300 bg-purple-50 px-4 font-semibold text-purple-800 transition-transform active:scale-95"
-        >
-          📝 Create practice test
-        </Link>
-      </div>
-
-      <section className="mt-6 flex flex-col gap-4">
-        <Link
-          href="/practice"
-          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md"
-        >
-          <div>
-            <p className="text-body font-medium text-text">Endless Practice</p>
-            <p className="text-label text-muted">
-              Endless mixed questions — spot the mistake, order the steps, odd one out
-            </p>
-          </div>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-5 w-5 shrink-0 text-muted"
-            aria-hidden
-          >
-            <path
-              d="M9 18l6-6-6-6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </Link>
-
-        <Link
-          href="/mastery"
-          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md"
-        >
-          <div>
-            <p className="text-body font-medium text-text">Your mastery</p>
-            <p className="text-label text-muted">
-              See your skills, recent practice, and comfort by lesson
-            </p>
-          </div>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            className="h-5 w-5 shrink-0 text-muted"
-            aria-hidden
-          >
-            <path
-              d="M9 18l6-6-6-6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </Link>
+      <section>
+        <h2 className="mb-1 font-heading text-heading-lg">
+          <span className="bg-gradient-to-r from-primary via-accent-purple to-accent-pink bg-clip-text text-transparent">
+            Your learning path
+          </span>
+        </h2>
+        <p className="mb-6 text-body text-muted">
+          Tap a lesson to see your progress and jump back in.
+        </p>
+        <LessonPath lessons={pathItems} />
       </section>
     </main>
   );

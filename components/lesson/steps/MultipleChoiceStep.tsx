@@ -57,7 +57,7 @@ export function MultipleChoiceStep({
                 showCorrect
                   ? "border-success bg-success/10 text-success"
                   : showWrong
-                    ? "border-error bg-error/10 text-error"
+                    ? "border-border bg-surface text-muted"
                     : isSelected
                       ? "border-primary bg-primary-light text-text"
                       : "border-border bg-surface text-text hover:border-primary"

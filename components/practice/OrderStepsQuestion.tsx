@@ -134,7 +134,7 @@ export function OrderStepsQuestion({
 
       {checked && !isCorrect && (
         <>
-          <div className="mt-4 rounded-lg border border-error/40 bg-error/5 px-4 py-3">
+          <div className="mt-4 rounded-lg border border-border bg-surface px-4 py-3">
             <p className="text-body text-error">{question.explanation}</p>
           </div>
           <div className="mt-4">
@@ -143,9 +143,9 @@ export function OrderStepsQuestion({
               {question.steps.map((step, index) => (
                 <li
                   key={`correct-${step}-${index}`}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-body text-text"
+                  className="flex items-center gap-3 rounded-lg border border-success/40 bg-success/10 px-4 py-3 text-body text-success"
                 >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-body font-medium text-primary">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success/20 text-body font-medium text-success">
                     {index + 1}
                   </span>
                   <span className="flex-1">{step}</span>

@@ -5,12 +5,21 @@ import type {
   ArenaSession,
 } from "@/types/arena";
 import type { CombatState } from "@/lib/arena/combat";
+import { getProfile } from "@/lib/progress";
 
 /** Columns selected for an arena session everywhere in the feature. */
 export const SESSION_COLUMNS =
-  "id, code, created_by, joined_by, guest_name, status, user1_hp, user2_hp, user1_streak, user2_streak, user1_correct_this_blow, user2_correct_this_blow, winner, created_at";
+  "id, code, created_by, joined_by, guest_name, creator_name, joiner_name, status, user1_hp, user2_hp, user1_streak, user2_streak, user1_correct_this_blow, user2_correct_this_blow, winner, created_at";
 
 const EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * A still-'active' session with no new events for this long is treated as
+ * abandoned (e.g. both players closed their tabs). Loaders self-heal such rows
+ * to 'complete' (winner 'draw') so they never linger as active forever. See
+ * CHANGE 2 — this is the robust backstop to the best-effort tab-close handler.
+ */
+export const STALE_ACTIVE_MS = 10 * 60 * 1000; // 10 minutes
 
 /** Unambiguous uppercase alphabet for room codes (no 0/O/1/I/L). */
 const ROOM_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -111,10 +120,21 @@ export async function createSession(
   const MAX_ATTEMPTS = 5;
   let lastError: { message: string; code?: string } | null = null;
 
+  // Denormalize the creator's display name onto the row so the joiner can show
+  // it without reading the creator's profile (the profiles SELECT policy is
+  // owner-only, and the joiner's page renders before they've even joined).
+  const creatorProfile = await getProfile(supabase, userId);
+  const creatorName = creatorProfile?.display_name ?? null;
+
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const { data, error } = await supabase
       .from("arena_sessions")
-      .insert({ created_by: userId, status: "waiting", code: generateRoomCode() })
+      .insert({
+        created_by: userId,
+        status: "waiting",
+        code: generateRoomCode(),
+        creator_name: creatorName,
+      })
       .select(SESSION_COLUMNS)
       .single();
     if (!error) return data as ArenaSession;
@@ -159,11 +179,12 @@ export async function resolveRoomCodeToSessionId(
 export async function joinAsUser(
   supabase: SupabaseClient,
   sessionId: string,
-  userId: string
+  userId: string,
+  joinerName: string | null
 ): Promise<ArenaSession | null> {
   const { data, error } = await supabase
     .from("arena_sessions")
-    .update({ joined_by: userId, status: "active" })
+    .update({ joined_by: userId, status: "active", joiner_name: joinerName })
     .eq("id", sessionId)
     .eq("status", "waiting")
     .select(SESSION_COLUMNS)
@@ -228,20 +249,83 @@ export async function endSession(
   if (error) console.error("[arena] endSession failed", error.message);
 }
 
+/**
+ * Completes a session with no winner ('draw'). Used when BOTH players leave the
+ * match (so neither can be the disconnect winner) and by the staleness backstop.
+ * Idempotent: only flips a session that isn't already complete.
+ */
+export async function abandonSession(
+  supabase: SupabaseClient,
+  sessionId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("arena_sessions")
+    .update({ status: "complete", winner: "draw" })
+    .eq("id", sessionId)
+    .neq("status", "complete");
+  if (error) console.error("[arena] abandonSession failed", error.message);
+}
+
 export async function insertEvent(
   supabase: SupabaseClient,
   sessionId: string,
   actor: ArenaRole,
   eventType: ArenaEventType,
-  damage?: number
+  damage?: number,
+  topic?: string
 ): Promise<void> {
   const { error } = await supabase.from("arena_events").insert({
     session_id: sessionId,
     actor,
     event_type: eventType,
     damage: damage ?? null,
+    topic: topic ?? null,
   });
   if (error) console.error("[arena] insertEvent failed", error.message);
+}
+
+/**
+ * Self-heals the caller's abandoned rooms: any session they belong to that is
+ * still 'active' but has had no event for > STALE_ACTIVE_MS (or, lacking any
+ * event, was created that long ago) is forced to 'complete' (winner 'draw').
+ * This is the robust backstop for CHANGE 2 — if BOTH players closed their tabs,
+ * no client remained to end the match, so the next time the owner loads a list
+ * of their sessions we tidy up the stragglers. Runs with the user's own
+ * Supabase context, so RLS lets them update only their own sessions.
+ */
+export async function healStaleSessionsForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  now: number = Date.now()
+): Promise<void> {
+  const { data } = await supabase
+    .from("arena_sessions")
+    .select("id, created_at")
+    .or(`created_by.eq.${userId},joined_by.eq.${userId}`)
+    .eq("status", "active");
+
+  const active = (data as { id: string; created_at: string }[] | null) ?? [];
+  if (active.length === 0) return;
+
+  await Promise.all(
+    active.map(async ({ id, created_at }) => {
+      const { data: lastEvent } = await supabase
+        .from("arena_events")
+        .select("created_at")
+        .eq("session_id", id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const lastActivity = new Date(
+        (lastEvent?.created_at as string | undefined) ?? created_at
+      ).getTime();
+
+      if (now - lastActivity > STALE_ACTIVE_MS) {
+        await abandonSession(supabase, id);
+      }
+    })
+  );
 }
 
 /** A stable client-side guest id (uuid). Never a Supabase auth user. */

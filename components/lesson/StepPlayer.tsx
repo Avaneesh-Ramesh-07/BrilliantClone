@@ -610,6 +610,12 @@ export function StepPlayer({
 
   const afterCorrectLastProblem = useCallback(
     (updatedFirstAttempts: Record<string, boolean>) => {
+      // Practice tests are ungated and never use redemption: finishing a step
+      // always advances regardless of score.
+      if (isPracticeTest) {
+        dispatch({ type: "MASTERY_PASS" });
+        return;
+      }
       const mastery = computeMastery(step, updatedFirstAttempts);
       if (mastery.passed) {
         dispatch({
@@ -623,7 +629,7 @@ export function StepPlayer({
         dispatch({ type: "ARM_REDEMPTION", originIndex: null });
       }
     },
-    [step]
+    [step, isPracticeTest]
   );
 
   const goToPrevStep = useCallback(() => {
@@ -738,13 +744,24 @@ export function StepPlayer({
         if (hasHint) dispatch({ type: "REVEAL_HINT" });
         return;
       }
+      // Practice tests never enter the helper/redemption flow. On the second
+      // miss the explanation panel (showRevealPanel) is shown and the learner
+      // advances via the Next button — no redemption problem is ever created.
+      if (isPracticeTest) return;
       if (interactive && !state.helperDone) {
         dispatch({ type: "ACTIVATE_HELPER" });
         return;
       }
       dispatch({ type: "ARM_REDEMPTION", originIndex: state.problemIndex });
     },
-    [problem, step.interactive, isDemo, state.helperDone, state.problemIndex]
+    [
+      problem,
+      step.interactive,
+      isDemo,
+      isPracticeTest,
+      state.helperDone,
+      state.problemIndex,
+    ]
   );
 
   const handleCheck = useCallback(async () => {
@@ -969,8 +986,8 @@ export function StepPlayer({
       }
 
       // Two misses on the same problem trigger the redemption flow (demos are
-      // exempt — they're just guided walkthroughs).
-      if (!isFirst && !isDemo) {
+      // exempt — they're just guided walkthroughs; practice tests never redeem).
+      if (!isFirst && !isDemo && !isPracticeTest) {
         dispatch({ type: "ARM_REDEMPTION", originIndex: state.problemIndex });
       }
     },
@@ -981,6 +998,7 @@ export function StepPlayer({
       state.redemption,
       state.problemIndex,
       isDemo,
+      isPracticeTest,
       step.id,
       persistAttempt,
       failToFallback,
@@ -1096,6 +1114,22 @@ export function StepPlayer({
       return;
     }
 
+    // Practice tests have no redemption: once a question has been missed twice
+    // the explanation panel is shown and the learner advances straight to the
+    // next step (Next → / Finish Test →) rather than retrying forever.
+    if (
+      isPracticeTest &&
+      state.feedback &&
+      !state.feedback.isCorrect &&
+      (state.attemptCounts[problem.id] ?? 0) >= 2
+    ) {
+      runGatedAdvance(() => void goToNextStep(), {
+        graded: true,
+        endsLesson: isLastStep,
+      });
+      return;
+    }
+
     if (state.feedback && !state.feedback.isCorrect) {
       dispatch({ type: "RESET_ATTEMPT" });
       attemptStartRef.current = Date.now();
@@ -1122,6 +1156,15 @@ export function StepPlayer({
     }
     if (state.masteryPassed) return step.completionAction.buttonLabel;
     if (state.problemSolved && !isLastProblem) return "Continue →";
+    // Practice test, missed twice: advance instead of retrying forever.
+    if (
+      isPracticeTest &&
+      state.feedback &&
+      !state.feedback.isCorrect &&
+      (state.attemptCounts[problem.id] ?? 0) >= 2
+    ) {
+      return step.completionAction.buttonLabel;
+    }
     if (state.feedback && !state.feedback.isCorrect) return "Try Again";
     return "Check Answer";
   })();
@@ -1395,9 +1438,9 @@ export function StepPlayer({
               option is already highlighted via showChoiceResult. Only rendered
               when a `solution` exists, so normal lessons are unaffected. */}
           {showRevealPanel && (
-            <div className="mt-4 rounded-lg border border-primary/30 bg-primary-light px-4 py-3">
+            <div className="mt-4 rounded-lg border border-border bg-surface px-4 py-3">
               {problem.type === "numeric-input" && (
-                <p className="text-body font-semibold text-primary">
+                <p className="text-body font-semibold text-success">
                   Correct answer: <MathText text={String(problem.answer)} />
                 </p>
               )}
@@ -1405,10 +1448,10 @@ export function StepPlayer({
                 <div
                   className={problem.type === "numeric-input" ? "mt-3" : ""}
                 >
-                  <p className="text-label font-semibold text-primary">
-                    How to solve it
+                  <p className="text-label font-semibold text-muted">
+                    Explanation
                   </p>
-                  <p className="mt-1 whitespace-pre-line text-body text-text">
+                  <p className="mt-1 whitespace-pre-line text-body text-error">
                     <MathText text={problemSolution} />
                   </p>
                 </div>

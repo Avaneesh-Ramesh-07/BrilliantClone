@@ -41,8 +41,9 @@ export function OddOneOutQuestion({
       if (optionId === question.oddId) {
         return `${base} border-success bg-success/10 text-success`;
       }
+      // The learner's own incorrect pick is shown neutral (never red).
       if (isSelected) {
-        return `${base} border-error bg-error/10 text-error`;
+        return `${base} border-border bg-surface text-muted`;
       }
       return `${base} border-border bg-surface text-text`;
     }
@@ -90,11 +91,11 @@ export function OddOneOutQuestion({
           className={`mt-4 rounded-lg border px-4 py-3 ${
             isCorrect
               ? "border-success/40 bg-success/10"
-              : "border-error/40 bg-error/5"
+              : "border-border bg-surface"
           }`}
         >
           <p
-            className={`text-body ${isCorrect ? "text-success" : "text-text"}`}
+            className={`text-body ${isCorrect ? "text-success" : "text-error"}`}
           >
             {question.explanation}
           </p>

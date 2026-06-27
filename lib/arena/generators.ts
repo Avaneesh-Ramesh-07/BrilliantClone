@@ -99,7 +99,7 @@ const BANDS: Band[] = [
 // EQUATIONS — multi-step linear with variables on BOTH sides
 // ===========================================================================
 
-function genEquation(band: Band): ArenaProblem {
+function genEquation(band: Band): Omit<ArenaProblem, "topic"> {
   const x = randNonZero(-(band.rootMax + 3), band.rootMax + 6);
   const a = rand(2, band.coeffMax);
   let b = rand(1, band.coeffMax);
@@ -128,7 +128,7 @@ function genEquation(band: Band): ArenaProblem {
 // GRAPHING / LINEAR — single numeric answer
 // ===========================================================================
 
-function genGraphing(band: Band): ArenaProblem {
+function genGraphing(band: Band): Omit<ArenaProblem, "topic"> {
   const variant = pick(["evalY", "xIntercept", "solveX", "yIntercept"] as const);
   const m = randNonZero(2, band.coeffMax);
 
@@ -177,7 +177,7 @@ function genGraphing(band: Band): ArenaProblem {
 // QUADRATICS — factorable with integer roots
 // ===========================================================================
 
-function genQuadratic(band: Band): ArenaProblem {
+function genQuadratic(band: Band): Omit<ArenaProblem, "topic"> {
   const variant = pick([
     "largerRoot",
     "smallerRoot",
@@ -237,14 +237,21 @@ function genQuadratic(band: Band): ArenaProblem {
 // Dispatch + public API
 // ===========================================================================
 
-const GENERATORS: Record<ArenaTopic, (band: Band) => ArenaProblem> = {
+const GENERATORS: Record<
+  ArenaTopic,
+  (band: Band) => Omit<ArenaProblem, "topic">
+> = {
   equations: genEquation,
   graphing: genGraphing,
   quadratics: genQuadratic,
 };
 
+/**
+ * Builds a problem for `topic` and stamps the topic onto it so every generated
+ * problem carries the topic it tests (consumed by the per-answer arena stats).
+ */
 function generateFor(topic: ArenaTopic, band: Band): ArenaProblem {
-  return GENERATORS[topic](band);
+  return { ...GENERATORS[topic](band), topic };
 }
 
 /** Normalize the requested topics: dedupe and keep only valid topics. */

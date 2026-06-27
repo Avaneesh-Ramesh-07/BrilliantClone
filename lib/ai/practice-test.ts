@@ -16,6 +16,27 @@ function letterId(index: number): string {
   return String.fromCharCode(97 + index);
 }
 
+/**
+ * Defensive cleanup: strips a trailing inline multiple-choice option list that
+ * the model sometimes leaks into the question `prompt` (the choices belong only
+ * in the `options` array, never in the stem). Matches an enumerated A–D run
+ * such as "A) 2 and -3  B) 3 and -2  C) -2 and 3  D) -3 and 2", also handling
+ * "A." / "(A)" / "[A]" and lowercase variants.
+ *
+ * To avoid damaging legitimate prompt math, it ONLY strips when at least the
+ * markers A, B and C appear in order (the unmistakable signature of an option
+ * list), and the leading marker sits at a word boundary so things like
+ * "area)" never trip it.
+ */
+function stripInlineOptionList(prompt: string): string {
+  if (!prompt) return prompt;
+  const OPTION_LIST_RE =
+    /(?:^|\s)[([]?[Aa][).\]]\s[\s\S]*?\s[([]?[Bb][).\]]\s[\s\S]*?\s[([]?[Cc][).\]][\s\S]*$/;
+  const stripped = prompt.replace(OPTION_LIST_RE, "").trim();
+  // If stripping somehow consumed everything, keep the original prompt.
+  return stripped.length > 0 ? stripped : prompt.trim();
+}
+
 // --- Prompts --------------------------------------------------------------
 
 export function buildPracticeTestSystemPrompt(): string {
@@ -105,10 +126,22 @@ export function buildPracticeTestSystemPrompt(): string {
     "- quadratics: projectile / maximum height (the vertex), area maximization,",
     "  'for what input is the value zero' (roots) framed as a real scenario.",
     "",
+    "THE 'prompt' FIELD — question stem ONLY (strict):",
+    "- The 'prompt' MUST contain ONLY the question stem (the situation + what is",
+    "  being asked). It must END with the question.",
+    "- NEVER put the multiple-choice answer choices inside the 'prompt'. Do NOT",
+    "  append an enumerated option list such as 'A) 2 and -3  B) 3 and -2  C) -2",
+    "  and 3  D) -3 and 2' (or 'A.'/'(A)'/lowercase variants) to the prompt text.",
+    "  The answer choices belong SOLELY in the 'options' array and are rendered by",
+    "  the UI — listing them in the prompt would show them twice.",
+    "- This applies to BOTH numeric and mc problems: the prompt is the stem, never",
+    "  the answers.",
+    "",
     "Other rules:",
     "- For multiple-choice ('mc') problems, write TRICK distractors that reflect",
     "  common mistakes ON THIS CONCEPT (sign errors, off-by-one, swapped values) —",
-    "  not obvious throwaways. Exactly one option is correct ('correctIndex').",
+    "  not obvious throwaways. Exactly one option is correct ('correctIndex'). Put",
+    "  every choice ONLY in the 'options' array — never inside the 'prompt'.",
     "- For 'numeric' problems the 'answer' is a single number.",
     "",
     "ANSWER EXPRESSION — REQUIRED on EVERY problem ('answerExpression'):",
@@ -170,6 +203,9 @@ export function buildPracticeTestUserPrompt(concepts: EligibleConcept[]): string
     "- If the situation involves a constant rate / linear cost, you MUST write the",
     "  explicit equation (e.g. '30x + 50 = 350') into the prompt and make the hint",
     "  that equation; otherwise choose a non-rate situation.",
+    "- Keep the 'prompt' to the question STEM only — never list the answer",
+    "  choices (no 'A) ... B) ... C) ... D) ...' inside the prompt). The choices",
+    "  go ONLY in the 'options' array.",
     "- Set 'conceptLabel' to that concept's label VERBATIM from the list above.",
     "- Include a tailored 'hint' that scaffolds the approach for THIS problem",
     "  without giving away the final answer (equation-to-solve for setup problems,",
@@ -200,6 +236,8 @@ function practiceSpecToProblem(
   // Prefer the model's tailored scaffold; fall back to the full explanation
   // only when the hint is missing/blank.
   const hint = spec.hint && spec.hint.trim() ? spec.hint : spec.explanation;
+  // Defensive: never let an enumerated MC option list leak into the stem.
+  const prompt = stripInlineOptionList(spec.prompt);
   switch (spec.kind) {
     case "numeric": {
       const feedback: ProblemFeedback = {
@@ -209,7 +247,7 @@ function practiceSpecToProblem(
       return {
         id,
         type: "numeric-input",
-        prompt: spec.prompt,
+        prompt,
         answer: spec.answer,
         hint,
         // Full worked solution, revealed only on the second miss (the short
@@ -228,7 +266,7 @@ function practiceSpecToProblem(
       return {
         id,
         type: "multiple-choice",
-        prompt: spec.prompt,
+        prompt,
         options,
         hint,
         // Full worked solution, revealed only on the second miss (the short
