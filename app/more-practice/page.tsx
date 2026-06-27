@@ -30,7 +30,7 @@ export default async function MorePracticePage() {
           Back to lessons
         </Link>
         <h1 className="mt-3 font-heading text-heading-lg text-text">
-          More Practice
+          Practice
         </h1>
         <p className="mt-1 text-body text-muted">
           Two ways to keep your algebra sharp — pick a path and dive in.

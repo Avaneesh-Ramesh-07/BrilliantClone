@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
-import { AccountActions } from "@/components/home/AccountActions";
+import { CalendarToggle } from "@/components/home/CalendarToggle";
 import { LessonPath, type LessonPathItem } from "@/components/home/LessonPath";
 import { StreakWidget } from "@/components/home/StreakWidget";
+import { getMonthlyActivity } from "@/lib/activity";
 import { getAllLessons } from "@/lib/lessons";
 import {
   getAllLessonProgress,
@@ -27,13 +28,19 @@ export default async function HomePage() {
 
   if (!user) redirect("/login");
 
-  const [profile, streak, weekly, progressMap, lessonStats] = await Promise.all([
-    getProfile(supabase, user.id),
-    getStreak(supabase, user.id),
-    getWeeklyActivity(supabase, user.id),
-    getAllLessonProgress(supabase, user.id),
-    getAllLessonStats(supabase, user.id),
-  ]);
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  const [profile, streak, weekly, progressMap, lessonStats, monthlyActivity] =
+    await Promise.all([
+      getProfile(supabase, user.id),
+      getStreak(supabase, user.id),
+      getWeeklyActivity(supabase, user.id),
+      getAllLessonProgress(supabase, user.id),
+      getAllLessonStats(supabase, user.id),
+      getMonthlyActivity(supabase, user.id, currentYear, currentMonth),
+    ]);
 
   const lessons = getAllLessons();
 
@@ -64,33 +71,51 @@ export default async function HomePage() {
 
   return (
     <main className="py-8">
-      <header className="mb-8 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-label text-muted">Welcome back</p>
-          <h1 className="font-heading text-heading-lg text-text">{firstName}</h1>
+      {/*
+        Full-bleed breakout (desktop only): the root layout traps every page in
+        a 480px column (max-w-app) with px-4. On md+ we pull out to span the
+        viewport (left-1/2 + -mx-[50vw] + w-screen) then re-center in a wider
+        max-w-5xl container so the streak + path can sit side by side. On mobile
+        these md: utilities are inert, so it stays a single 480px column.
+      */}
+      <div className="md:relative md:left-1/2 md:right-1/2 md:-mx-[50vw] md:w-screen">
+        <div className="md:mx-auto md:max-w-5xl md:px-8">
+          <div className="md:grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-start md:gap-12">
+            {/* LEFT — welcome header + streak (sticky on desktop) */}
+            <div className="md:sticky md:top-24">
+              <header className="mb-8">
+                <p className="text-label text-muted">Welcome back</p>
+                <h1 className="font-heading text-heading-lg text-text">
+                  {firstName}
+                </h1>
+              </header>
+
+              <section className="mb-6">
+                <StreakWidget
+                  streak={streak.current_streak}
+                  days={weekly.days}
+                  todayIndex={weekly.todayIndex}
+                />
+              </section>
+
+              <section className="mb-10 md:mb-0">
+                <CalendarToggle activity={monthlyActivity} />
+              </section>
+            </div>
+
+            {/* RIGHT — vertical learning path */}
+            <section>
+              <h2 className="mb-1 font-heading text-heading-lg text-text">
+                Your learning path
+              </h2>
+              <p className="mb-6 text-body text-muted">
+                Tap a lesson to see your progress and jump back in.
+              </p>
+              <LessonPath lessons={pathItems} />
+            </section>
+          </div>
         </div>
-        <AccountActions email={user.email ?? ""} />
-      </header>
-
-      <section className="mb-10">
-        <StreakWidget
-          streak={streak.current_streak}
-          days={weekly.days}
-          todayIndex={weekly.todayIndex}
-        />
-      </section>
-
-      <section>
-        <h2 className="mb-1 font-heading text-heading-lg">
-          <span className="bg-gradient-to-r from-primary via-accent-purple to-accent-pink bg-clip-text text-transparent">
-            Your learning path
-          </span>
-        </h2>
-        <p className="mb-6 text-body text-muted">
-          Tap a lesson to see your progress and jump back in.
-        </p>
-        <LessonPath lessons={pathItems} />
-      </section>
+      </div>
     </main>
   );
 }

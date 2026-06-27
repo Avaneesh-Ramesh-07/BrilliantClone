@@ -44,7 +44,7 @@ export default function SignupPage() {
     <main className="flex min-h-screen flex-col justify-center py-12">
       <h1 className="font-heading text-heading-lg">Sign Up</h1>
       <p className="mt-2 text-body text-muted">
-        Create your AlgebraPath account.
+        Create your AlgebraDojo account.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">

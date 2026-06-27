@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import TopNav from "@/components/nav/TopNav";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "AlgebraPath",
+  title: "AlgebraDojo",
   description: "Learn algebra by solving equations hands-on",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html lang="en">
       <head>
@@ -28,7 +34,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <div className="mx-auto min-h-screen w-full max-w-app px-4 pb-safe">
-          <TopNav />
+          <TopNav email={user?.email ?? undefined} />
           {children}
         </div>
       </body>

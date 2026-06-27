@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { formatDuration, type ComfortLevel, type LessonMastery } from "@/lib/comfort";
 
 const COMFORT_META: Record<
@@ -57,6 +60,17 @@ function daysLabel(daysSince: number | null): { label: string; tone: string } {
   return { label: `${daysSince} days ago`, tone: "text-error" };
 }
 
+function statusMeta(status: LessonMastery["status"]): {
+  label: string;
+  badge: string;
+} {
+  if (status === "complete")
+    return { label: "Completed", badge: "bg-success/10 text-success" };
+  if (status === "in_progress")
+    return { label: "In progress", badge: "bg-primary/10 text-primary" };
+  return { label: "Not started", badge: "bg-border/60 text-muted" };
+}
+
 function ComfortMeter({ mastery }: { mastery: LessonMastery }) {
   const meta = COMFORT_META[mastery.comfort.level];
   const started = mastery.comfort.level !== "not-started";
@@ -97,14 +111,80 @@ function ComfortMeter({ mastery }: { mastery: LessonMastery }) {
   );
 }
 
+// Colorful accent per lesson so the page pops like the home screen.
+const CARD_ACCENTS = [
+  "bg-accent-purple",
+  "bg-accent-cyan",
+  "bg-accent-pink",
+  "bg-accent-orange",
+  "bg-accent-green",
+];
+
 export function MasteryView({ lessons }: { lessons: LessonMastery[] }) {
+  const [active, setActive] = useState(0);
+
+  if (lessons.length === 0) {
+    return (
+      <p className="text-body text-muted">No lessons to show yet.</p>
+    );
+  }
+
+  const activeIndex = Math.min(active, lessons.length - 1);
+  const lesson = lessons[activeIndex];
+
   return (
-    <div className="flex flex-col gap-5">
-      {lessons.map((lesson) => (
-        <article
-          key={lesson.lessonId}
-          className="rounded-xl border border-border bg-surface p-5 shadow-sm"
-        >
+    <div>
+      {/* Tabs — each shows the lesson name + completed status */}
+      <div
+        role="tablist"
+        aria-label="Lessons"
+        className="flex flex-wrap gap-2"
+      >
+        {lessons.map((l, index) => {
+          const isActive = index === activeIndex;
+          const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
+          const status = statusMeta(l.status);
+          return (
+            <button
+              key={l.lessonId}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActive(index)}
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-colors ${
+                isActive
+                  ? "border-primary bg-primary-light"
+                  : "border-border bg-surface hover:bg-bg"
+              }`}
+            >
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${accent}`} aria-hidden />
+              <span
+                className={`text-body font-semibold ${
+                  isActive ? "text-primary" : "text-text"
+                }`}
+              >
+                {l.title}
+              </span>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-label ${status.badge}`}
+              >
+                {status.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Active lesson's full data */}
+      <article
+        key={lesson.lessonId}
+        role="tabpanel"
+        className="card-pop mt-5 overflow-hidden p-0"
+      >
+        <div
+          className={`h-1.5 w-full ${CARD_ACCENTS[activeIndex % CARD_ACCENTS.length]}`}
+        />
+        <div className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-heading text-heading-md text-text">
@@ -137,8 +217,8 @@ export function MasteryView({ lessons }: { lessons: LessonMastery[] }) {
               );
             })}
           </ul>
-        </article>
-      ))}
+        </div>
+      </article>
     </div>
   );
 }

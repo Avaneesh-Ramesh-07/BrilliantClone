@@ -17,6 +17,16 @@ export interface ArenaSession {
   creator_name: string | null;
   /** An authenticated joiner's (user2's) display name, set on join. */
   joiner_name: string | null;
+  /**
+   * The creator's (user1's) total duel WINS, denormalized at creation so the
+   * opponent can render the creator's duel rank without owner-scoped reads.
+   */
+  creator_wins: number;
+  /**
+   * The joiner's (user2's) total duel WINS, set on join. Guests are always 0
+   * (the lowest rank, Initiate).
+   */
+  joiner_wins: number;
   status: ArenaStatus;
   user1_hp: number;
   user2_hp: number;

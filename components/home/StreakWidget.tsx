@@ -10,17 +10,26 @@ const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export function StreakWidget({ streak, days, todayIndex }: StreakWidgetProps) {
   return (
-    <div className="card-pop overflow-hidden bg-gradient-to-br from-accent-orange/15 via-surface to-accent-yellow/15 p-5">
+    <div
+      aria-label={`${streak}-day streak.`}
+      className="card-pop overflow-hidden bg-gradient-to-br from-accent-orange/15 via-surface to-accent-yellow/15 p-5"
+    >
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-orange/15 text-3xl ring-1 ring-accent-orange/30">
-          <span aria-hidden>🔥</span>
+        <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-orange/15 text-3xl ring-1 ring-accent-orange/30">
+          <span aria-hidden>🥷</span>
+          <span
+            aria-hidden
+            className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-surface text-base shadow ring-1 ring-accent-orange/30"
+          >
+            🔥
+          </span>
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="font-heading text-heading-lg text-text">
             <span className="text-accent-orange">{streak}</span>-day streak
           </p>
           <p className="text-label text-muted">
-            {streak > 0 ? "Keep the fire going" : "Start your streak today"}
+            {streak > 0 ? "Keep the ninja fire burning" : "Begin your training today"}
           </p>
         </div>
       </div>

@@ -14,11 +14,6 @@ export function isGraded(problem: Problem): boolean {
   if ("throwback" in problem && problem.throwback !== undefined) {
     return false;
   }
-  // Graded "pick the point(s)" problems (e.g. step-6 pick-both-roots) count
-  // toward mastery; their guided demo variants do not.
-  if (problem.type === "plot-point") {
-    return problem.demo !== true;
-  }
   if (
     problem.type === "isolate-blocks" ||
     problem.type === "eliminate-blocks" ||
@@ -28,12 +23,12 @@ export function isGraded(problem: Problem): boolean {
     problem.type === "variable-box" ||
     problem.type === "graph-intercept" ||
     problem.type === "slope-race" ||
+    problem.type === "plot-point" ||
     problem.type === "parabola-balls" ||
     problem.type === "factor-quadratic" ||
     problem.type === "power-toggle" ||
     problem.type === "parabola-a-slider" ||
-    problem.type === "vertex-formula" ||
-    problem.type === "quadratic-formula"
+    problem.type === "vertex-formula"
   ) {
     return false;
   }

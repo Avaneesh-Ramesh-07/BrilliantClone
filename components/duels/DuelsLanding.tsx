@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DuelCard } from "@/components/arena/DuelCard";
 import { DUEL_TIERS } from "@/lib/arena/rank";
 import type { DuelRank } from "@/lib/arena/rank";
 
@@ -31,7 +32,13 @@ function Blades() {
   );
 }
 
-export function DuelsLanding({ rank }: { rank: DuelRank }) {
+export function DuelsLanding({
+  rank,
+  username,
+}: {
+  rank: DuelRank;
+  username: string;
+}) {
   const { tierName, tierIndex, stars, winsIntoTier, winsToNext, isMaxTier } =
     rank;
 
@@ -80,9 +87,18 @@ export function DuelsLanding({ rank }: { rank: DuelRank }) {
           </p>
         </header>
 
+        {/* The signed-in player's own duel card (only surfaced here on /duels
+            and inside the match-start versus animation). */}
+        <section className="relative mt-7">
+          <p className="text-label text-white/50">Your duel card</p>
+          <div className="mt-2">
+            <DuelCard username={username} wins={rank.wins} rank={rank} />
+          </div>
+        </section>
+
         {/* RANK display */}
         <section
-          className="relative mt-7 rounded-2xl p-5"
+          className="relative mt-5 rounded-2xl p-5"
           style={{
             background: "rgba(255,255,255,0.04)",
             border: "1px solid rgba(255,255,255,0.08)",

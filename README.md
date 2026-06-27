@@ -1,4 +1,4 @@
-# AlgebraPath
+# AlgebraDojo
 
 Learn algebra by solving equations hands-on.
 

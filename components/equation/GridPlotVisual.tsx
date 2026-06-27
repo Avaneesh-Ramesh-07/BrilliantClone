@@ -92,10 +92,7 @@ export function GridPlotVisual({ visual, animation }: GridPlotVisualProps) {
           <span className="inline-flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-1.5 font-math text-equation text-text shadow-sm">
             <span
               className="inline-block h-2.5 w-4 rounded-sm"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg, #E03131 0 4px, transparent 4px 7px)",
-              }}
+              style={{ backgroundColor: "#E03131" }}
               aria-hidden
             />
             {visual.rightLine.label}

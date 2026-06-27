@@ -5,11 +5,12 @@ import type {
   ArenaSession,
 } from "@/types/arena";
 import type { CombatState } from "@/lib/arena/combat";
+import { countDuelWins } from "@/lib/arena/rank";
 import { getProfile } from "@/lib/progress";
 
 /** Columns selected for an arena session everywhere in the feature. */
 export const SESSION_COLUMNS =
-  "id, code, created_by, joined_by, guest_name, creator_name, joiner_name, status, user1_hp, user2_hp, user1_streak, user2_streak, user1_correct_this_blow, user2_correct_this_blow, winner, created_at";
+  "id, code, created_by, joined_by, guest_name, creator_name, joiner_name, creator_wins, joiner_wins, status, user1_hp, user2_hp, user1_streak, user2_streak, user1_correct_this_blow, user2_correct_this_blow, winner, created_at";
 
 const EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -126,6 +127,11 @@ export async function createSession(
   const creatorProfile = await getProfile(supabase, userId);
   const creatorName = creatorProfile?.display_name ?? null;
 
+  // Also denormalize the creator's total duel wins so the opponent can render
+  // the creator's duel rank in the match-start versus animation (the win count
+  // is otherwise only readable by the creator themselves under owner RLS).
+  const creatorWins = await countDuelWins(supabase, userId);
+
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const { data, error } = await supabase
       .from("arena_sessions")
@@ -134,6 +140,7 @@ export async function createSession(
         status: "waiting",
         code: generateRoomCode(),
         creator_name: creatorName,
+        creator_wins: creatorWins,
       })
       .select(SESSION_COLUMNS)
       .single();
@@ -182,11 +189,23 @@ export async function joinAsUser(
   userId: string,
   joinerName: string | null
 ): Promise<ArenaSession | null> {
+  // A signed-in user may never claim the SECOND seat in a room they created —
+  // that would be dueling themselves. `.neq("created_by", userId)` makes the
+  // update match no row in that case (so the claim fails and returns null);
+  // it's also enforced by RLS (`created_by <> auth.uid()`). The creator's own
+  // link still lands them as user1 via `roleForUser`, which never reaches here.
+  const joinerWins = await countDuelWins(supabase, userId);
   const { data, error } = await supabase
     .from("arena_sessions")
-    .update({ joined_by: userId, status: "active", joiner_name: joinerName })
+    .update({
+      joined_by: userId,
+      status: "active",
+      joiner_name: joinerName,
+      joiner_wins: joinerWins,
+    })
     .eq("id", sessionId)
     .eq("status", "waiting")
+    .neq("created_by", userId)
     .select(SESSION_COLUMNS)
     .single();
   if (error) {
@@ -208,9 +227,16 @@ export async function joinAsGuest(
   guestName: string,
   guestId: string
 ): Promise<ArenaSession | null> {
+  // Guests are always the lowest rank (Initiate, 0 wins / 0 stars), so their
+  // denormalized win count is fixed at 0.
   const { data, error } = await supabase
     .from("arena_sessions")
-    .update({ guest_name: guestName, joined_by: guestId, status: "active" })
+    .update({
+      guest_name: guestName,
+      joined_by: guestId,
+      status: "active",
+      joiner_wins: 0,
+    })
     .eq("id", sessionId)
     .eq("status", "waiting")
     .select(SESSION_COLUMNS)
@@ -328,7 +354,11 @@ export async function healStaleSessionsForUser(
   );
 }
 
-/** A stable client-side guest id (uuid). Never a Supabase auth user. */
+/**
+ * A throwaway client-side guest id (uuid) for a single join, stored in the row's
+ * `joined_by`. It is NOT persisted anywhere on the client — guests are never
+ * re-identified across page loads, so a guest who leaves a match cannot rejoin.
+ */
 export function newGuestId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();

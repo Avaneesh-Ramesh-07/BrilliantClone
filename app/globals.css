@@ -227,3 +227,355 @@ body {
 .animate-hero-float {
   animation: hero-float 6s ease-in-out infinite;
 }
+
+/*
+ * Home learning path: a little ninja runs from the start node to the first
+ * uncompleted lesson on mount. The travel (top/left) is driven by per-element
+ * CSS custom properties measured from the live node positions in JS, so the
+ * same keyframe works for any zig-zag layout. Runs once (forwards).
+ */
+@keyframes ninja-run {
+  from {
+    top: var(--nrun-start-y, 0px);
+    left: var(--nrun-start-x, 0px);
+  }
+  to {
+    top: var(--nrun-end-y, 0px);
+    left: var(--nrun-end-x, 0px);
+  }
+}
+
+.animate-ninja-run {
+  top: var(--nrun-start-y, 0px);
+  left: var(--nrun-start-x, 0px);
+  animation: ninja-run 1400ms cubic-bezier(0.45, 0.05, 0.3, 1) forwards;
+}
+
+/* The running bob/lean applied to the ninja itself while it travels. */
+@keyframes ninja-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg) scaleX(1);
+  }
+  50% {
+    transform: translateY(-7px) rotate(6deg) scaleX(1.06);
+  }
+}
+
+.animate-ninja-bob {
+  animation: ninja-bob 320ms ease-in-out infinite;
+}
+
+/* Flip-book running legs/arms: two limb poses alternate rapidly so the ninja
+   looks like it's actually running (legs pumping) while it travels. */
+@keyframes ninja-stride-a {
+  0%,
+  49.99% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes ninja-stride-b {
+  0%,
+  49.99% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+.ninja-stride-a {
+  animation: ninja-stride-a 240ms steps(1, end) infinite;
+}
+.ninja-stride-b {
+  animation: ninja-stride-b 240ms steps(1, end) infinite;
+}
+
+/* Short dashed "speed lines" dropped behind the running ninja; fade within 0.5s. */
+@keyframes ninja-trail {
+  0% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -58%) scale(0.8);
+  }
+}
+.ninja-trail-mark {
+  animation: ninja-trail 500ms ease-out forwards;
+}
+
+/* Target lesson "coin" reacting as the ninja dives in: a springy scale-bounce. */
+@keyframes node-impact {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.18);
+  }
+  70% {
+    transform: scale(0.94);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-node-impact {
+  animation: node-impact 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Expanding ring ripple emitted from the node at the moment of entry. */
+@keyframes node-ripple {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+.animate-node-ripple {
+  animation: node-ripple 550ms ease-out forwards;
+}
+
+/* Little dust puff kicked up where the ninja vanishes into the node. */
+@keyframes ninja-dust {
+  0% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -70%) scale(1.4);
+    opacity: 0;
+  }
+}
+.animate-ninja-dust {
+  animation: ninja-dust 500ms ease-out forwards;
+}
+
+/* ===========================================================================
+ * Duels match-start "versus" intro (DuelStartVersus). A full-screen, game-like
+ * intro (Brawl Stars / Clash Royale vibe): both players' duel cards slam in
+ * from the sides of a lightning-split screen, a screen flash fires on the bolt,
+ * and a staggered "Ready… / Set… / Duel!!" sequence plays before it clears.
+ * Namespaced `duel-vs-*` / `lightning-*`.
+ * ======================================================================== */
+
+/* Backdrop fades in fast, then the whole overlay fades out at the end. */
+@keyframes duel-vs-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.duel-vs-overlay-in {
+  animation: duel-vs-overlay-in 180ms ease-out both;
+}
+@keyframes duel-vs-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+.duel-vs-overlay-out {
+  animation: duel-vs-overlay-out 320ms ease-in forwards;
+}
+
+/* The local player's card slams in from the LEFT with a slight overshoot. */
+@keyframes duel-vs-slam-left {
+  0% {
+    transform: translateX(-130%) rotate(-10deg) scale(0.8);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(6%) rotate(2deg) scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+.duel-vs-slam-left {
+  animation: duel-vs-slam-left 560ms cubic-bezier(0.18, 0.9, 0.25, 1.2) both;
+}
+
+/* The opponent's card slams in from the RIGHT (mirrored). */
+@keyframes duel-vs-slam-right {
+  0% {
+    transform: translateX(130%) rotate(10deg) scale(0.8);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(-6%) rotate(-2deg) scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+.duel-vs-slam-right {
+  animation: duel-vs-slam-right 560ms cubic-bezier(0.18, 0.9, 0.25, 1.2) both;
+  animation-delay: 80ms;
+}
+
+/* The central lightning bolt draws/snaps in down the middle of the screen. */
+@keyframes lightning-strike {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.2) scaleX(0.5);
+    filter: brightness(2.6);
+  }
+  55% {
+    opacity: 1;
+    transform: scaleY(1.06) scaleX(1.15);
+    filter: brightness(2.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1) scaleX(1);
+    filter: brightness(1);
+  }
+}
+.lightning-strike {
+  transform-origin: center;
+  animation: lightning-strike 520ms cubic-bezier(0.2, 0.8, 0.2, 1) 360ms both;
+}
+
+/* A quick white screen flash synced to the bolt landing. */
+@keyframes lightning-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  60% {
+    opacity: 0.25;
+  }
+}
+.lightning-flash {
+  animation: lightning-flash 480ms ease-out 420ms 1 both;
+}
+
+/* The bolt keeps a subtle electric flicker after it lands. */
+@keyframes lightning-flicker {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(168, 220, 255, 0.9));
+  }
+  50% {
+    opacity: 0.78;
+    filter: drop-shadow(0 0 22px rgba(168, 220, 255, 1));
+  }
+}
+.lightning-flicker {
+  animation: lightning-flicker 220ms ease-in-out 880ms 3;
+}
+
+/* Each Ready/Set/Duel message pops in punchy then settles (re-keyed per word). */
+@keyframes duel-vs-text-pop {
+  0% {
+    transform: scale(2.2);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  45% {
+    transform: scale(0.92);
+    opacity: 1;
+    filter: blur(0);
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.duel-vs-text-pop {
+  animation: duel-vs-text-pop 360ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+/* The final "Duel!!" gets an extra impact pulse. */
+@keyframes duel-vs-text-impact {
+  0% {
+    transform: scale(2.6);
+    opacity: 0;
+    filter: blur(8px);
+  }
+  40% {
+    transform: scale(0.9);
+    opacity: 1;
+    filter: blur(0);
+  }
+  60% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+.duel-vs-text-impact {
+  animation: duel-vs-text-impact 420ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+/* A subtle camera-shake jolt on the whole stage when the bolt hits. */
+@keyframes duel-vs-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-5px, 3px);
+  }
+  40% {
+    transform: translate(5px, -3px);
+  }
+  60% {
+    transform: translate(-3px, 2px);
+  }
+  80% {
+    transform: translate(3px, -2px);
+  }
+}
+.duel-vs-shake {
+  animation: duel-vs-shake 360ms ease-in-out 420ms 1 both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ninja-run {
+    top: var(--nrun-end-y, 0px);
+    left: var(--nrun-end-x, 0px);
+    animation: none;
+  }
+  .animate-ninja-bob {
+    animation: none;
+  }
+  .duel-vs-slam-left,
+  .duel-vs-slam-right,
+  .lightning-strike,
+  .lightning-flash,
+  .lightning-flicker,
+  .duel-vs-text-pop,
+  .duel-vs-text-impact,
+  .duel-vs-shake {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 import {
   FormEvent,
   useCallback,
@@ -10,6 +11,7 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/Button";
+import { DuelStartVersus } from "@/components/arena/DuelStartVersus";
 import {
   applyAnswer,
   patchForOutcome,
@@ -31,7 +33,11 @@ import type {
 } from "@/types/arena";
 import styles from "./arena.module.css";
 
-const DISCONNECT_GRACE_MS = 30_000;
+// Short, INVISIBLE debounce before awarding a forfeit when the opponent's
+// presence drops. Supabase Realtime briefly emits leave→rejoin during normal
+// re-sync, so a tiny wait avoids a spurious forfeit from a momentary flap. No
+// countdown is shown; a real tab-close resolves to the win in a few seconds.
+const DISCONNECT_DEBOUNCE_MS = 2_500;
 const HIT_ANIM_MS = 600;
 
 interface ArenaMatchProps {
@@ -105,6 +111,7 @@ export function ArenaMatch({
   selfName,
   enemyName,
 }: ArenaMatchProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [session, setSession] = useState<ArenaSession>(initialSession);
 
@@ -117,6 +124,17 @@ export function ArenaMatch({
   const [enemyHit, setEnemyHit] = useState(false);
   const [selfHit, setSelfHit] = useState(false);
   const [opponentLeft, setOpponentLeft] = useState(false);
+
+  // Explicit "Leave duel" (forfeit) flow.
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  // Set once THIS client has run its own leave path, so the tab-close/unmount
+  // handler below doesn't fire a second (redundant) termination write.
+  const leftRef = useRef(false);
+
+  // Match-start "versus" intro: shown once, the first time this match is active.
+  const [showVersus, setShowVersus] = useState(false);
+  const versusShownRef = useRef(false);
 
   const usedIdsRef = useRef<Set<string>>(new Set());
   const correctCountRef = useRef(0);
@@ -150,6 +168,23 @@ export function ArenaMatch({
     role === "user1"
       ? session.guest_name ?? session.joiner_name ?? enemyName ?? "Challenger"
       : session.creator_name ?? enemyName ?? "Challenger";
+
+  // Wins for each side, read off the (denormalized) session row. The local
+  // player is always user1 => creator_*, or user2 => joiner_*. Guests join with
+  // joiner_wins = 0 (Initiate). Used by the versus intro's duel cards.
+  const myWins = role === "user1" ? session.creator_wins : session.joiner_wins;
+  const enemyWins =
+    role === "user1" ? session.joiner_wins : session.creator_wins;
+
+  // Trigger the match-start versus intro exactly once, the first time the match
+  // is active (covers both the creator — whose ArenaMatch mounts on hand-off —
+  // and the joiner — who lands here already active). It auto-dismisses.
+  useEffect(() => {
+    if (session.status === "active" && !versusShownRef.current) {
+      versusShownRef.current = true;
+      setShowVersus(true);
+    }
+  }, [session.status]);
 
   // Pick the first problem on mount.
   const advance = useCallback(
@@ -186,6 +221,8 @@ export function ArenaMatch({
 
       if (opponentPresent) {
         opponentEverSeenRef.current = true;
+        // Opponent (re)connected within the debounce — cancel the pending
+        // forfeit and resume the match (this also absorbs presence flaps).
         if (disconnectTimerRef.current) {
           clearTimeout(disconnectTimerRef.current);
           disconnectTimerRef.current = null;
@@ -195,7 +232,9 @@ export function ArenaMatch({
       }
 
       // Opponent not present. Only treat as a disconnect if we've seen them
-      // before and the match is still live.
+      // before and the match is still live. After a short INVISIBLE debounce
+      // (to ride out a momentary presence flap) the remaining player is awarded
+      // the forfeit win — there is no visible countdown.
       if (
         opponentEverSeenRef.current &&
         !disconnectTimerRef.current &&
@@ -203,11 +242,15 @@ export function ArenaMatch({
       ) {
         disconnectTimerRef.current = setTimeout(() => {
           disconnectTimerRef.current = null;
+          // Re-check at fire time: the match may have ended during the debounce
+          // (e.g. the opponent explicitly forfeited and already wrote the
+          // terminal state). If so this is a no-op so we don't double-record.
+          if (statusRef.current !== "active") return;
           setOpponentLeft(true);
           void insertEvent(supabase, sessionId, opponentRole, "disconnect");
           void insertEvent(supabase, sessionId, role, "win");
           void endSession(supabase, sessionId, role);
-        }, DISCONNECT_GRACE_MS);
+        }, DISCONNECT_DEBOUNCE_MS);
       }
     };
 
@@ -255,36 +298,50 @@ export function ArenaMatch({
     prevMyHpRef.current = myHp;
   }, [myHp]);
 
-  // ----- CHANGE 2: kill the match if BOTH players leave. -----
-  // The existing presence + DISCONNECT_GRACE_MS path lets the *remaining*
-  // player win when ONE side leaves. But if BOTH close their tabs, no client is
-  // left to end the match, so it would linger as 'active' forever. When THIS
-  // client is leaving (tab close/hide or SPA unmount) mid-match, we check
-  // whether the opponent is already gone: if so we end the match as a draw
-  // (abandoned); if they're still here, we leave it to their grace-timer win
-  // path. Unload can't await a network write, so this is best-effort — the
-  // `healStaleSessionsForUser` staleness backstop tidies up any room where the
-  // write never landed.
-  useEffect(() => {
-    const handleLeave = () => {
-      if (statusRef.current !== "active") return;
-      if (!opponentPresentRef.current) {
-        void abandonSession(supabase, sessionId);
+  // ----- Implicit leave (tab close / disconnect) is INTENTIONALLY not resolved
+  // here. -----
+  // An implicit leave writes NO terminal result from the leaver's side. The
+  // resolution is owned entirely by the REMAINING player's presence handler (see
+  // the realtime effect above): after a short invisible debounce it re-reads the
+  // authoritative `statusRef` and awards that player the win by forfeit. A
+  // genuine both-left room (no client remains to fire the timer) is swept to a
+  // draw by the `healStaleSessionsForUser` staleness backstop. The explicit
+  // "Leave duel" button below is the only client-initiated immediate forfeit.
+
+  // ----- Explicit "Leave duel" (forfeit). -----
+  // When a player deliberately quits a live match, they forfeit: the opponent —
+  // if still present — is awarded the win and the leaver is recorded as the
+  // loser, reusing the SAME endSession termination path as a disconnect/normal
+  // end (so wins/rank/history all derive consistently from session.winner). If
+  // the opponent is already gone too, nobody remains to win, so the room is
+  // abandoned as a draw. Unlike an implicit leave this is immediate (no grace
+  // window) because the player explicitly chose to quit. Guarded by the
+  // active-status check plus endSession/abandonSession's `neq('complete')`
+  // idempotency, so a leave signal on an already-finished room is a no-op and
+  // the result can never be double-counted.
+  const handleConfirmLeave = useCallback(async () => {
+    if (leftRef.current) return;
+    leftRef.current = true;
+    setLeaving(true);
+
+    // We are the one leaving — cancel any pending "opponent disconnected" timer.
+    if (disconnectTimerRef.current) {
+      clearTimeout(disconnectTimerRef.current);
+      disconnectTimerRef.current = null;
+    }
+
+    if (statusRef.current === "active") {
+      if (opponentPresentRef.current) {
+        await insertEvent(supabase, sessionId, role, "disconnect");
+        await insertEvent(supabase, sessionId, opponentRole, "win");
+        await endSession(supabase, sessionId, opponentRole);
+      } else {
+        await abandonSession(supabase, sessionId);
       }
-    };
-    const handleVisibility = () => {
-      if (document.visibilityState === "hidden") handleLeave();
-    };
-    window.addEventListener("beforeunload", handleLeave);
-    window.addEventListener("pagehide", handleLeave);
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => {
-      window.removeEventListener("beforeunload", handleLeave);
-      window.removeEventListener("pagehide", handleLeave);
-      document.removeEventListener("visibilitychange", handleVisibility);
-      handleLeave();
-    };
-  }, [supabase, sessionId]);
+    }
+
+    window.location.href = "/arena";
+  }, [supabase, sessionId, role, opponentRole]);
 
   const handleSubmit = useCallback(
     (e: FormEvent) => {
@@ -344,17 +401,58 @@ export function ArenaMatch({
     setChallengeLink(`${window.location.origin}/arena/${sessionId}`);
   }, [sessionId]);
 
+  // A forfeit (explicit leave or disconnect) ends the match with a winner while
+  // the loser still has HP left — a normal end always drives the loser to 0 HP.
+  // So a positive loser-HP on a completed, non-draw match means win-by-forfeit.
+  // This lets BOTH the detecting client (opponentLeft) AND the one who only
+  // receives the realtime terminal update render the forfeit outcome correctly.
+  const loserHp =
+    session.winner === "user1"
+      ? session.user2_hp
+      : session.winner === "user2"
+        ? session.user1_hp
+        : null;
+  const byForfeit =
+    isComplete &&
+    (session.winner === "user1" || session.winner === "user2") &&
+    (loserHp ?? 0) > 0;
+
   const winnerText = (() => {
     if (!isComplete) return null;
     if (session.winner === "draw") return "It's a draw!";
     if (session.winner === role) {
-      return opponentLeft ? "Your opponent disconnected — You Win!" : "You Win!";
+      return opponentLeft || byForfeit
+        ? "Opponent forfeited — You Win!"
+        : "You Win!";
     }
-    return "You Lose";
+    return byForfeit ? "You forfeited — You Lose" : "You Lose";
   })();
 
   return (
     <main className="flex min-h-screen flex-col py-6">
+      {/* ===== Match-start versus intro (overlay, auto-dismisses) ===== */}
+      {showVersus && (
+        <DuelStartVersus
+          me={{ username: selfName, wins: myWins }}
+          opponent={{ username: enemyDisplay, wins: enemyWins }}
+          onDone={() => setShowVersus(false)}
+        />
+      )}
+
+      {/* ===== Leave duel (forfeit) affordance ===== */}
+      {!isComplete && (
+        <div className="mb-2 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setConfirmLeave(true)}
+            disabled={leaving}
+            className="text-label text-muted underline-offset-2 hover:text-error hover:underline disabled:opacity-50"
+          >
+            Leave duel
+          </button>
+        </div>
+      )}
+
       {/* ===== Combatants ===== */}
       <div className="flex items-stretch justify-between gap-3">
         <div className="flex flex-1 flex-col items-center gap-2">
@@ -450,6 +548,41 @@ export function ArenaMatch({
         </form>
       )}
 
+      {/* ===== Leave/forfeit confirmation ===== */}
+      {confirmLeave && !isComplete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
+          <div className="w-full max-w-app rounded-2xl bg-surface p-6 text-center shadow-lg">
+            <p className="font-heading text-heading-md text-text">
+              Flee the duel?
+            </p>
+            <p className="mt-2 text-body text-muted">
+              {isActive
+                ? "Abandon a live duel and your opponent claims victory by forfeit."
+                : "Leave this room and return to the arena."}
+            </p>
+            <div className="mt-6 flex gap-3">
+              <Button
+                variant="secondary"
+                fullWidth
+                className="min-h-[48px]"
+                onClick={() => setConfirmLeave(false)}
+                disabled={leaving}
+              >
+                Keep fighting
+              </Button>
+              <Button
+                fullWidth
+                className="min-h-[48px]"
+                onClick={handleConfirmLeave}
+                disabled={leaving}
+              >
+                {leaving ? "Fleeing…" : isActive ? "Forfeit" : "Leave"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ===== Game over overlay ===== */}
       {isComplete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
@@ -459,12 +592,20 @@ export function ArenaMatch({
               {selfName} ❤️ {Math.max(0, myHp)} &nbsp;·&nbsp; {enemyDisplay} ❤️{" "}
               {Math.max(0, enemyHp)}
             </p>
-            <a
-              href="/arena"
+            {/* Programmatic client-side navigation (not <Link>): a <Link> here
+                prefetched /arena, which server-redirects guests to /login, and
+                the click reused that prefetch and appeared to do nothing.
+                router.push performs a fresh soft navigation, preserving the App
+                Router context (so the earlier usePathname/useContext crash from
+                a full reload does NOT return). /arena is the new-match lobby for
+                authed players and funnels guests to /login to start one. */}
+            <button
+              type="button"
+              onClick={() => router.push("/arena")}
               className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center rounded-lg bg-primary px-4 font-semibold text-white active:scale-95"
             >
               New match
-            </a>
+            </button>
           </div>
         </div>
       )}
