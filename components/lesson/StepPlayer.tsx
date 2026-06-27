@@ -1264,10 +1264,14 @@ export function StepPlayer({
       {isDemo && !state.redemption && (
         <div className="mt-6 inline-flex items-center gap-1.5 self-start rounded-full border border-primary/30 bg-primary-light px-3 py-1 text-label font-semibold text-primary">
           <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden>
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
             <path
-              d="M8 5v14l11-7z"
-              fill="currentColor"
+              d="M12 11v5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
             />
+            <circle cx="12" cy="7.6" r="1.2" fill="currentColor" />
           </svg>
           Demo — walkthrough
         </div>

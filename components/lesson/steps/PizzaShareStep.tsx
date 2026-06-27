@@ -167,8 +167,8 @@ export function PizzaShareStep({
           <span className="font-semibold">
             {divisionsNeeded} straight {divisionsNeeded === 1 ? "cut" : "cuts"}
           </span>{" "}
-          through the center — click a notch on the crust to slice straight
-          across.
+          through the center — click a notch on the crust or an edge between
+          slices to slice straight across.
         </p>
       )}
 
@@ -225,7 +225,40 @@ export function PizzaShareStep({
                   const opp = boundaryPoint(b + half, slices, R + 5);
                   return (
                     <g key={b}>
-                      {/* large invisible hit target */}
+                      {/* Clickable radial EDGE (the line between slices), from the
+                          center out to the notch — lets the cut be selected by the
+                          edge as well as the vertex. Wide transparent hit target. */}
+                      <line
+                        x1={CX}
+                        y1={CY}
+                        x2={p.x}
+                        y2={p.y}
+                        stroke="transparent"
+                        strokeWidth={14}
+                        strokeLinecap="round"
+                        className="cursor-pointer"
+                        onClick={() => makeCut(b)}
+                        onMouseEnter={() => setHover(b)}
+                        onMouseLeave={() =>
+                          setHover((h) => (h === b ? null : h))
+                        }
+                        role="button"
+                        aria-label={`Cut straight across along this edge`}
+                      />
+                      {/* Highlight the hovered edge so it's clear it's selectable. */}
+                      {hover === b && (
+                        <line
+                          x1={CX}
+                          y1={CY}
+                          x2={p.x}
+                          y2={p.y}
+                          stroke="#1f2937"
+                          strokeWidth={3}
+                          strokeLinecap="round"
+                          className="pointer-events-none"
+                        />
+                      )}
+                      {/* large invisible hit target on the vertex notch */}
                       <circle
                         cx={p.x}
                         cy={p.y}
