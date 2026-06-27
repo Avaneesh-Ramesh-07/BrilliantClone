@@ -1,103 +1,50 @@
-import lessonEquations from "@/content/lessons/lesson-equations.json";
-import lessonGraphingLines from "@/content/lessons/lesson-graphing-lines.json";
-import lessonQuadratics from "@/content/lessons/lesson-quadratics.json";
-import guestBank from "@/content/arena/guest-problems.json";
-import type { ArenaProblem, ProblemPool } from "@/types/arena";
+import { buildPoolForTopics } from "@/lib/arena/generators";
+import { ARENA_TOPICS } from "@/types/arena";
+import type { ArenaProblem, ArenaTopic, ProblemPool } from "@/types/arena";
 
 /**
- * Problem delivery for the Arena. Two pools:
- *  - Guests: the 30-problem easy -> hard bank (Phase 2), consumed sequentially.
- *  - Authenticated users: numeric-input problems pulled from STATICALLY IMPORTED
- *    lesson JSON, restricted to lessons the user has completed. Problems are
- *    grouped into tiers by step index (step 1 = easiest tier), and the feed
- *    advances to a harder tier every 4 correct answers.
+ * Problem delivery for the Arena. Every problem is a single-numeric-answer
+ * ArenaProblem produced by the procedural generators (lib/arena/generators.ts),
+ * which build HARD, multi-step problems correct-by-construction across the
+ * three algebra topics. Two pools:
  *
- * No lesson content is ever fetched from Supabase — only the imports above.
+ *  - Guests: assumed fully proficient — the FULL topic range at hard difficulty.
+ *  - Authenticated users: hard problems restricted to the topics behind the
+ *    lessons they've completed (with a safe full-range fallback).
+ *
+ * No lesson content or problems are fetched from Supabase.
  */
 
-const STATIC_LESSONS = [
-  lessonEquations,
-  lessonGraphingLines,
-  lessonQuadratics,
-] as const;
-
-const LESSON_BY_ID: Record<string, (typeof STATIC_LESSONS)[number]> = {
-  "lesson-equations": lessonEquations,
-  "lesson-graphing-lines": lessonGraphingLines,
-  "lesson-quadratics": lessonQuadratics,
+/** Maps a completed lesson id to the arena topic it unlocks. */
+const LESSON_TO_TOPIC: Record<string, ArenaTopic> = {
+  "lesson-equations": "equations",
+  "lesson-graphing-lines": "graphing",
+  "lesson-quadratics": "quadratics",
 };
 
-interface RawProblem {
-  id?: string;
-  type?: string;
-  prompt?: string;
-  answer?: unknown;
-  demo?: boolean;
-}
-
-/** A numeric-input problem usable in the arena: has a prompt and a numeric answer. */
-function toArenaProblem(
-  p: RawProblem,
-  lessonId: string,
-  stepId: string
-): ArenaProblem | null {
-  if (p.type !== "numeric-input") return null;
-  if (typeof p.prompt !== "string") return null;
-  if (typeof p.answer !== "number" || Number.isNaN(p.answer)) return null;
-  return {
-    // Namespace the id so the same problem id across lessons can't collide.
-    id: `${lessonId}:${stepId}:${p.id ?? p.prompt}`,
-    prompt: p.prompt,
-    answer: p.answer,
-  };
-}
-
-/** The full guest bank as ArenaProblems, in authored (easy -> hard) order. */
-export function getGuestProblems(): ArenaProblem[] {
-  return guestBank.problems.map((p) => ({
-    id: p.id,
-    prompt: p.prompt,
-    answer: p.answer,
-  }));
-}
-
-/** Guest pool: a single tier consumed in order, so difficulty rises naturally. */
+/**
+ * Guest pool: guests are assumed fully proficient in algebra, so they get the
+ * full topic range (equations + graphing + quadratics) at hard difficulty.
+ */
 export function buildGuestPool(): ProblemPool {
-  return { tiers: [getGuestProblems()] };
+  return buildPoolForTopics(ARENA_TOPICS);
 }
 
 /**
- * Authenticated pool built from the given completed lesson ids. Tiers are keyed
- * by step index across all completed lessons (tier 0 = every lesson's step 1,
- * tier 1 = step 2, ...) so the feed gets harder as the step index climbs.
- * Lessons are taken in curriculum order; unknown ids are ignored. If the user
- * has completed nothing (or no numeric problems are found), falls back to the
- * guest bank so a match is always playable.
+ * Authenticated pool built from the given completed lesson ids: resolves them
+ * to arena topics and generates hard problems for only those topics. If no
+ * topic resolves (shouldn't happen — the Arena gate requires ≥1 completed
+ * lesson), falls back to the full guest range so a match is always playable.
  */
 export function buildAuthedPool(completedLessonIds: string[]): ProblemPool {
-  const orderedCompleted = STATIC_LESSONS.map((l) => l.id).filter((id) =>
-    completedLessonIds.includes(id)
-  );
-
-  const tiers: ArenaProblem[][] = [];
-
-  for (const lessonId of orderedCompleted) {
-    const lesson = LESSON_BY_ID[lessonId];
-    if (!lesson) continue;
-    lesson.steps.forEach((step, stepIndex) => {
-      const problems = (step.problems as RawProblem[]) ?? [];
-      for (const raw of problems) {
-        const arenaProblem = toArenaProblem(raw, lesson.id, step.id);
-        if (!arenaProblem) continue;
-        if (!tiers[stepIndex]) tiers[stepIndex] = [];
-        tiers[stepIndex].push(arenaProblem);
-      }
-    });
+  const topics: ArenaTopic[] = [];
+  for (const id of completedLessonIds) {
+    const topic = LESSON_TO_TOPIC[id];
+    if (topic && !topics.includes(topic)) topics.push(topic);
   }
 
-  const nonEmpty = tiers.filter((t) => t && t.length > 0);
-  if (nonEmpty.length === 0) return buildGuestPool();
-  return { tiers: nonEmpty };
+  if (topics.length === 0) return buildGuestPool();
+  return buildPoolForTopics(topics);
 }
 
 /**

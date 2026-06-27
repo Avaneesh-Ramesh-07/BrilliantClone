@@ -24,18 +24,33 @@ interface ArenaRoomProps {
   creatorName: string | null;
   /** Completed lesson ids for the viewer (empty for guests/anon). */
   completedLessonIds: string[];
+  /**
+   * Whether this viewer is allowed to play. True for guests always; for an
+   * authenticated viewer, true only when they've completed ≥1 lesson.
+   */
+  canPlay: boolean;
 }
 
-function Message({ title, body }: { title: string; body?: string }) {
+function Message({
+  title,
+  body,
+  href = "/arena",
+  cta = "Go to Arena",
+}: {
+  title: string;
+  body?: string;
+  href?: string;
+  cta?: string;
+}) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12 text-center">
       <h1 className="font-heading text-heading-lg text-text">{title}</h1>
       {body && <p className="mt-3 text-body text-muted">{body}</p>}
       <a
-        href="/arena"
+        href={href}
         className="mt-8 inline-flex min-h-[48px] items-center justify-center rounded-lg bg-primary px-6 font-semibold text-white active:scale-95"
       >
-        Go to Arena
+        {cta}
       </a>
     </main>
   );
@@ -48,6 +63,7 @@ export function ArenaRoom({
   viewerName,
   creatorName,
   completedLessonIds,
+  canPlay,
 }: ArenaRoomProps) {
   const supabase = useMemo(() => createClient(), []);
   const authedPool = useMemo(
@@ -72,6 +88,7 @@ export function ArenaRoom({
     if (autoJoinRef.current) return;
     if (!session || !viewerId) return;
     if (existingRole) return; // already a member
+    if (!canPlay) return; // authed viewer without a completed lesson is gated
     if (isExpired(session) || isFull(session)) return;
 
     autoJoinRef.current = true;
@@ -92,6 +109,7 @@ export function ArenaRoom({
     session,
     viewerId,
     existingRole,
+    canPlay,
     supabase,
     sessionId,
     authedPool,
@@ -156,7 +174,21 @@ export function ArenaRoom({
     return <Message title="This arena is already full" />;
   }
 
-  // ----- 4. Logged-in joiner mid-claim -----
+  // ----- 4. Gate: authenticated viewer with no completed lesson -----
+  // (Existing members are already handled above; guests have viewerId == null
+  // and skip this entirely.)
+  if (viewerId && !canPlay) {
+    return (
+      <Message
+        title="Complete a lesson first"
+        body="You need to finish at least one lesson before you can battle in the Arena."
+        href="/home"
+        cta="Go to Home"
+      />
+    );
+  }
+
+  // ----- 5. Logged-in joiner mid-claim -----
   if (viewerId) {
     return (
       <Message
@@ -166,7 +198,7 @@ export function ArenaRoom({
     );
   }
 
-  // ----- 5. Not logged in: Log In | Sign Up | Continue as Guest -----
+  // ----- 6. Not logged in: Log In | Sign Up | Continue as Guest -----
   const redirect = encodeURIComponent(`/arena/${sessionId}`);
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">

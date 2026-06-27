@@ -37,6 +37,10 @@ export default async function ArenaSessionPage({
     completedLessonIds = (completedRows ?? []).map((r) => r.lesson_id as string);
   }
 
+  // Gate: an authenticated viewer must have completed ≥1 lesson to join.
+  // Guests (no user) are exempt and can always play.
+  const canPlay = user ? completedLessonIds.length > 0 : true;
+
   return (
     <ArenaRoom
       sessionId={session_id}
@@ -45,6 +49,7 @@ export default async function ArenaSessionPage({
       viewerName={viewerProfile?.display_name ?? null}
       creatorName={creatorProfile?.display_name ?? null}
       completedLessonIds={completedLessonIds}
+      canPlay={canPlay}
     />
   );
 }
