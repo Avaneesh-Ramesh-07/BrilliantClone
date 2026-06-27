@@ -75,6 +75,13 @@ export default async function HomePage() {
 
       <div className="mt-6 flex flex-col gap-3">
         <Link
+          href="/arena"
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 font-semibold text-white shadow-sm transition-transform hover:bg-red-700 active:scale-95"
+        >
+          <span aria-hidden>⚔️</span>
+          Test your skills in head-to-head
+        </Link>
+        <Link
           href="/sandbox/practice-test"
           className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg border border-purple-300 bg-purple-50 px-4 font-semibold text-purple-800 transition-transform active:scale-95"
         >
