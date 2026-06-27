@@ -155,10 +155,10 @@ export async function POST() {
   // Unverifiable numeric problems are dropped here.
   let problems = reconcileSpecProblems(spec);
 
-  // If verification left too few problems, make ONE more generation attempt and
-  // re-verify; keep whichever attempt yields more valid problems. A failed
-  // retry simply leaves us with the first attempt's reconciled problems.
-  if (problems.length < 3) {
+  // If verification left fewer than 15 valid problems, make ONE more generation
+  // attempt and re-verify; keep whichever attempt yields more valid problems. A
+  // failed retry simply leaves us with the first attempt's reconciled problems.
+  if (problems.length < 15) {
     try {
       const retrySpec = await generatePracticeTestSpec(concepts);
       const retryProblems = reconcileSpecProblems(retrySpec);

@@ -23,6 +23,16 @@ export function buildPracticeTestSystemPrompt(): string {
     "You are an expert algebra and geometry teacher writing a focused practice",
     "test for a motivated learner who has already studied these specific concepts.",
     "",
+    "TEST LENGTH — make it substantial:",
+    "- Produce about 20 problems total, and NEVER fewer than 15.",
+    "- The eligible-concept list is often SHORTER than 15, so write MULTIPLE",
+    "  distinct problems per concept — distributed across all the listed concepts —",
+    "  to reach the count. Reuse a concept across several problems freely.",
+    "- Every problem on the SAME concept must use a genuinely different scenario",
+    "  and different numbers; never produce near-duplicates or reworded twins.",
+    "- Keep each 'explanation' reasonably CONCISE (a few tight sentences) so all",
+    "  ~20 problems fit within the output budget without being truncated.",
+    "",
     "CORE PRINCIPLE — stay on the target concept:",
     "- Each problem MUST DIRECTLY exercise EXACTLY ONE of the supplied eligible",
     "  concepts, and its 'conceptLabel' MUST be set to that concept's EXACT label",
@@ -125,6 +135,10 @@ export function buildPracticeTestSystemPrompt(): string {
     "  'incorrectFeedback' gently points at the misstep.",
     "- Keep ALL math in plain text (e.g. 'y = 2x + 3', 'x^2', '3/4'). No markdown,",
     "  no LaTeX.",
+    "- In DISPLAYED fields (prompt, mc options, hint, explanation, feedback), the UI",
+    "  renders any exponent written with '^' as a real superscript (e.g. 'x^2' shows",
+    "  as x², '2^(n+1)' as 2 raised to n+1). So ALWAYS write exponents with the '^'",
+    "  form and NEVER spell them out as 'to the power of' or 'squared'.",
   ].join("\n");
 }
 
@@ -132,7 +146,6 @@ export function buildPracticeTestUserPrompt(concepts: EligibleConcept[]): string
   const lines = concepts.map(
     (c) => `- "${c.conceptLabel}" (from the lesson "${c.lessonTitle}")`
   );
-  const count = Math.min(concepts.length, 12);
 
   return [
     "Write a practice test covering ONLY these concepts the learner last reviewed",
@@ -140,8 +153,13 @@ export function buildPracticeTestUserPrompt(concepts: EligibleConcept[]): string
     "from):",
     ...lines,
     "",
-    `Produce ONE word problem per concept, up to ${count} problems total. For each`,
-    "problem:",
+    "Produce about 20 problems total, and NO FEWER THAN 15. The eligible-concept",
+    "list above may have fewer than 15 entries, so you MUST write SEVERAL",
+    "different problems for each concept as needed to reach the count — distribute",
+    "the problems across all the listed concepts as evenly as you reasonably can.",
+    "When you write multiple problems for the same concept, each one must use a",
+    "genuinely DIFFERENT scenario and DIFFERENT numbers — no near-duplicates, no",
+    "trivially reworded twins. For each problem:",
     "- Its scenario must test THAT concept SPECIFICALLY — a thin word-problem",
     "  wrapper around exactly that skill, never drifting into other topics.",
     "- Make it a REAL, multi-sentence situational word problem that needs setup",
@@ -161,6 +179,8 @@ export function buildPracticeTestUserPrompt(concepts: EligibleConcept[]): string
     "  the answer. For numeric it must evaluate to 'answer'; for mc it must",
     "  evaluate to the numeric value of the correct option. It will be evaluated",
     "  and used to verify/override the answer, so it MUST be correct.",
+    "- Keep each 'explanation' reasonably CONCISE (a few tight sentences) so all",
+    "  ~20 problems fit comfortably — clear worked solution, no padding.",
     "Vary the difficulty across problems and order them so the hardest come LAST.",
     "Give the test a short, motivating title and a one-sentence description.",
   ].join("\n");

@@ -16,9 +16,65 @@ interface MathTextProps {
 const FRACTION_RE = /\\frac\{([^{}]*)\}\{([^{}]*)\}/g;
 
 /**
- * Renders an inline string with two layers of enrichment (no fractions here):
+ * Matches a caret-exponent token: a `^` followed by one of
+ *  - `{...}`  LaTeX-style braces (e.g. `x^{10}`),
+ *  - `(...)`  a parenthesized exponent (e.g. `2^(n+1)`),
+ *  - `[+-]?\d+`  a run of digits with an optional sign (e.g. `x^2`, `x^-3`),
+ *  - a single variable letter (e.g. `x^n`).
+ * A stray `^` with no following token (or `^` at end of string) never matches,
+ * so it's left untouched rather than producing an empty superscript.
+ */
+const EXPONENT_RE = /\^(\{[^{}]*\}|\([^()]*\)|[+-]?\d+|[A-Za-z])/g;
+
+/** Strips the surrounding braces/parens from a captured exponent token. */
+function stripGrouping(token: string): string {
+  if (
+    (token.startsWith("{") && token.endsWith("}")) ||
+    (token.startsWith("(") && token.endsWith(")"))
+  ) {
+    return token.slice(1, -1);
+  }
+  return token;
+}
+
+/**
+ * Converts caret-exponent notation in a plain string into real superscripts,
+ * rendering the base text as-is and each exponent inside a small raised
+ * `<sup>`. Multiple exponents in one string are all converted. Pre-existing
+ * Unicode superscripts (e.g. ², ³) contain no `^` and are left untouched.
+ */
+function renderSuperscripts(text: string, keyBase: string): React.ReactNode {
+  const out: React.ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let k = 0;
+  EXPONENT_RE.lastIndex = 0;
+  while ((match = EXPONENT_RE.exec(text)) !== null) {
+    if (match.index > last) out.push(text.slice(last, match.index));
+    out.push(
+      <sup
+        key={`${keyBase}-sup-${k++}`}
+        className="align-super text-[0.7em] leading-none"
+      >
+        {stripGrouping(match[1])}
+      </sup>
+    );
+    last = match.index + match[0].length;
+  }
+  if (out.length === 0) return text;
+  if (last < text.length) out.push(text.slice(last));
+  return <>{out}</>;
+}
+
+/**
+ * Renders an inline string with three layers of enrichment (no fractions here):
  *  1. math variables wrapped in backticks are shown in the "math" face;
- *  2. recognized glossary terms in the plain text become tappable definitions.
+ *  2. recognized glossary terms in the plain text become tappable definitions;
+ *  3. caret-exponent notation (`x^2`, `x^{10}`, `2^(n+1)`, `x^n`) is rendered
+ *     as a true superscript so a literal `^` is never shown to the learner.
+ *
+ * Superscript conversion runs only on the plain-text/math leaves (after the
+ * backtick and glossary splits), so nothing is double-processed.
  */
 function renderInline(text: string, glossary: boolean) {
   const parts = text.split(/(`[^`]+`)/g);
@@ -26,12 +82,14 @@ function renderInline(text: string, glossary: boolean) {
     if (part.length >= 2 && part.startsWith("`") && part.endsWith("`")) {
       return (
         <span key={i} className="font-math">
-          {part.slice(1, -1)}
+          {renderSuperscripts(part.slice(1, -1), `bt-${i}`)}
         </span>
       );
     }
     if (!glossary) {
-      return <Fragment key={i}>{part}</Fragment>;
+      return (
+        <Fragment key={i}>{renderSuperscripts(part, `pl-${i}`)}</Fragment>
+      );
     }
     const segments = splitGlossary(part);
     return (
@@ -40,7 +98,9 @@ function renderInline(text: string, glossary: boolean) {
           seg.term && seg.definition ? (
             <GlossaryTerm key={j} term={seg.text} definition={seg.definition} />
           ) : (
-            <Fragment key={j}>{seg.text}</Fragment>
+            <Fragment key={j}>
+              {renderSuperscripts(seg.text, `g-${i}-${j}`)}
+            </Fragment>
           )
         )}
       </Fragment>

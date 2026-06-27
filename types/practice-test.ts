@@ -58,7 +58,7 @@ export type PracticeProblemSpec = z.infer<typeof problemSpecSchema>;
 export const practiceTestSpecSchema = z.object({
   title: z.string(),
   description: z.string(),
-  problems: z.array(problemSpecSchema).min(4).max(12),
+  problems: z.array(problemSpecSchema).min(15).max(22),
 });
 
 export type PracticeTestSpec = z.infer<typeof practiceTestSpecSchema>;
