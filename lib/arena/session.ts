@@ -8,9 +8,28 @@ import type { CombatState } from "@/lib/arena/combat";
 
 /** Columns selected for an arena session everywhere in the feature. */
 export const SESSION_COLUMNS =
-  "id, created_by, joined_by, guest_name, status, user1_hp, user2_hp, user1_streak, user2_streak, user1_correct_this_blow, user2_correct_this_blow, winner, created_at";
+  "id, code, created_by, joined_by, guest_name, status, user1_hp, user2_hp, user1_streak, user2_streak, user1_correct_this_blow, user2_correct_this_blow, winner, created_at";
 
 const EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/** Unambiguous uppercase alphabet for room codes (no 0/O/1/I/L). */
+const ROOM_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const ROOM_CODE_LENGTH = 6;
+
+/** Generates a single random 6-char room code (not guaranteed unique). */
+export function generateRoomCode(): string {
+  let code = "";
+  for (let i = 0; i < ROOM_CODE_LENGTH; i++) {
+    const idx = Math.floor(Math.random() * ROOM_CODE_ALPHABET.length);
+    code += ROOM_CODE_ALPHABET[idx];
+  }
+  return code;
+}
+
+/** Normalizes user-entered codes (trim + uppercase) for lookup. */
+export function normalizeRoomCode(raw: string): string {
+  return raw.trim().toUpperCase();
+}
 
 /** A waiting session older than 24h is considered expired. */
 export function isExpired(session: ArenaSession, now: number = Date.now()): boolean {
@@ -80,21 +99,60 @@ export async function getOrCreateSession(
   return createSession(supabase, userId);
 }
 
-/** Authenticated User 1 creates a fresh waiting session. */
+/**
+ * Authenticated User 1 creates a fresh waiting session with a unique room code.
+ * Generation retries on the (extremely unlikely) unique-code collision so the
+ * insert is robust against the rare clash.
+ */
 export async function createSession(
   supabase: SupabaseClient,
   userId: string
 ): Promise<ArenaSession | null> {
+  const MAX_ATTEMPTS = 5;
+  let lastError: { message: string; code?: string } | null = null;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const { data, error } = await supabase
+      .from("arena_sessions")
+      .insert({ created_by: userId, status: "waiting", code: generateRoomCode() })
+      .select(SESSION_COLUMNS)
+      .single();
+    if (!error) return data as ArenaSession;
+
+    lastError = error;
+    // 23505 = unique_violation: a code clash — retry with a fresh code.
+    if (error.code !== "23505") break;
+  }
+
+  console.error(
+    "[arena] createSession failed",
+    lastError?.message ?? "unknown error"
+  );
+  return null;
+}
+
+/**
+ * Resolves a room code to a joinable (waiting) session id, or null if no such
+ * open session exists. Reads via the caller's Supabase context (works for anon
+ * guests and authed users since the SELECT policy is open).
+ */
+export async function resolveRoomCodeToSessionId(
+  supabase: SupabaseClient,
+  rawCode: string
+): Promise<string | null> {
+  const code = normalizeRoomCode(rawCode);
+  if (code.length !== ROOM_CODE_LENGTH) return null;
   const { data, error } = await supabase
     .from("arena_sessions")
-    .insert({ created_by: userId, status: "waiting" })
-    .select(SESSION_COLUMNS)
-    .single();
+    .select("id, status")
+    .eq("code", code)
+    .eq("status", "waiting")
+    .maybeSingle();
   if (error) {
-    console.error("[arena] createSession failed", error.message);
+    console.error("[arena] resolveRoomCode failed", error.message);
     return null;
   }
-  return data as ArenaSession;
+  return (data?.id as string | undefined) ?? null;
 }
 
 /** A logged-in second player claims a waiting session. */

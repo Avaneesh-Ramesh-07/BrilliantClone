@@ -8,6 +8,8 @@ export type ArenaWinner = "user1" | "user2" | "draw" | null;
 /** A single arena_sessions row. */
 export interface ArenaSession {
   id: string;
+  /** Short, human-friendly join-by-code (6 chars, unambiguous uppercase). */
+  code: string;
   created_by: string | null;
   joined_by: string | null;
   guest_name: string | null;
@@ -21,6 +23,15 @@ export interface ArenaSession {
   winner: ArenaWinner;
   created_at: string;
 }
+
+/** The algebra topics the arena can generate problems for. */
+export type ArenaTopic = "equations" | "graphing" | "quadratics";
+
+export const ARENA_TOPICS: ArenaTopic[] = [
+  "equations",
+  "graphing",
+  "quadratics",
+];
 
 /** A single numeric-answer arena problem (guest bank or derived from a lesson). */
 export interface ArenaProblem {
