@@ -132,9 +132,35 @@ export function ArenaMatch({
   // handler below doesn't fire a second (redundant) termination write.
   const leftRef = useRef(false);
 
-  // Match-start "versus" intro: shown once, the first time this match is active.
+  // Pre-match RULES gate (Feature A): once the match is active, BOTH players must
+  // click "I understand" before either advances to the versus intro + live play.
+  // Readiness is exchanged over the EXISTING presence channel (a `ready` flag in
+  // each player's presence meta), so it survives sync/late-join/refresh without a
+  // schema change.
+  const [iUnderstand, setIUnderstand] = useState(false);
+  const [opponentReady, setOpponentReady] = useState(false);
+  const iUnderstandRef = useRef(false);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
+  // Match-start "versus" intro: shown once, after the rules gate clears.
   const [showVersus, setShowVersus] = useState(false);
-  const versusShownRef = useRef(false);
+  // Latches true the moment the rules gate clears so the rules overlay never
+  // reappears after the versus intro / during live play.
+  const [versusStarted, setVersusStarted] = useState(false);
+
+  // Edge-of-screen damage flash + per-answer card outline (Feature B).
+  const [edgeFlash, setEdgeFlash] = useState<{
+    color: "green" | "red";
+    id: number;
+  } | null>(null);
+  const edgeFlashIdRef = useRef(0);
+  const edgeFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [answerOutline, setAnswerOutline] = useState<"correct" | "wrong" | null>(
+    null
+  );
+  const answerOutlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const usedIdsRef = useRef<Set<string>>(new Set());
   const correctCountRef = useRef(0);
@@ -176,15 +202,44 @@ export function ArenaMatch({
   const enemyWins =
     role === "user1" ? session.joiner_wins : session.creator_wins;
 
-  // Trigger the match-start versus intro exactly once, the first time the match
-  // is active (covers both the creator — whose ArenaMatch mounts on hand-off —
-  // and the joiner — who lands here already active). It auto-dismisses.
+  const bothReady = iUnderstand && opponentReady;
+
+  // Trigger the match-start versus intro exactly once — but only AFTER the rules
+  // gate clears (both players confirmed "I understand"). Setting both flags in a
+  // single commit means the rules overlay is replaced directly by the versus
+  // intro with no flash of the live board in between. It then auto-dismisses.
   useEffect(() => {
-    if (session.status === "active" && !versusShownRef.current) {
-      versusShownRef.current = true;
+    if (session.status === "active" && bothReady && !versusStarted) {
+      setVersusStarted(true);
       setShowVersus(true);
     }
-  }, [session.status]);
+  }, [session.status, bothReady, versusStarted]);
+
+  // Brief green/red vignette around the viewport edges. Keyed by an incrementing
+  // id so repeated flashes of the same color restart the animation; cleared by a
+  // JS timer (so it also disappears under prefers-reduced-motion, where the CSS
+  // animation is suppressed in favor of a static tint).
+  const triggerEdgeFlash = useCallback((color: "green" | "red") => {
+    edgeFlashIdRef.current += 1;
+    setEdgeFlash({ color, id: edgeFlashIdRef.current });
+    if (edgeFlashTimerRef.current) clearTimeout(edgeFlashTimerRef.current);
+    edgeFlashTimerRef.current = setTimeout(() => setEdgeFlash(null), 750);
+  }, []);
+
+  // Briefly outline the problem card green/red after the local player answers.
+  const flashAnswerOutline = useCallback((kind: "correct" | "wrong") => {
+    setAnswerOutline(kind);
+    if (answerOutlineTimerRef.current) clearTimeout(answerOutlineTimerRef.current);
+    answerOutlineTimerRef.current = setTimeout(() => setAnswerOutline(null), 700);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (edgeFlashTimerRef.current) clearTimeout(edgeFlashTimerRef.current);
+      if (answerOutlineTimerRef.current)
+        clearTimeout(answerOutlineTimerRef.current);
+    };
+  }, []);
 
   // Pick the first problem on mount.
   const advance = useCallback(
@@ -211,13 +266,36 @@ export function ArenaMatch({
     const channel: RealtimeChannel = supabase.channel(`arena:${sessionId}`, {
       config: { presence: { key: role } },
     });
+    channelRef.current = channel;
 
     const handlePresence = () => {
-      const state = channel.presenceState() as Record<string, unknown[]>;
-      const opponentPresent = Array.isArray(state[opponentRole])
-        ? state[opponentRole].length > 0
-        : false;
+      const state = channel.presenceState() as Record<
+        string,
+        Array<{ ready?: boolean }>
+      >;
+      const oppMetas = state[opponentRole];
+      const opponentPresent = Array.isArray(oppMetas) && oppMetas.length > 0;
       opponentPresentRef.current = opponentPresent;
+
+      // Rules-gate readiness BACKSTOP (primary signal is the `ready` broadcast
+      // below). Scan ALL of the opponent's metas — a second track() call appends
+      // a new meta rather than replacing, so the ready flag may not be at [0].
+      // Readiness is monotonic within a match and we only ever flip it ON here,
+      // so a stale meta can never reset a `ready` we already learned by broadcast.
+      if (opponentPresent && oppMetas.some((m) => m?.ready)) {
+        setOpponentReady(true);
+      }
+
+      // If I've already confirmed and the opponent has just (re)appeared, re-emit
+      // my ready broadcast so a late-joining / refreshed opponent reliably hears
+      // it (the original broadcast may have fired before they subscribed).
+      if (opponentPresent && iUnderstandRef.current) {
+        void channel.send({
+          type: "broadcast",
+          event: "ready",
+          payload: { role },
+        });
+      }
 
       if (opponentPresent) {
         opponentEverSeenRef.current = true;
@@ -270,14 +348,30 @@ export function ArenaMatch({
       .on("presence", { event: "sync" }, handlePresence)
       .on("presence", { event: "join" }, handlePresence)
       .on("presence", { event: "leave" }, handlePresence)
+      // Primary rules-gate signal: when the OTHER role announces "ready", mark
+      // them ready. Sticky (only ever set true) so a later presence sync can't
+      // undo it. We never need to hear our own broadcast — the local click
+      // counts immediately via `setIUnderstand(true)` in handleUnderstand.
+      .on("broadcast", { event: "ready" }, ({ payload }) => {
+        if ((payload as { role?: ArenaRole } | null)?.role === opponentRole) {
+          setOpponentReady(true);
+        }
+      })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
-          await channel.track({ role, online_at: new Date().toISOString() });
+          // Include the current readiness so a re-subscribe (e.g. after a flap)
+          // re-publishes that this player already clicked "I understand".
+          await channel.track({
+            role,
+            ready: iUnderstandRef.current,
+            online_at: new Date().toISOString(),
+          });
         }
       });
 
     return () => {
       if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
+      channelRef.current = null;
       void supabase.removeChannel(channel);
     };
     // session.status is read inside but we intentionally keep the subscription
@@ -288,15 +382,17 @@ export function ArenaMatch({
   }, [sessionId, role, opponentRole, supabase]);
 
   // Detect a blow received: my HP dropped since the last render from realtime.
+  // From MY perspective this is taking damage → flash the screen edges RED.
   useEffect(() => {
     if (myHp < prevMyHpRef.current) {
       setSelfHit(true);
+      triggerEdgeFlash("red");
       const t = setTimeout(() => setSelfHit(false), HIT_ANIM_MS);
       prevMyHpRef.current = myHp;
       return () => clearTimeout(t);
     }
     prevMyHpRef.current = myHp;
-  }, [myHp]);
+  }, [myHp, triggerEdgeFlash]);
 
   // ----- Implicit leave (tab close / disconnect) is INTENTIONALLY not resolved
   // here. -----
@@ -331,17 +427,31 @@ export function ArenaMatch({
     }
 
     if (statusRef.current === "active") {
+      // Live match → record the forfeit, then STAY on the result screen. We
+      // optimistically flip the local session to complete so the game-over
+      // overlay ("You forfeited — You Lose") shows immediately without waiting
+      // for the realtime round-trip; the matching DB update arrives right after
+      // and is identical. The user dismisses via the "Back to home" button —
+      // there is intentionally NO auto-navigation here.
       if (opponentPresentRef.current) {
         await insertEvent(supabase, sessionId, role, "disconnect");
         await insertEvent(supabase, sessionId, opponentRole, "win");
         await endSession(supabase, sessionId, opponentRole);
+        setSession((s) => ({ ...s, status: "complete", winner: opponentRole }));
       } else {
         await abandonSession(supabase, sessionId);
+        setSession((s) => ({ ...s, status: "complete", winner: "draw" }));
       }
+      setLeaving(false);
+      setConfirmLeave(false);
+      return;
     }
 
-    window.location.href = "/arena";
-  }, [supabase, sessionId, role, opponentRole]);
+    // Not in a live match (e.g. still waiting in the lobby) → nothing to
+    // forfeit, so just leave the room. Soft client-side navigation to /home
+    // (matches the "Back to home" button; /arena would bounce a guest to login).
+    router.push("/home");
+  }, [supabase, sessionId, role, opponentRole, router]);
 
   const handleSubmit = useCallback(
     (e: FormEvent) => {
@@ -362,8 +472,13 @@ export function ArenaMatch({
       // Optimistic local update of just the fields this player changed.
       setSession((s) => ({ ...s, ...patch }) as ArenaSession);
 
+      // Per-answer card outline (Feature B): green on correct, red on wrong.
+      flashAnswerOutline(correct ? "correct" : "wrong");
+
       if (outcome.blow) {
         setEnemyHit(true);
+        // I just dealt damage to my opponent → flash MY screen edges GREEN.
+        triggerEdgeFlash("green");
         setTimeout(() => setEnemyHit(false), HIT_ANIM_MS);
         setFeedback(
           outcome.buffActive
@@ -390,8 +505,40 @@ export function ArenaMatch({
       advance(correctCountRef.current);
       setInput("");
     },
-    [problem, isActive, input, session, role, supabase, sessionId, advance]
+    [
+      problem,
+      isActive,
+      input,
+      session,
+      role,
+      supabase,
+      sessionId,
+      advance,
+      flashAnswerOutline,
+      triggerEdgeFlash,
+    ]
   );
+
+  // Rules gate: this player confirms they understand. Publishes readiness via
+  // presence so the opponent's client sees it on the next sync; the local flag
+  // mirror keeps the re-subscribe track payload correct after a flap.
+  const handleUnderstand = useCallback(() => {
+    if (iUnderstandRef.current) return;
+    iUnderstandRef.current = true;
+    setIUnderstand(true); // local side counts immediately — never relies on echo
+    const channel = channelRef.current;
+    if (!channel) return;
+    // Primary cross-client signal: a broadcast (reliable; presence-meta updates
+    // via a 2nd track() are not a dependable way to notify the other client).
+    void channel.send({ type: "broadcast", event: "ready", payload: { role } });
+    // Backstop for a late-join / refresh: keep the flag in presence meta too, so
+    // an opponent who subscribes afterward still discovers it on sync.
+    void channel.track({
+      role,
+      ready: true,
+      online_at: new Date().toISOString(),
+    });
+  }, [role]);
 
   // ----- Render helpers -----
   // Start with the relative path so SSR and the first client render match, then
@@ -430,6 +577,17 @@ export function ArenaMatch({
 
   return (
     <main className="flex min-h-screen flex-col py-6">
+      {/* ===== Screen-edge damage flash (green = dealt, red = taken) ===== */}
+      {edgeFlash && (
+        <div
+          key={edgeFlash.id}
+          aria-hidden
+          className={`${styles.edgeFlash} ${
+            edgeFlash.color === "green" ? styles.edgeGreen : styles.edgeRed
+          }`}
+        />
+      )}
+
       {/* ===== Match-start versus intro (overlay, auto-dismisses) ===== */}
       {showVersus && (
         <DuelStartVersus
@@ -437,6 +595,58 @@ export function ArenaMatch({
           opponent={{ username: enemyDisplay, wins: enemyWins }}
           onDone={() => setShowVersus(false)}
         />
+      )}
+
+      {/* ===== Pre-match RULES gate: both players must confirm before play ===== */}
+      {isActive && !isComplete && !versusStarted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
+          <div className="w-full max-w-app rounded-2xl border border-border bg-surface p-6 text-center shadow-lg">
+            <h2 className="font-heading text-heading-lg text-text">How to Duel</h2>
+            <ol className="mt-5 flex flex-col gap-3 text-left">
+              <li className="flex gap-3 text-body text-text">
+                <span className="font-heading text-primary">1.</span>
+                Solve math problems quickly!
+              </li>
+              <li className="flex gap-3 text-body text-text">
+                <span className="font-heading text-primary">2.</span>
+                Getting 2 problems correct inflicts damage to your opponent.
+              </li>
+              <li className="flex gap-3 text-body text-text">
+                <span className="font-heading text-primary">3.</span>
+                Keep a streak going for multipliers!
+              </li>
+            </ol>
+
+            {iUnderstand ? (
+              <p
+                className="mt-6 text-body text-muted"
+                role="status"
+                aria-live="polite"
+              >
+                Waiting for your opponent…
+              </p>
+            ) : (
+              <>
+                <Button
+                  fullWidth
+                  className="mt-6 min-h-[48px]"
+                  onClick={handleUnderstand}
+                >
+                  I understand
+                </Button>
+                {opponentReady && (
+                  <p
+                    className="mt-3 text-label text-muted"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    Your opponent is ready.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       {/* ===== Leave duel (forfeit) affordance ===== */}
@@ -501,12 +711,22 @@ export function ArenaMatch({
         )}
 
         {isActive && problem && (
-          <p
-            className="px-2 text-center font-equation text-text"
-            style={{ fontSize: 20, lineHeight: 1.4 }}
+          <div
+            className={`rounded-xl border-2 px-5 py-6 transition-colors duration-200 ${
+              answerOutline === "correct"
+                ? "border-success"
+                : answerOutline === "wrong"
+                  ? "border-error"
+                  : "border-border"
+            }`}
           >
-            {problem.prompt}
-          </p>
+            <p
+              className="px-2 text-center font-equation text-text"
+              style={{ fontSize: 20, lineHeight: 1.4 }}
+            >
+              {problem.prompt}
+            </p>
+          </div>
         )}
 
         {isActive && poolExhausted && (
@@ -592,19 +812,17 @@ export function ArenaMatch({
               {selfName} ❤️ {Math.max(0, myHp)} &nbsp;·&nbsp; {enemyDisplay} ❤️{" "}
               {Math.max(0, enemyHp)}
             </p>
-            {/* Programmatic client-side navigation (not <Link>): a <Link> here
-                prefetched /arena, which server-redirects guests to /login, and
-                the click reused that prefetch and appeared to do nothing.
-                router.push performs a fresh soft navigation, preserving the App
-                Router context (so the earlier usePathname/useContext crash from
-                a full reload does NOT return). /arena is the new-match lobby for
-                authed players and funnels guests to /login to start one. */}
+            {/* Programmatic client-side navigation (not <Link>): a fresh soft
+                navigation preserves the App Router context (so the earlier
+                usePathname/useContext crash from a full reload does NOT return).
+                Goes to /home — the reliable destination for both authed players
+                and guests (a guest has no /arena lobby). */}
             <button
               type="button"
-              onClick={() => router.push("/arena")}
+              onClick={() => router.push("/home")}
               className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center rounded-lg bg-primary px-4 font-semibold text-white active:scale-95"
             >
-              New match
+              Back to home
             </button>
           </div>
         </div>

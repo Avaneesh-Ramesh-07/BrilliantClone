@@ -7,6 +7,19 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 
+/**
+ * Resolves a post-login redirect target from the `next` query param. Only a
+ * same-origin RELATIVE path (e.g. "/arena/123") is allowed — anything absolute
+ * ("https://…"), protocol-relative ("//evil.com"), or otherwise malformed falls
+ * back to "/home". This prevents the `next` param from being abused as an open
+ * redirect while still letting an invited arena guest return to their challenge.
+ */
+function safeNext(raw: string | null): string {
+  if (!raw) return "/home";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/home";
+  return raw;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -32,7 +45,16 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/home");
+    // Honor an optional `next` target (e.g. an arena invite link sends
+    // `/login?next=/arena/<id>` so the user returns to the challenge after
+    // signing in). Read it client-side from the URL to avoid needing a
+    // useSearchParams Suspense boundary. Defaults to /home.
+    const next =
+      typeof window !== "undefined"
+        ? safeNext(new URLSearchParams(window.location.search).get("next"))
+        : "/home";
+
+    router.push(next);
     router.refresh();
   }
 

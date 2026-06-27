@@ -7,6 +7,19 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 
+/**
+ * Resolves a post-signup redirect target from the `next` query param. Mirrors
+ * the login page: only a same-origin RELATIVE path (e.g. "/arena/123") is
+ * allowed — anything absolute ("https://…"), protocol-relative ("//evil.com"),
+ * or malformed falls back to "/home". Prevents open-redirect abuse while letting
+ * an invited arena guest return to their challenge after creating an account.
+ */
+function safeNext(raw: string | null): string {
+  if (!raw) return "/home";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/home";
+  return raw;
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
@@ -36,7 +49,22 @@ export default function SignupPage() {
       return;
     }
 
-    router.push("/home");
+    // Honor an optional `next` target (e.g. an arena invite sends
+    // `/signup?next=/arena/<id>` so the user returns to the challenge after
+    // creating an account). Read it client-side to avoid a useSearchParams
+    // Suspense boundary; defaults to /home.
+    //
+    // NOTE: this assumes signUp returns an active session (current behavior —
+    // the app navigates straight to /home). If email confirmation is later
+    // enabled in Supabase, there's no session yet, so middleware would bounce a
+    // protected route to /login; the `next` target is still passed but the user
+    // would need to confirm + log in first (login already honors `next`).
+    const next =
+      typeof window !== "undefined"
+        ? safeNext(new URLSearchParams(window.location.search).get("next"))
+        : "/home";
+
+    router.push(next);
     router.refresh();
   }
 

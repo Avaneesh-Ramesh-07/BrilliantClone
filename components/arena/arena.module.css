@@ -62,9 +62,52 @@
   transition: width 300ms ease;
 }
 
+/* ===== Screen-edge damage feedback (Feature B) ===== */
+/* A full-viewport, click-through vignette that fades in then out. GREEN when I
+   land a blow on my opponent, RED when I take a blow — always from MY own
+   perspective. The element is keyed/remounted per flash so the animation
+   restarts on repeat hits. */
+@keyframes arena-edge-fade {
+  0% {
+    opacity: 0;
+  }
+  28% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.edgeFlash {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.edgeGreen {
+  box-shadow: inset 0 0 90px 26px rgba(34, 197, 94, 0.55);
+  animation: arena-edge-fade 0.7s ease-out forwards;
+}
+
+.edgeRed {
+  box-shadow: inset 0 0 90px 26px rgba(224, 49, 49, 0.55);
+  animation: arena-edge-fade 0.7s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hit,
   .buffed {
     animation: none;
+  }
+
+  /* No harsh flashing: hold a gentle static tint for the (JS-cleared) duration
+     instead of pulsing opacity. */
+  .edgeGreen,
+  .edgeRed {
+    animation: none;
+    opacity: 0.4;
   }
 }

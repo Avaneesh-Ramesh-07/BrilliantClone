@@ -340,7 +340,10 @@ export function ArenaRoom({
   }
 
   // ----- 9. Not logged in: Log In | Sign Up | Continue as Guest -----
-  const redirect = encodeURIComponent(`/arena/${sessionId}`);
+  // Both the "Log in" and "Sign up" links carry a `next` target so the auth flow
+  // returns the visitor to THIS challenge afterward (login + signup both honor
+  // `next`, validated to relative same-origin paths).
+  const next = encodeURIComponent(`/arena/${sessionId}`);
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-app rounded-2xl border border-border bg-surface p-6 shadow-sm">
@@ -354,13 +357,13 @@ export function ArenaRoom({
 
         <div className="mt-6 flex flex-col gap-3">
           <a
-            href={`/login?redirect=${redirect}&next=${redirect}`}
+            href={`/login?next=${next}`}
             className="inline-flex min-h-[48px] w-full items-center justify-center rounded-lg bg-primary px-4 font-semibold text-white active:scale-95"
           >
             Log In
           </a>
           <a
-            href={`/signup?redirect=${redirect}&next=${redirect}`}
+            href={`/signup?next=${next}`}
             className="inline-flex min-h-[48px] w-full items-center justify-center rounded-lg border border-border bg-surface px-4 font-semibold text-text active:scale-95"
           >
             Sign Up
