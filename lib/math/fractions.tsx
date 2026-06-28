@@ -3,20 +3,26 @@ import { Fraction } from "@/components/math/Fraction";
 
 /**
  * Conservative detector for "bare" math fractions written with a slash, e.g.
- * `3/4`, `1/2`, `x/2`, `-5/6`, `(x+1)/3`, `b/(2a)`. It deliberately AVOIDS
+ * `3/4`, `1/2`, `x/2`, `-5/6`, `(x+1)/3`, `b/(2a)`, `-b/2a`, `a/(b+c)`, and the
+ * complex worked-solution forms like `-(24)/(2*(-4))`. It deliberately AVOIDS
  * touching prose and non-fraction slashes:
  *  - it requires NO whitespace around the slash, so "Rise / Run",
  *    "roots / zeroes" and similar are left alone;
- *  - each side must be a signed number, a single variable letter, or a
- *    parenthesized group, so multi-letter words ("and/or", "up/down") never
- *    match;
+ *  - each side must be a signed math token: a number, a run of digits/letters
+ *    (e.g. `2a`), or a (possibly nested) parenthesized group; so multi-letter
+ *    words ("and/or", "up/down") never match because neither side is numeric;
  *  - at least ONE side must be numeric or parenthesized, so letter/letter units
  *    ("km/h", "m/s") and bare "x/y" are left alone.
  *
  * Anything that does not clearly read as a simple math fraction is left as
  * written so we never corrupt prose, units, dates, paths, or code.
  */
-const PART = String.raw`[+\-−]?(?:\d+(?:\.\d+)?|[A-Za-z]|\([^()]*\))`;
+// A balanced parenthesized group, tolerating one level of nesting (enough for
+// the worked-solution forms the practice test produces, e.g. "(2*(-4))").
+const GROUP = String.raw`\((?:[^()]+|\([^()]*\))*\)`;
+// One side of a fraction: an optional sign, then either a balanced group or a
+// run of alphanumerics/dots (so "2a", "24", "3.5", "x", "b" all qualify).
+const PART = String.raw`[+\-−]?(?:${GROUP}|[A-Za-z0-9.]+)`;
 const FRACTION_RE = new RegExp(
   String.raw`(?<![\w./−-])(${PART})/(${PART})(?![\w./−-])`,
   "g"
@@ -29,13 +35,39 @@ function isNumericOrParen(part: string): boolean {
 }
 
 /**
+ * Strips the outer pair of parentheses from a string ONLY when they wrap the
+ * whole expression as a single balanced group (so "(2*(-4))" -> "2*(-4)" but
+ * "(a)+(b)" is left alone because the first group closes early).
+ */
+function unwrapOuter(s: string): string {
+  if (s.length < 2 || s[0] !== "(" || s[s.length - 1] !== ")") return s;
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === "(") depth++;
+    else if (s[i] === ")") {
+      depth--;
+      // The opening "(" was matched before the final char: not a single wrap.
+      if (depth === 0 && i < s.length - 1) return s;
+    }
+  }
+  return depth === 0 ? s.slice(1, -1) : s;
+}
+
+/**
  * Strips a single outer pair of parentheses used purely for grouping, e.g.
- * "(2a)" -> "2a" or "(x+1)" -> "x+1". A leading sign is left alone (so
- * "−(−6)" is preserved verbatim rather than collapsed into "−−6").
+ * "(2a)" -> "2a", "(x+1)" -> "x+1", "(2*(-4))" -> "2*(-4)", "-(24)" -> "-24".
+ * A leading sign is preserved, and a SIGNED inner group is left alone (so
+ * "−(−6)" stays verbatim rather than collapsing into "−−6").
  */
 function unwrap(part: string): string {
-  const m = /^\((.*)\)$/.exec(part);
-  return m ? m[1] : part;
+  const signMatch = /^[+\-−]/.exec(part);
+  if (signMatch) {
+    const rest = part.slice(1);
+    const inner = unwrapOuter(rest);
+    if (inner !== rest && !/^[+\-−]/.test(inner)) return signMatch[0] + inner;
+    return part;
+  }
+  return unwrapOuter(part);
 }
 
 /**

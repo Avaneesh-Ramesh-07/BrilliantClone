@@ -56,6 +56,16 @@ export function evaluateAnswerExpression(expression: string): ExpressionResult {
   }
 }
 
+/**
+ * Clamps a model-supplied difficulty to an integer in [1,10], defaulting to a
+ * middle 5 when the value is missing/non-finite, so the field is always a
+ * usable 1-10 rating regardless of what the model emitted.
+ */
+function clampDifficulty(value: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 5;
+  return Math.min(10, Math.max(1, Math.round(value)));
+}
+
 /** Rounds to an integer when within 1e-6, else to a sensible 6 decimals. */
 function reconcileNumber(value: number): number {
   const rounded = Math.round(value);
@@ -372,6 +382,7 @@ export function verifyPracticeProblem(
         id: "",
         kind: "numeric",
         conceptLabel: spec.conceptLabel?.trim() ?? "",
+        difficulty: clampDifficulty(spec.difficulty),
         prompt: spec.prompt,
         hint: spec.hint,
         explanation: spec.explanation,
@@ -450,6 +461,7 @@ export function verifyPracticeProblem(
       id: "",
       kind: "mc",
       conceptLabel: mc.conceptLabel?.trim() ?? "",
+      difficulty: clampDifficulty(mc.difficulty),
       prompt: mc.prompt,
       hint: mc.hint,
       explanation: mc.explanation,

@@ -120,6 +120,27 @@ body {
   }
 }
 
+/* ===========================================================================
+ * Practice-test math face: scope ALL equation/math rendering in the practice
+ * test to ONE family - the app's monospace equation font (the same DM Mono used
+ * by the numeric answer input and `.text-equation`). Inside `.pt-math` this
+ * overrides the shared `.font-math` serif-italic face used by MathText and the
+ * Fraction component, so numerators, denominators, and inline math all match the
+ * surrounding equation text instead of clashing as a different italic serif.
+ * Unlayered, so it wins over the layered `.font-math` utility regardless of
+ * source order. Scoped to the practice test only, so lessons/arena keep the
+ * shared serif math face unchanged.
+ * ======================================================================== */
+.pt-math .font-math {
+  font-family: var(--font-dm-mono), monospace;
+  font-style: normal;
+  letter-spacing: 0;
+}
+.pt-math .pt-equation {
+  font-family: var(--font-dm-mono), monospace;
+  font-weight: 500;
+}
+
 @keyframes tile-shake {
   0%,
   100% {
@@ -226,6 +247,129 @@ body {
 
 .animate-hero-float {
   animation: hero-float 6s ease-in-out infinite;
+}
+
+/* ===========================================================================
+ * Home learning path: a running ninja travels from the first lesson along the
+ * drawn dotted connectors to the first uncompleted lesson and dives in. Travel
+ * and per-connector greenΓåÆgreen reveal are driven in JS (Web Animations API)
+ * off measured node/connector geometry; these keyframes supply the figure's
+ * running bob, flip-book limbs, fading speed-line trails, the dive-in, and the
+ * landing impact/ripple. Namespaced `ninja-*` / `node-*`.
+ * ======================================================================== */
+
+/* The running bob/lean applied to the ninja figure while it travels. */
+@keyframes ninja-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg) scaleX(1);
+  }
+  50% {
+    transform: translateY(-7px) rotate(6deg) scaleX(1.06);
+  }
+}
+.animate-ninja-bob {
+  animation: ninja-bob 320ms ease-in-out infinite;
+}
+
+/* Flip-book running legs/arms: two limb poses alternate rapidly so the ninja
+   looks like it's actually running (legs pumping) while it travels. */
+@keyframes ninja-stride-a {
+  0%,
+  49.99% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes ninja-stride-b {
+  0%,
+  49.99% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+.ninja-stride-a {
+  animation: ninja-stride-a 240ms steps(1, end) infinite;
+}
+.ninja-stride-b {
+  animation: ninja-stride-b 240ms steps(1, end) infinite;
+}
+
+/* Short dashed "speed lines" dropped behind the running ninja; fade + shrink
+   within 0.5s so they read as a trailing wake. */
+@keyframes ninja-trail {
+  0% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -58%) scale(0.8);
+  }
+}
+.ninja-trail-mark {
+  animation: ninja-trail 500ms ease-out forwards;
+}
+
+/* The figure tucks, spins and shrinks as it dives into the target node. The
+   travel toward the node centre is driven separately in JS; this is the
+   figure's own scale/rotate "plunge". */
+@keyframes ninja-dive {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  32% {
+    transform: scale(1.08) rotate(-12deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.12) rotate(260deg);
+    opacity: 0.85;
+  }
+}
+.animate-ninja-dive {
+  animation: ninja-dive 620ms cubic-bezier(0.5, 0, 0.85, 0.3) forwards;
+}
+
+/* Target lesson "coin" reacting as the ninja dives in: a springy scale-bounce. */
+@keyframes node-impact {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.18);
+  }
+  70% {
+    transform: scale(0.94);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-node-impact {
+  animation: node-impact 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Expanding ring ripple emitted from the node at the moment of entry. */
+@keyframes node-ripple {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+.animate-node-ripple {
+  animation: node-ripple 550ms ease-out forwards;
 }
 
 /* ===========================================================================
@@ -428,6 +572,18 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .animate-ninja-bob,
+  .ninja-stride-a,
+  .ninja-stride-b,
+  .ninja-trail-mark,
+  .animate-ninja-dive {
+    animation: none !important;
+  }
+  .animate-node-impact,
+  .animate-node-ripple {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
   .duel-vs-slam-left,
   .duel-vs-slam-right,
   .lightning-strike,

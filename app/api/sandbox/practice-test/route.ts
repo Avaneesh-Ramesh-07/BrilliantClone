@@ -41,6 +41,27 @@ function normalizeStem(prompt: string): string {
   return prompt.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/**
+ * A NEAR-DUPLICATE signature for MULTIPLE-CHOICE problems beyond the stem: two
+ * mc problems collide when they share the SAME correct answer AND the SAME set
+ * of option texts, regardless of wording or option order. This catches reworded
+ * twins the stem check misses (e.g. the same equation re-skinned with a new
+ * scenario but the same choices). Returns null for numeric problems (which have
+ * no option set; deduping them by answer alone would wrongly drop distinct
+ * problems that merely share a common answer like 5), so those rely on the stem
+ * check only.
+ */
+function nearDuplicateSignature(v: ProblemVerification): string | null {
+  const problem = v.problem;
+  if (!problem || problem.kind !== "mc") return null;
+  const options = [...problem.options]
+    .map((o) => normalizeStem(o))
+    .sort()
+    .join("|");
+  const answer = normalizeStem(problem.options[problem.correctIndex] ?? "");
+  return `mc|${answer}|${options}`;
+}
+
 /** A representative ALLOWED_TOPICS id whose family matches, for the `topic` column. */
 const FAMILY_TOPIC_ID: Record<string, string> = {
   equations: "linear-equations",
@@ -146,6 +167,9 @@ export async function POST() {
   // attempt is caught and skipped so it can never crash the whole handler.
   const kept: ProblemVerification[] = [];
   const seenStems = new Set<string>();
+  // Near-duplicate signatures (answer + option set). Shared across attempts AND
+  // within a single attempt, so repeats are dropped wherever they appear.
+  const seenSignatures = new Set<string>();
   let baseSpec: PracticeTestSpec | null = null;
   let lastError: unknown = null;
 
@@ -167,11 +191,16 @@ export async function POST() {
     }
     // Keep the first successful spec for its title/description metadata.
     if (!baseSpec) baseSpec = attemptSpec;
-    // Dedupe across attempts by normalized stem, keeping the first occurrence.
+    // Dedupe by normalized stem AND by near-duplicate signature (answer + option
+    // set), both WITHIN this attempt and ACROSS attempts (the `seen*` sets are
+    // shared), keeping the first occurrence of each.
     for (const v of verifyAndKeep(attemptSpec)) {
       const stem = normalizeStem(v.spec.prompt);
       if (seenStems.has(stem)) continue;
+      const signature = nearDuplicateSignature(v);
+      if (signature !== null && seenSignatures.has(signature)) continue;
       seenStems.add(stem);
+      if (signature !== null) seenSignatures.add(signature);
       kept.push(v);
     }
   }
@@ -203,6 +232,13 @@ export async function POST() {
       { status: 500 }
     );
   }
+
+  // ENFORCE INCREASING CHALLENGE: order the kept problems by ascending verified
+  // difficulty (clamped 1-10) so the test gets progressively harder. A stable
+  // sort preserves generation order for equal ratings. The spec rebuilt below
+  // reads from this same `kept` array, so the stored lesson + the runner bank
+  // stay aligned in this sorted order.
+  kept.sort((a, b) => (a.problem?.difficulty ?? 5) - (b.problem?.difficulty ?? 5));
 
   // Assign stable ids the runner uses for attempt tracking, and gather the
   // runner-ready verified problem bank.

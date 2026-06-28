@@ -41,6 +41,29 @@ export interface DuelRank {
   isMaxTier: boolean;
 }
 
+/** A single rung of the duel rank ladder: a tier and the wins to reach it. */
+export interface DuelTierLadderEntry {
+  /** 0-based tier index. */
+  tierIndex: number;
+  /** The tier's display name. */
+  tierName: DuelTierName;
+  /** Total wins required to first reach this tier (0 for the starting tier). */
+  winsRequired: number;
+}
+
+/**
+ * Builds the full duel rank ladder (lowest to highest) directly from
+ * `DUEL_TIERS` and `WINS_PER_TIER`, so the tier names and thresholds live in
+ * exactly one place. Each tier is reached at `tierIndex * WINS_PER_TIER` wins.
+ */
+export function getDuelTierLadder(): DuelTierLadderEntry[] {
+  return DUEL_TIERS.map((tierName, tierIndex) => ({
+    tierIndex,
+    tierName,
+    winsRequired: tierIndex * WINS_PER_TIER,
+  }));
+}
+
 /**
  * Computes a player's duel rank from their total wins. Pure and robust to
  * `wins = 0` (Initiate, 0 stars, 0/5 progress).

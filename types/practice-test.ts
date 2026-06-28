@@ -12,6 +12,10 @@ import type { Lesson } from "@/types/lesson";
 const numericProblemSpec = z.object({
   kind: z.literal("numeric"),
   conceptLabel: z.string(),
+  // Integer 1-10 self-rated difficulty (1 = easiest, 10 = hardest). Instructed
+  // in the prompt and clamped server-side to [1,10]; used to order the test so
+  // it gets progressively harder. Strict-mode requires it; never `.optional()`.
+  difficulty: z.number().int(),
   prompt: z.string(),
   answer: z.number(),
   // A SINGLE, fully-NUMERIC arithmetic expression (NO variables/letters) that
@@ -33,6 +37,10 @@ const numericProblemSpec = z.object({
 const mcProblemSpec = z.object({
   kind: z.literal("mc"),
   conceptLabel: z.string(),
+  // Integer 1-10 self-rated difficulty (1 = easiest, 10 = hardest). Instructed
+  // in the prompt and clamped server-side to [1,10]; used to order the test so
+  // it gets progressively harder. Strict-mode requires it; never `.optional()`.
+  difficulty: z.number().int(),
   prompt: z.string(),
   options: z.array(z.string()).min(2).max(4),
   correctIndex: z.number().int(),
@@ -85,6 +93,8 @@ interface VerifiedProblemBase {
   /** Stable id used by the runner for attempt tracking. */
   id: string;
   conceptLabel: string;
+  /** Integer 1-10 difficulty (clamped). Drives ascending order + the UI label. */
+  difficulty: number;
   prompt: string;
   hint: string;
   /** Full worked solution, revealed on the second consecutive miss. */

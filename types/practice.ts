@@ -233,6 +233,13 @@ export interface PracticeProblemContext {
   options?: string[];
   /** odd-one-out: the text of the correct (odd-one-out) option. */
   oddAnswer?: string;
+  /**
+   * A pre-verified, authoritative correct answer supplied by the caller when the
+   * problem's prompt does NOT match the deterministic label grammars in
+   * `groundTruth.ts` (the practice-test runner's word problems). When present it
+   * is trusted as the ground truth the tutor model grades the photo against.
+   */
+  correctAnswer?: string;
   /** The correct-answer explanation. */
   explanation: string;
 }

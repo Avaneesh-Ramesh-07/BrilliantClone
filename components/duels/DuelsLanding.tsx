@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DuelCard } from "@/components/arena/DuelCard";
+import { RankInfo } from "@/components/duels/RankInfo";
 import { DUEL_TIERS } from "@/lib/arena/rank";
 import type { DuelRank } from "@/lib/arena/rank";
 
@@ -120,6 +121,7 @@ export function DuelsLanding({
               <span style={{ color: "var(--color-accent-orange)" }}>
                 <Blades />
               </span>
+              <RankInfo currentTierIndex={tierIndex} />
             </div>
 
             {stars > 0 && (

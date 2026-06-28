@@ -104,14 +104,9 @@ export function PracticeTestBuilder() {
 
       <header className="mb-6">
         <p className="text-label text-muted">Sandbox</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-heading text-heading-lg text-text">
-            Create practice test
-          </h1>
-          <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-amber-700">
-            Beta
-          </span>
-        </div>
+        <h1 className="font-heading text-heading-lg text-text">
+          Create practice test
+        </h1>
         <p className="mt-2 text-body text-muted">
           A challenging test of real-world word problems, built only from
           concepts you reviewed on an earlier day, so it tests what should be
@@ -131,7 +126,7 @@ export function PracticeTestBuilder() {
           </p>
           <p className="max-w-xs text-label text-muted">
             Writing challenging word problems across your reviewed concepts. This
-            usually takes a few seconds.
+            usually takes a few minutes.
           </p>
         </div>
       ) : loadingConcepts ? (

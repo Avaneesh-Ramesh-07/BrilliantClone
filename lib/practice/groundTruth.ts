@@ -194,12 +194,25 @@ export function computeGroundTruth(p: PracticeProblemContext): GroundTruth {
     };
   }
 
-  // Fallback: derive a conclusion purely from the structured fields.
+  // Fallback: derive a conclusion from the structured fields. When the caller
+  // supplied a pre-verified correctAnswer (the practice-test runner does, since
+  // its word problems don't match the grammars above), trust it as the answer
+  // and fold it into the conclusion the tutor model is told to compare against.
+  const stepConclusion = describeStepConclusion(p);
+  if (p.correctAnswer && p.correctAnswer.trim()) {
+    const answer = p.correctAnswer.trim();
+    return {
+      kind: "concept",
+      answer,
+      workedSteps: [],
+      conclusion: `The verified correct answer is ${answer}. ${stepConclusion}`,
+    };
+  }
   return {
     kind: "concept",
     answer: null,
     workedSteps: [],
-    conclusion: describeStepConclusion(p),
+    conclusion: stepConclusion,
   };
 }
 

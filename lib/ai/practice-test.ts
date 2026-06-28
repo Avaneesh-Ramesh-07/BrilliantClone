@@ -12,14 +12,15 @@ import type { Lesson, Problem, ProblemFeedback, Step } from "@/types/lesson";
 import type { PracticeProblemSpec, PracticeTestSpec } from "@/types/practice-test";
 
 /**
- * Model used ONLY for practice-test generation. Intentionally OpenAI's current
- * flagship `gpt-5.5` (not the smaller model used by lesson building / photo
- * feedback) for stronger arithmetic and instruction-following on answer keys and
- * self-consistency. Note `gpt-5.5` is a REASONING model: it consumes reasoning
+ * Model used ONLY for practice-test generation: `gpt-5.4`, one tier below the
+ * flagship `gpt-5.5` (strong everyday reasoning at lower cost/latency), and
+ * still stronger than the smaller model used by lesson building / photo
+ * feedback for arithmetic and instruction-following on answer keys and
+ * self-consistency. Note `gpt-5.4` is a REASONING model: it consumes reasoning
  * tokens and does NOT accept a custom `temperature`, so the generation call must
  * omit `temperature` and budget extra `maxOutputTokens` for reasoning.
  */
-export const PRACTICE_TEST_MODEL = "gpt-5.5" as const;
+export const PRACTICE_TEST_MODEL = "gpt-5.4" as const;
 
 /** a, b, c, … for multiple-choice option ids (mirrors lesson-builder). */
 function letterId(index: number): string {
@@ -63,6 +64,7 @@ export function buildPracticeTestSystemPrompt(): string {
     "  {",
     "    \"kind\": \"mc\",",
     "    \"conceptLabel\": string,      // EXACT label copied verbatim from the eligible list",
+    "    \"difficulty\": integer,      // 1-10 challenge rating (see DIFFICULTY RATING)",
     "    \"prompt\": string,           // question STEM only; ends with the question; NO choices inside",
     "    \"options\": string[],        // 2 to 4 DISTINCT choices",
     "    \"correctIndex\": integer,    // 0-based index of the single correct option",
@@ -77,6 +79,7 @@ export function buildPracticeTestSystemPrompt(): string {
     "  {",
     "    \"kind\": \"numeric\",",
     "    \"conceptLabel\": string,",
+    "    \"difficulty\": integer,      // 1-10 challenge rating (see DIFFICULTY RATING)",
     "    \"prompt\": string,           // question STEM only; ends with the question",
     "    \"answer\": number,           // the single numeric answer",
     "    \"answerExpression\": string, // fully-numeric math.js expr that evaluates to `answer`",
@@ -119,6 +122,16 @@ export function buildPracticeTestSystemPrompt(): string {
     "  obvious setup, trick MC distractors), not from extra unrelated steps.",
     "- Calibrate difficulty to the concept: a simple comparison stays simple; a",
     "  quadratic-feature concept can be genuinely harder.",
+    "",
+    "DIFFICULTY RATING (required 'difficulty' integer on EVERY problem):",
+    "- Rate how challenging the problem is for this learner on an integer scale of",
+    "  1 to 10, where 1 is the easiest (a single, obvious step) and 10 is the",
+    "  hardest (multi-step reasoning, less obvious setup, trickier numbers).",
+    "- Rate HONESTLY and SPREAD the ratings across the test: include some easy",
+    "  (1-3), several medium (4-7), and a few genuinely hard (8-10) problems so the",
+    "  set covers a real range of challenge rather than clustering at one value.",
+    "- Difficulty must reflect the actual problem, NOT its position; the test will",
+    "  be reordered by difficulty automatically, so just rate each item accurately.",
     "",
     "THE 'hint' FIELD (required on every problem): a SINGLE short scaffold that",
     "helps the learner START, revealed only after a wrong attempt; it must NEVER",
@@ -212,9 +225,11 @@ export function buildPracticeTestUserPrompt(concepts: EligibleConcept[]): string
     "instructions above (define each symbol, ask only for quantities present, full",
     "internal consistency, thin on-concept word problems, distinct mc options, and",
     "a fully-numeric answerExpression that independently computes the answer).",
-    "Order the problems so the hardest come LAST, never sacrificing clarity or",
-    "correctness. Give the test a short, motivating title and a one-sentence",
-    "description.",
+    "Give EACH problem an honest 1-10 'difficulty' rating spread across the full",
+    "range (some easy, several medium, a few hard); the test is reordered by that",
+    "rating automatically, so you do not need to order the problems yourself. Never",
+    "sacrifice clarity or correctness for difficulty. Give the test a short,",
+    "motivating title and a one-sentence description.",
   ].join("\n");
 }
 

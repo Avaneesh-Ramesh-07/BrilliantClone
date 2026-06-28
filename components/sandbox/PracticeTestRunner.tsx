@@ -6,7 +6,9 @@ import { revalidateProgressViews } from "@/app/actions";
 import { FeedbackPanel } from "@/components/lesson/FeedbackPanel";
 import { MathText } from "@/components/lesson/MathText";
 import { StepProgressBar } from "@/components/lesson/StepProgressBar";
+import { WorkUpload } from "@/components/practice/WorkUpload";
 import { Button } from "@/components/ui/Button";
+import { serializePracticeTestProblem } from "@/lib/practice/context";
 import { completeLesson, recordStepAttempt } from "@/lib/progress";
 import { createClient } from "@/lib/supabase/client";
 import { updateStreak } from "@/lib/streak";
@@ -95,6 +97,15 @@ export function PracticeTestRunner({
   const isLast = index === problems.length - 1;
   const hasHint = !!problem.hint && problem.hint.trim().length > 0;
 
+  // Photo-feedback context for THIS problem, grounded by the deterministically
+  // verified answer (computed value / correct option) + explanation, so the
+  // shared upload-your-work tutor grades against real ground truth even though
+  // the word-problem prompt doesn't match groundTruth.ts's label grammars.
+  const feedbackContext = useMemo(
+    () => serializePracticeTestProblem(problem),
+    [problem]
+  );
+
   // Reveal the correct answer ONLY once the question is solved, or after the
   // 2nd CONSECUTIVE wrong attempt on this same question (attempts >= 2). A
   // single wrong attempt (attempts === 1) must NOT reveal/highlight anything;
@@ -102,6 +113,11 @@ export function PracticeTestRunner({
   const revealCorrect =
     solved || (!!feedback && !feedback.isCorrect && attempts >= 2);
   const showResult = feedback !== null;
+  // "Fully wrong": the learner missed the question to the point its answer was
+  // revealed (2nd consecutive wrong and not solved). The upload-your-work photo
+  // tutor is offered ONLY in this state.
+  const fullyWrong =
+    !solved && !!feedback && !feedback.isCorrect && attempts >= 2;
 
   async function recordAttempt(correct: boolean) {
     const durationMs = Math.min(
@@ -251,33 +267,20 @@ export function PracticeTestRunner({
   const showGiveUp = isCheckPhase && !solved;
 
   return (
-    <div className="flex min-h-screen flex-col pb-28">
+    <div className="pt-math flex min-h-screen flex-col pb-28">
       <div className="sticky top-0 z-20 -mx-4 border-b border-border/60 bg-bg/85 px-4 pb-3 pt-4 backdrop-blur">
         <StepProgressBar current={index + 1} total={problems.length} />
       </div>
 
       <header className="mt-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-label font-semibold uppercase tracking-wide text-muted">
-            Practice Test
-          </span>
-          <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-amber-700">
-            Beta
-          </span>
-        </div>
+        <span className="text-label font-semibold uppercase tracking-wide text-muted">
+          Practice Test
+        </span>
         <p className="mt-1 text-label text-muted">{title}</p>
         {description && (
           <p className="mt-1 text-label text-muted/80">{description}</p>
         )}
       </header>
-
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        {problem.conceptLabel && (
-          <span className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-label font-medium text-purple-800">
-            {problem.conceptLabel}
-          </span>
-        )}
-      </div>
 
       <div className="mt-6">
         <p className="text-body text-text">
@@ -381,15 +384,25 @@ export function PracticeTestRunner({
           {problem.computedAnswer !== null && (
             <p className="mt-1 text-body text-text">
               Computed answer:{" "}
-              <span className="font-semibold">
+              <span className="pt-equation font-semibold">
                 {formatComputed(problem.computedAnswer)}
               </span>
               {problem.answerExpression?.trim() && (
                 <>
                   {" "}
                   <span className="text-muted">
-                    (<MathText text={problem.answerExpression} glossary={false} />{" "}
-                    = {formatComputed(problem.computedAnswer)})
+                    (
+                    <span className="pt-equation">
+                      <MathText
+                        text={problem.answerExpression}
+                        glossary={false}
+                      />
+                    </span>{" "}
+                    ={" "}
+                    <span className="pt-equation">
+                      {formatComputed(problem.computedAnswer)}
+                    </span>
+                    )
                   </span>
                 </>
               )}
@@ -405,6 +418,11 @@ export function PracticeTestRunner({
           )}
         </div>
       )}
+
+      {/* Upload-your-work photo feedback, offered ONLY after the learner gets
+          the problem fully wrong (answer revealed). Keyed by problem.id so its
+          state resets when the learner advances. */}
+      {fullyWrong && <WorkUpload key={problem.id} context={feedbackContext} />}
 
       <div className="sticky bottom-0 mt-auto flex flex-col gap-4 border-t border-border bg-bg pt-4">
         {answerPrompt && (
@@ -433,3 +451,4 @@ export function PracticeTestRunner({
     </div>
   );
 }
+

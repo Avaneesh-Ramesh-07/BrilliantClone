@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   type Ref,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { NinjaHead, beltForIndex } from "@/components/home/NinjaHead";
+import { RunningNinja } from "@/components/home/RunningNinja";
 import type { Lesson, LessonProgress } from "@/types/lesson";
 
 export interface LessonPathItem {
@@ -65,6 +67,24 @@ function leanFor(index: number): number {
   return index % 2 === 0 ? 34 : 66;
 }
 
+interface Point {
+  x: number;
+  y: number;
+}
+
+/**
+ * A connector segment that the ninja traverses. `startFrac`/`endFrac` are the
+ * connector's start/end positions as a fraction (0..1) of the TOTAL run
+ * distance, so its green overlay can be revealed in lock-step with the ninja's
+ * progress (the reveal path uses pathLength=1, so its strokeDashoffset is
+ * driven from 1 down to 0 across [startFrac, endFrac]).
+ */
+interface GreenSeg {
+  index: number;
+  startFrac: number;
+  endFrac: number;
+}
+
 /**
  * Open-popup state. `sticky` distinguishes a popup opened by click/tap (which
  * stays open until an outside-click or Escape) from a transient hover preview
@@ -85,6 +105,49 @@ export function LessonPath({ lessons }: LessonPathProps) {
   // circle's edge (or while travelling onto the popup) doesn't immediately
   // dismiss a transient hover preview.
   const closeTimerRef = useRef<number | null>(null);
+
+  // --- Running-ninja path animation state ----------------------------------
+  // The positioned overlay container the ninja/trails are measured against.
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Per-connector measuring + reveal refs (the box, the masked reveal path, and
+  // the green dotted overlay whose opacity is armed when the run starts).
+  const connectorRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // The masked reveal path (driven during the run). Geometry is measured off
+  // `geomRefs` (the always-rendered base grey path) instead, because path
+  // metrics on elements inside <defs>/<mask> are unreliable across browsers.
+  const revealRefs = useRef<(SVGPathElement | null)[]>([]);
+  const geomRefs = useRef<(SVGPathElement | null)[]>([]);
+  const greenSegsRef = useRef<GreenSeg[] | null>(null);
+  // The travel polyline (container-relative px) the ninja follows; null when no
+  // run is active (reduced motion, popup open, nothing to traverse, or done).
+  const [route, setRoute] = useState<Point[] | null>(null);
+  const ninjaRef = useRef<HTMLDivElement>(null);
+  const figureRef = useRef<HTMLSpanElement>(null);
+  const targetRef = useRef<{ index: number; center: Point } | null>(null);
+  const [impactIndex, setImpactIndex] = useState<number | null>(null);
+  // True once the run has begun: arms the green dotted overlays (opacity 0 ->
+  // 1) so they never flash green before the masked reveal starts.
+  const [runStarted, setRunStarted] = useState(false);
+  // True while the figure is diving into the target node (swaps bob -> dive).
+  const [diving, setDiving] = useState(false);
+  // Connector indices whose green "traversed" overlay should persist (fully
+  // lit, mask dropped): the resting/fallback green-up-to-target coloring.
+  const [litConnectors, setLitConnectors] = useState<number[]>([]);
+  const hasRunRef = useRef(false);
+  const [trails, setTrails] = useState<{ id: number; x: number; y: number }[]>(
+    []
+  );
+  const trailIdRef = useRef(0);
+
+  // The user's CURRENT lesson: the first one not yet completed (or the last
+  // node when everything is complete). The path is coloured green from the
+  // first lesson up to and including the connector leading into this node;
+  // everything beyond stays grey.
+  const firstUncompletedIndex = lessons.findIndex(
+    (l) => l.progress.completed_at == null
+  );
+  const targetNodeIndex =
+    firstUncompletedIndex === -1 ? lessons.length - 1 : firstUncompletedIndex;
 
   // Keep a ref mirror of the open state so handlers can consult it without
   // needing `open` in their dependency lists.
@@ -156,15 +219,389 @@ export function LessonPath({ lessons }: LessonPathProps) {
     };
   }, [open, lessons]);
 
-  // The user's CURRENT lesson: the first one not yet completed (or the last
-  // node when everything is complete). The path is statically coloured green
-  // from the first lesson up to and including the connector leading into this
-  // node; everything beyond stays grey.
-  const firstUncompletedIndex = lessons.findIndex(
-    (l) => l.progress.completed_at == null
-  );
-  const targetNodeIndex =
-    firstUncompletedIndex === -1 ? lessons.length - 1 : firstUncompletedIndex;
+  // Measure the on-screen route the ninja should run (node 0's outer edge,
+  // along each drawn connector, to the target node's outer edge) and decide
+  // whether to animate at all. Runs once per home load. Bails to the static
+  // green-up-to-target path (no ninja) under reduced motion, when a popup is
+  // already open, or when there's nothing to traverse.
+  useEffect(() => {
+    if (hasRunRef.current) return;
+    if (lessons.length === 0) return;
+
+    const target = targetNodeIndex;
+    const greenIndices: number[] = [];
+    for (let i = 1; i <= target; i++) greenIndices.push(i);
+
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // No run: settle straight to the resting green-up-to-target coloring. This
+    // path DOES consume hasRunRef (the decision not to animate is final).
+    const settleStatic = () => {
+      hasRunRef.current = true;
+      if (greenIndices.length > 0) setLitConnectors(greenIndices);
+    };
+
+    if (prefersReduced || openRef.current || target <= 0) {
+      settleStatic();
+      return;
+    }
+
+    // Build the screen-space route. Returns null when the geometry isn't ready
+    // yet (zero-size / not-yet-laid-out container, degenerate path metrics, or
+    // a ~0-length total) so the caller can retry instead of giving up. Crucially
+    // this does NOT consume hasRunRef on failure, so a too-early or degenerate
+    // measurement never permanently disables the animation.
+    const buildRoute = (): Point[] | null => {
+      const container = containerRef.current;
+      if (!container) return null;
+      const cRect = container.getBoundingClientRect();
+      // Container not laid out / hidden (e.g. a collapsed responsive column):
+      // bail and let the ResizeObserver/rAF retry once it has a real size.
+      if (cRect.width < 1 || cRect.height < 1) return null;
+
+      const startNode = nodeRefs.current[0];
+      const endNode = nodeRefs.current[target];
+      if (!startNode || !endNode) return null;
+
+      const center = (el: HTMLElement): Point => {
+        const r = el.getBoundingClientRect();
+        return {
+          x: r.left - cRect.left + r.width / 2,
+          y: r.top - cRect.top + r.height / 2,
+        };
+      };
+
+      // Sample connector[i]'s ACTUAL drawn SVG path (between node[i-1] and
+      // node[i]) by arc length, mapping each point into container px. We measure
+      // off the always-rendered BASE grey path (geomRefs), whose getTotalLength
+      // / getPointAtLength are reliable; the masked reveal path is only driven.
+      // The SVG uses viewBox 0..100 with preserveAspectRatio="none", so the
+      // 0..100 user box is stretched to the div's rect:
+      //   pxX = rectLeft + (userX/100)*width ; pxY = rectTop + (userY/100)*height.
+      const SAMPLES = 28;
+      const sampleConnector = (i: number): Point[] => {
+        const div = connectorRefs.current[i];
+        const path = geomRefs.current[i];
+        if (!div || !path) return [];
+        const r = div.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) return [];
+        let totalLen = 0;
+        try {
+          totalLen = path.getTotalLength();
+        } catch {
+          return [];
+        }
+        if (!Number.isFinite(totalLen) || totalLen <= 0) return [];
+        const left = r.left - cRect.left;
+        const top = r.top - cRect.top;
+        const pts: Point[] = [];
+        for (let s = 0; s <= SAMPLES; s++) {
+          const pt = path.getPointAtLength((s / SAMPLES) * totalLen);
+          pts.push({
+            x: left + (pt.x / 100) * r.width,
+            y: top + (pt.y / 100) * r.height,
+          });
+        }
+        return pts;
+      };
+
+      // Stitch the connector paths in order: start just OUTSIDE node 0 (the
+      // first connector's `M` point sits at the circle edge) and end just
+      // outside the target node (the last connector's final drawn point).
+      const points: Point[] = [];
+      const bounds: { index: number; startIdx: number; endIdx: number }[] = [];
+      for (let i = 1; i <= target; i++) {
+        const pts = sampleConnector(i);
+        if (pts.length < 2) continue;
+        const startIdx = points.length;
+        points.push(...pts);
+        bounds.push({ index: i, startIdx, endIdx: points.length - 1 });
+      }
+      if (points.length < 2) return null;
+
+      // Cumulative on-screen distance along the whole route.
+      const cum: number[] = [0];
+      for (let k = 1; k < points.length; k++) {
+        cum.push(
+          cum[k - 1] +
+            Math.hypot(
+              points[k].x - points[k - 1].x,
+              points[k].y - points[k - 1].y
+            )
+        );
+      }
+      const totalDist = cum[points.length - 1];
+      if (!Number.isFinite(totalDist) || totalDist < 2) return null;
+
+      // Per-connector fractions of the total run, so each green overlay can
+      // light progressively (its reveal path's strokeDashoffset is driven
+      // 1 -> 0 across [startFrac, endFrac]) exactly as the ninja crosses it.
+      greenSegsRef.current = bounds.map((b) => ({
+        index: b.index,
+        startFrac: cum[b.startIdx] / totalDist,
+        endFrac: cum[b.endIdx] / totalDist,
+      }));
+      targetRef.current = { index: target, center: center(endNode) };
+      return points;
+    };
+
+    let cancelled = false;
+    let rafId = 0;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 30; // ~0.5s of rAF retries before relying on the observer
+    let observer: ResizeObserver | null = null;
+
+    const stop = () => {
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      observer?.disconnect();
+      observer = null;
+    };
+
+    // One measurement attempt. On success consumes hasRunRef ONCE and starts the
+    // run; returns whether it succeeded (or should otherwise stop retrying).
+    const attempt = (): boolean => {
+      if (cancelled || hasRunRef.current) return true;
+      const points = buildRoute();
+      if (!points) return false;
+      hasRunRef.current = true;
+      stop();
+      setRoute(points);
+      return true;
+    };
+
+    // rAF retry loop: defers past initial layout, then keeps trying for a short
+    // window so a late-laid-out / async-sized container still triggers exactly
+    // one run as soon as its geometry is valid.
+    const tick = () => {
+      rafId = 0;
+      if (attempt()) return;
+      attempts += 1;
+      if (attempts < MAX_ATTEMPTS && !cancelled && !hasRunRef.current) {
+        rafId = window.requestAnimationFrame(tick);
+      }
+    };
+    rafId = window.requestAnimationFrame(tick);
+
+    // ResizeObserver: the moment the container gains a real size (responsive
+    // breakpoint resolving, fonts/layout settling, becoming visible), measure
+    // once more. Guarded by hasRunRef so it only ever starts a single run.
+    const container = containerRef.current;
+    if (typeof ResizeObserver !== "undefined" && container) {
+      observer = new ResizeObserver(() => {
+        if (cancelled || hasRunRef.current) {
+          stop();
+          return;
+        }
+        // Measure on the next frame so child connector/node layout has settled.
+        window.requestAnimationFrame(() => {
+          if (cancelled || hasRunRef.current) return;
+          attempt();
+        });
+      });
+      observer.observe(container);
+    }
+
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [lessons, targetNodeIndex]);
+
+  // Physically run the ninja along the reconstructed route with the Web
+  // Animations API, advancing each crossed connector's green reveal in
+  // lock-step, then dive into the target node. Cancels + freezes the static
+  // green coloring if a popup opens mid-run; cleans up on unmount.
+  useEffect(() => {
+    if (!route || route.length < 2) return;
+
+    const greenIndices = (greenSegsRef.current ?? []).map((s) => s.index);
+
+    // A lesson popup opened: cancel the run, hide the ninja/trails, and freeze
+    // the reveals at the static target coloring (green up to target).
+    if (open) {
+      setRoute(null);
+      setTrails([]);
+      setImpactIndex(null);
+      setDiving(false);
+      if (greenIndices.length > 0) setLitConnectors(greenIndices);
+      return;
+    }
+
+    const el = ninjaRef.current;
+    if (!el) return;
+
+    const cum: number[] = [0];
+    for (let i = 1; i < route.length; i++) {
+      cum.push(
+        cum[i - 1] +
+          Math.hypot(route[i].x - route[i - 1].x, route[i].y - route[i - 1].y)
+      );
+    }
+    const total = cum[cum.length - 1];
+    if (total < 2) {
+      const t = window.setTimeout(() => setRoute(null), 500);
+      return () => window.clearTimeout(t);
+    }
+
+    const RUN_MS = 1500;
+    const RUN_DELAY = 300; // pause at the first lesson, then dash to the target
+    const EASING = "cubic-bezier(0.45, 0.05, 0.3, 1)";
+
+    // Arm the green dotted overlays so they fade in (opacity 0 -> 1) only once
+    // the run is underway; the mask still hides them until the ninja crosses.
+    setRunStarted(true);
+
+    // A viewport resize invalidates the measured px route: abort the run and
+    // settle to the static green-up-to-target coloring instead of animating
+    // along stale coordinates.
+    const onResize = () => {
+      setRoute(null);
+      setTrails([]);
+      setImpactIndex(null);
+      setDiving(false);
+      if (greenIndices.length > 0) setLitConnectors(greenIndices);
+    };
+    window.addEventListener("resize", onResize);
+
+    const keyframes: Keyframe[] = route.map((p, i) => ({
+      offset: cum[i] / total,
+      top: `${p.y}px`,
+      left: `${p.x}px`,
+    }));
+
+    const anim = el.animate(keyframes, {
+      duration: RUN_MS,
+      delay: RUN_DELAY,
+      easing: EASING,
+      fill: "forwards",
+    });
+
+    // Progressive grey -> green reveal of the traversed connectors. Each reveal
+    // path uses pathLength=1, so strokeDashoffset goes 1 (hidden) -> 0
+    // (revealed) across the connector's [startFrac, endFrac] window of the SAME
+    // eased run timeline; because the ninja's keyframe offsets are also distance
+    // fractions, the revealed length tracks the ninja in lock-step. fill:"both"
+    // keeps it hidden during the initial pause and fully revealed afterwards.
+    const greenAnims: Animation[] = [];
+    for (const seg of greenSegsRef.current ?? []) {
+      const path = revealRefs.current[seg.index];
+      if (!path) continue;
+      const frames: Keyframe[] = [
+        { strokeDashoffset: 1, offset: 0 },
+      ];
+      if (seg.startFrac > 0.0001) {
+        frames.push({ strokeDashoffset: 1, offset: seg.startFrac });
+      }
+      const litOffset = Math.min(
+        1,
+        Math.max(seg.endFrac, seg.startFrac + 0.0001)
+      );
+      frames.push({ strokeDashoffset: 0, offset: litOffset });
+      if (litOffset < 1) {
+        frames.push({ strokeDashoffset: 0, offset: 1 });
+      }
+      greenAnims.push(
+        path.animate(frames, {
+          duration: RUN_MS,
+          delay: RUN_DELAY,
+          easing: EASING,
+          fill: "both",
+        })
+      );
+    }
+
+    // Drop fading dashed "speed lines" behind the ninja while it runs.
+    const container = containerRef.current;
+    let trailInterval: number | undefined;
+    const trailStart = window.setTimeout(() => {
+      trailInterval = window.setInterval(() => {
+        const node = ninjaRef.current;
+        if (!node || !container) return;
+        const nr = node.getBoundingClientRect();
+        const cr = container.getBoundingClientRect();
+        const x = nr.left - cr.left + nr.width / 2;
+        const y = nr.top - cr.top + nr.height / 2;
+        const id = (trailIdRef.current += 1);
+        setTrails((cur) => [...cur, { id, x, y }]);
+        window.setTimeout(
+          () => setTrails((cur) => cur.filter((p) => p.id !== id)),
+          500
+        );
+      }, 70);
+    }, RUN_DELAY);
+
+    let removeTimer: number | undefined;
+    let impactTimer: number | undefined;
+    let diveAnim: Animation | undefined;
+
+    anim.onfinish = () => {
+      if (trailInterval) window.clearInterval(trailInterval);
+
+      // Persist the green illumination declaratively so it survives the
+      // eventual cancellation of the reveal animations + later re-renders.
+      if (greenIndices.length > 0) setLitConnectors(greenIndices);
+
+      const target = targetRef.current;
+      const arrival = route[route.length - 1];
+      const DIVE_MS = 620;
+
+      if (target) {
+        const targetCenter = target.center;
+        const apex = {
+          x: (arrival.x + targetCenter.x) / 2,
+          y: Math.min(arrival.y, targetCenter.y) - 26, // hop up before plunging
+        };
+
+        // Travel from the path's end into the node centre; the figure's own
+        // tuck/shrink is the CSS `animate-ninja-dive` swapped in via `diving`.
+        diveAnim = el.animate(
+          [
+            { top: `${arrival.y}px`, left: `${arrival.x}px`, offset: 0 },
+            { top: `${apex.y}px`, left: `${apex.x}px`, offset: 0.32 },
+            { top: `${targetCenter.y}px`, left: `${targetCenter.x}px`, offset: 1 },
+          ],
+          {
+            duration: DIVE_MS,
+            easing: "cubic-bezier(0.45, 0, 0.75, 0.2)",
+            fill: "forwards",
+          }
+        );
+        setDiving(true);
+
+        // Landing reaction (coin bounce + ring ripple) timed to arrival.
+        impactTimer = window.setTimeout(() => {
+          setImpactIndex(target.index);
+        }, DIVE_MS - 120);
+      }
+
+      removeTimer = window.setTimeout(() => {
+        setRoute(null);
+        setImpactIndex(null);
+        setDiving(false);
+        setTrails([]);
+      }, DIVE_MS + 220);
+    };
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      anim.cancel();
+      diveAnim?.cancel();
+      // Cancel the reveal animations. After a normal finish litConnectors is
+      // set, so the green overlays persist (mask dropped); if interrupted the
+      // popup branch sets the static target coloring before this teardown.
+      greenAnims.forEach((g) => g.cancel());
+      window.clearTimeout(trailStart);
+      if (trailInterval) window.clearInterval(trailInterval);
+      if (impactTimer) window.clearTimeout(impactTimer);
+      if (removeTimer) window.clearTimeout(removeTimer);
+    };
+  }, [route, open]);
 
   // The currently open lesson (if any), resolved to its node so the popover can
   // measure the node's live position for placement.
@@ -174,13 +611,15 @@ export function LessonPath({ lessons }: LessonPathProps) {
   const openItem = openIndex >= 0 ? lessons[openIndex] : null;
 
   return (
-    <div className="flex flex-col">
+    <div ref={containerRef} className="relative flex flex-col">
       {lessons.map((item, index) => {
         const { lesson } = item;
         const state = nodeState(item);
         const isOpen = openId === lesson.id;
-        // Connector slot `index` joins node index-1 → node index. It's green
-        // when it sits at or before the current lesson, grey otherwise.
+        // Connector slot `index` joins node index-1 → node index. It's within
+        // the green range when it sits at or before the current lesson, grey
+        // beyond. `lit` shows its green dotted overlay in full (resting state);
+        // during a run the overlay is revealed progressively via its mask.
         const connectorGreen = index <= targetNodeIndex;
         const isCurrent = index === targetNodeIndex;
 
@@ -189,8 +628,19 @@ export function LessonPath({ lessons }: LessonPathProps) {
             {index > 0 && (
               <Connector
                 green={connectorGreen}
+                lit={litConnectors.includes(index)}
+                armed={runStarted}
                 fromLean={leanFor(index - 1)}
                 toLean={leanFor(index)}
+                divRef={(el) => {
+                  connectorRefs.current[index] = el;
+                }}
+                revealRef={(el) => {
+                  revealRefs.current[index] = el;
+                }}
+                geomRef={(el) => {
+                  geomRefs.current[index] = el;
+                }}
               />
             )}
 
@@ -211,6 +661,7 @@ export function LessonPath({ lessons }: LessonPathProps) {
                   state={state}
                   isOpen={isOpen}
                   isCurrent={isCurrent}
+                  impact={impactIndex === index}
                   onToggle={() => toggleOpen(lesson.id)}
                   onHover={() => hoverOpen(lesson.id)}
                   onLeave={() => scheduleHoverClose(lesson.id)}
@@ -227,6 +678,42 @@ export function LessonPath({ lessons }: LessonPathProps) {
           </div>
         );
       })}
+
+      {/* Fading dashed "speed lines" dropped behind the running ninja. */}
+      {trails.map((t) => (
+        <span
+          key={t.id}
+          aria-hidden
+          className="ninja-trail-mark pointer-events-none absolute z-30"
+          style={{ top: t.y, left: t.x }}
+        >
+          <svg width="28" height="16" viewBox="0 0 28 16" fill="none">
+            <line x1="16" y1="4" x2="27" y2="4" stroke="#9aa1ab" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3" />
+            <line x1="13" y1="8" x2="26" y2="8" stroke="#9aa1ab" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3" />
+            <line x1="17" y1="12" x2="25" y2="12" stroke="#9aa1ab" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3" />
+          </svg>
+        </span>
+      ))}
+
+      {/* The running ninja figure: an absolutely-positioned overlay the WAAPI
+          controller drives along the measured route, then dives into the node. */}
+      {route && route.length > 0 && (
+        <div
+          ref={ninjaRef}
+          aria-hidden
+          className="pointer-events-none absolute z-40 -translate-x-1/2 -translate-y-1/2"
+          style={{ top: route[0].y, left: route[0].x }}
+        >
+          <span
+            ref={figureRef}
+            className={`block drop-shadow-md ${
+              diving ? "animate-ninja-dive" : "animate-ninja-bob"
+            }`}
+          >
+            <RunningNinja />
+          </span>
+        </div>
+      )}
 
       {/* The popup is a FIXED, portalled overlay positioned from the open node's
           bounding rect with flip/clamp collision handling, so it's always fully
@@ -251,6 +738,8 @@ interface PathNodeProps {
   isOpen: boolean;
   /** True for the user's current lesson node (gets a prominent static highlight). */
   isCurrent?: boolean;
+  /** True briefly as the ninja dives in (coin bounce + ring ripple). */
+  impact?: boolean;
   onToggle: () => void;
   onHover: () => void;
   onLeave: () => void;
@@ -263,6 +752,7 @@ function PathNode({
   state,
   isOpen,
   isCurrent,
+  impact,
   onToggle,
   onHover,
   onLeave,
@@ -326,8 +816,16 @@ function PathNode({
       )}
       <span
         aria-hidden
-        className={`absolute inset-0 rounded-full transition-colors ${backdrop}`}
+        className={`absolute inset-0 rounded-full transition-colors ${backdrop} ${
+          impact ? "animate-node-impact" : ""
+        }`}
       />
+      {impact && (
+        <span
+          aria-hidden
+          className="animate-node-ripple pointer-events-none absolute inset-0 rounded-full ring-4 ring-primary/50"
+        />
+      )}
       <NinjaHead
         belt={beltForIndex(index)}
         state={state}
@@ -340,31 +838,108 @@ function PathNode({
 interface ConnectorProps {
   fromLean: number;
   toLean: number;
-  /** Static green dotted path (traversed/up-to-current) vs grey (beyond). */
+  /** Within the green range (index <= target): gets a green dotted overlay. */
   green?: boolean;
+  /** Show the green dotted overlay in FULL (resting/persisted; mask dropped). */
+  lit?: boolean;
+  /** The run has started: fade the overlay in (opacity 0 -> 1) behind its mask. */
+  armed?: boolean;
+  divRef?: (el: HTMLDivElement | null) => void;
+  /** The mask's reveal path; the controller drives its strokeDashoffset 1 -> 0. */
+  revealRef?: (el: SVGPathElement | null) => void;
+  /** The always-rendered base path; the controller measures geometry off it. */
+  geomRef?: (el: SVGPathElement | null) => void;
 }
 
-function Connector({ fromLean, toLean, green }: ConnectorProps) {
+function Connector({
+  fromLean,
+  toLean,
+  green,
+  lit,
+  armed,
+  divRef,
+  revealRef,
+  geomRef,
+}: ConnectorProps) {
   const midY = 50;
   const d = `M ${fromLean} 0 C ${fromLean} ${midY}, ${toLean} ${midY}, ${toLean} 100`;
+  // Stable, render-safe mask id per connector instance.
+  const maskId = `conn-reveal-${useId().replace(/[:]/g, "")}`;
+
+  // The green dotted overlay is hidden until the run arms it (opacity 0 -> 1),
+  // which also prevents an initial green flash before the masked reveal starts.
+  const overlayOpacity = lit || armed ? 1 : 0;
+
   return (
-    <div className="h-12 w-full" aria-hidden>
+    <div ref={divRef} className="h-12 w-full" aria-hidden>
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         className="h-full w-full"
       >
-        {/* Dotted connector. Static colour: green up to and including the
-            segment leading into the current lesson, grey beyond it. */}
+        {green && (
+          <defs>
+            {/* Mask whose white region grows ALONG the path: the reveal path's
+                strokeDashoffset is driven 1 -> 0 in lock-step with the ninja.
+                The green dotted overlay is painted only where this mask is
+                white; a wide white stroke fully covers the dot thickness so the
+                revealed dots read as fully green. */}
+            <mask
+              id={maskId}
+              maskUnits="userSpaceOnUse"
+              x="-20"
+              y="-20"
+              width="140"
+              height="140"
+            >
+              <path
+                ref={revealRef}
+                d={d}
+                fill="none"
+                stroke="#fff"
+                strokeWidth="14"
+                strokeLinecap="round"
+                pathLength={1}
+                vectorEffect="non-scaling-stroke"
+                style={{ strokeDasharray: 1, strokeDashoffset: 1 }}
+              />
+            </mask>
+          </defs>
+        )}
+
+        {/* Base GREY dotted connector. ALWAYS grey; the green comes from the
+            overlay above so traversed segments can illuminate progressively.
+            This is the always-rendered path the controller measures geometry
+            off (getTotalLength/getPointAtLength). */}
         <path
+          ref={geomRef}
           d={d}
           fill="none"
-          stroke={green ? "var(--color-accent-green)" : "var(--color-border)"}
+          stroke="var(--color-border)"
           strokeWidth="3"
           strokeLinecap="round"
           strokeDasharray="6 7"
           vectorEffect="non-scaling-stroke"
         />
+
+        {/* GREEN dotted overlay - IDENTICAL dot pattern, only the colour
+            differs. Revealed progressively through the mask as the ninja
+            passes; once `lit` the mask is dropped so the whole connector stays
+            green dotted (the resting / fallback coloring). Beyond-target
+            connectors omit this entirely and read plain grey. */}
+        {green && (
+          <path
+            d={d}
+            fill="none"
+            stroke="var(--color-accent-green)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray="6 7"
+            vectorEffect="non-scaling-stroke"
+            style={{ opacity: overlayOpacity }}
+            mask={lit ? undefined : `url(#${maskId})`}
+          />
+        )}
       </svg>
     </div>
   );
