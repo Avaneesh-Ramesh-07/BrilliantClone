@@ -57,7 +57,7 @@ export function selectLessonRun(lesson: Lesson): Lesson {
         step.anchors
       );
       // If this step has a throwback bank, pick one at random and slot it in just
-      // AFTER the first graded question — never as the opening problem and never
+      // AFTER the first graded question, never as the opening problem and never
       // last. This way a throwback only ever follows a real question (the engine
       // additionally gates it on answering that question correctly) and the final
       // problem stays graded so the step's mastery check always runs. If there's

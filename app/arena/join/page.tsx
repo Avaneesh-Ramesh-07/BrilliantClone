@@ -3,7 +3,7 @@ import { JoinByCode } from "@/components/arena/JoinByCode";
 /**
  * Public join-by-code entry point. Unlike /arena (the challenger lobby, which
  * redirects unauthenticated visitors to /login), this page is reachable by
- * anyone — including anon guests — so an opponent can type a room code and be
+ * anyone, including anon guests, so an opponent can type a room code and be
  * routed into the existing /arena/[id] join flow. The static `join` segment
  * takes precedence over the dynamic [session_id] route.
  */

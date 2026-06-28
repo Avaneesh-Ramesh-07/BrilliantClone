@@ -33,9 +33,9 @@ export interface DuelRank {
   tierName: DuelTierName;
   /** Prestige stars earned (only accrue at the top tier). */
   stars: number;
-  /** Wins accumulated within the current 5-win block (0–4). */
+  /** Wins accumulated within the current 5-win block (0-4). */
   winsIntoTier: number;
-  /** Wins remaining to the next tier or next prestige star (1–5). */
+  /** Wins remaining to the next tier or next prestige star (1-5). */
   winsToNext: number;
   /** Whether the player is at the top tier (Shadow Lord). */
   isMaxTier: boolean;

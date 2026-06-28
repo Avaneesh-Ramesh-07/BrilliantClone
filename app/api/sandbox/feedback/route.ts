@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { openai } from "@ai-sdk/openai";
-import { generateText } from "ai";
+import { generateObject } from "ai";
 import type { FeedbackRequest, FeedbackResponse } from "@/types/practice";
-import { SANDBOX_MODEL, buildFeedbackPrompt } from "@/lib/ai/sandbox";
+import {
+  SANDBOX_MODEL,
+  buildFeedbackPrompt,
+  feedbackSchema,
+} from "@/lib/ai/sandbox";
 import { sanitizeFeedback } from "@/lib/practice/sanitizeFeedback";
+import {
+  computeGroundTruth,
+  contradictsGroundTruth,
+  safeGroundedFeedback,
+} from "@/lib/practice/groundTruth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +24,7 @@ const UNAVAILABLE: FeedbackResponse = {
 
 const ERRORED: FeedbackResponse = {
   feedback: null,
-  error: "Couldn't analyze that image — try again.",
+  error: "Couldn't analyze that image. Try again.",
 };
 
 /** Split a base64 data URL into its raw base64 payload + media type. */
@@ -38,13 +47,19 @@ export async function POST(
     return NextResponse.json(UNAVAILABLE);
   }
 
+  // Compute the correct solution DETERMINISTICALLY first, server-side. This is
+  // the ground truth the model is told to compare the photo against, and the
+  // yardstick we use to reject contradicting feedback below.
+  const groundTruth = computeGroundTruth(problem);
+
   try {
     const { base64, mediaType } = parseImage(image, mimeType);
 
-    const { text } = await generateText({
+    const { object } = await generateObject({
       model: openai(SANDBOX_MODEL),
+      schema: feedbackSchema,
       // Image analysis is slower and user-initiated (not the hot path), so a
-      // longer timeout is fine — but still fail fast to a graceful error.
+      // longer timeout is fine, but still fail fast to a graceful error.
       maxRetries: 0,
       abortSignal: AbortSignal.timeout(20000),
       messages: [
@@ -58,18 +73,42 @@ export async function POST(
       ],
     });
 
-    const feedback = sanitizeFeedback(text);
+    const readBack = object.readBack?.trim() ? object.readBack.trim() : null;
+    const studentAnswer = object.studentAnswer?.trim()
+      ? object.studentAnswer.trim()
+      : null;
+
+    // VALIDATION: if the model's stated correct answer disagrees with our
+    // deterministic answer, suppress its (misleading) feedback and fall back to
+    // a safe, corrected message built from the verified solution. Otherwise the
+    // model's feedback is grounded - sanitize and show it.
+    const contradicts = contradictsGroundTruth(groundTruth, object.correctAnswer);
+    const grounded = !contradicts;
+
+    const rawFeedback = contradicts
+      ? safeGroundedFeedback(groundTruth)
+      : object.feedback;
+    const feedback = sanitizeFeedback(rawFeedback);
     if (!feedback) return NextResponse.json(ERRORED);
-    return NextResponse.json({ feedback, error: null });
+
+    return NextResponse.json({
+      feedback,
+      error: null,
+      readBack,
+      studentAnswer,
+      correctAnswer: groundTruth.answer,
+      workedSteps: groundTruth.workedSteps.length > 0 ? groundTruth.workedSteps : null,
+      grounded,
+    });
   } catch (err) {
     // Surface the real cause in the server logs; keep the user-facing message
     // friendly. A 429 means the OpenAI API key is out of quota (e.g. the
-    // account has no remaining credits) — call that out specifically.
-    console.error("[sandbox/feedback] generateText failed:", err);
+    // account has no remaining credits), call that out specifically.
+    console.error("[sandbox/feedback] generateObject failed:", err);
     const status = (err as { statusCode?: number } | null)?.statusCode;
     const error =
       status === 429
-        ? "The AI is over its current quota — try again shortly. If it keeps happening, the OpenAI API key's plan or billing needs attention."
+        ? "The AI is over its current quota. Try again shortly. If it keeps happening, the OpenAI API key's plan or billing needs attention."
         : ERRORED.error;
     return NextResponse.json({ feedback: null, error });
   }

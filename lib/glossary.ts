@@ -4,7 +4,7 @@
  * plain-language sentence. These power the tappable glossary terms rendered by
  * {@link components/lesson/GlossaryTerm} via {@link components/lesson/MathText}.
  *
- * Keep definitions to one sentence and free of jargon — they're a quick
+ * Keep definitions to one sentence and free of jargon, they're a quick
  * confidence boost mid-problem, not a textbook entry.
  */
 export const GLOSSARY: Record<string, string> = {
@@ -14,16 +14,16 @@ export const GLOSSARY: Record<string, string> = {
   "concave down": "A curve that opens downward, like an upside-down U.",
   maximum: "The highest point on a graph.",
   minimum: "The lowest point on a graph.",
-  vertex: "The turning point of a parabola — its lowest or highest point.",
-  slope: "How steep a line is — how much y changes for each step in x.",
+  vertex: "The turning point of a parabola: its lowest or highest point.",
+  slope: "How steep a line is: how much y changes for each step in x.",
   "y-intercept": "Where a line or curve crosses the y-axis (where x = 0).",
   "x-intercept": "Where a line or curve crosses the x-axis (where y = 0).",
-  quadratic: "An equation whose highest power of x is 2 — it graphs as a parabola.",
+  quadratic: "An equation whose highest power of x is 2; it graphs as a parabola.",
   linear: "An equation that graphs as a straight line.",
   variable: "A letter that stands for an unknown number, like x.",
   constant: "A fixed number that doesn't change (the +5 in x + 5).",
   factor: "One of the parts multiplied together to build an expression.",
-  solution: "An x-value that makes the equation true — where the parabola crosses the x-axis. Same thing as a root or a zero.",
+  solution: "An x-value that makes the equation true, where the parabola crosses the x-axis. Same thing as a root or a zero.",
   root: "An x-value where the parabola crosses the x-axis (y = 0). Same thing as a solution or a zero.",
   zero: "An x-value where the graph crosses the x-axis (y = 0). Same thing as a root or a solution.",
 };

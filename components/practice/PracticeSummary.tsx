@@ -16,7 +16,7 @@ interface PracticeSummaryProps {
 }
 
 export function PracticeSummary({ request, onDone }: PracticeSummaryProps) {
-  // The summary is fully deterministic/heuristic now — computed locally with no
+  // The summary is fully deterministic/heuristic now, computed locally with no
   // network call, so it renders synchronously.
   const response = useMemo(() => fallbackSummary(request), [request]);
 

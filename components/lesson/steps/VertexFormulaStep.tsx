@@ -40,7 +40,7 @@ function formatQuadratic(a: number, b: number, c: number): string {
   return s;
 }
 
-/** Shuffle a copy of the array (Fisher–Yates). */
+/** Shuffle a copy of the array (Fisher-Yates). */
 function shuffle<T>(arr: T[]): T[] {
   const out = [...arr];
   for (let i = out.length - 1; i > 0; i--) {
@@ -119,7 +119,7 @@ export function VertexFormulaStep({
         setMessage(null);
       } else {
         setMessage({
-          text: "That's not b. b is the coefficient of x — look at the x term.",
+          text: "That's not b. b is the coefficient of x; look at the x term.",
           error: true,
         });
       }
@@ -130,7 +130,7 @@ export function VertexFormulaStep({
         setMessage(null);
       } else {
         setMessage({
-          text: "That's not a. a is the coefficient of x² — look at the x² term.",
+          text: "That's not a. a is the coefficient of x²; look at the x² term.",
           error: true,
         });
       }
@@ -253,7 +253,7 @@ export function VertexFormulaStep({
           <div className="mt-7">
             <p className="mb-2 text-center text-label text-muted">
               {selected !== null
-                ? "Now tap a slot — or drag a tile into place."
+                ? "Now tap a slot, or drag a tile into place."
                 : "Drag a tile into a slot (or tap a tile, then tap a slot)."}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2">
@@ -285,11 +285,11 @@ export function VertexFormulaStep({
           </div>
         )}
 
-        {/* Step 1 — simplify the formula to get the x-coordinate */}
+        {/* Step 1: simplify the formula to get the x-coordinate */}
         {stage >= 1 && (
           <div className="mt-7">
             <p className="text-center text-label font-semibold text-primary">
-              Step 1 — find x with the formula
+              Step 1: find x with the formula
             </p>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-2 font-math text-equation text-text">
               <span>x =</span>
@@ -316,11 +316,11 @@ export function VertexFormulaStep({
           </div>
         )}
 
-        {/* Step 2 — substitute x back into the original equation to get y */}
+        {/* Step 2: substitute x back into the original equation to get y */}
         {stage >= 4 && (
           <div className="mt-7">
             <p className="text-center text-label font-semibold text-primary">
-              Step 2 — substitute x into the equation
+              Step 2: substitute x into the equation
             </p>
             <p className="mt-1 text-center text-body text-muted">
               Now plug x = {fmtNum(vx)} back into {originalEq} to get y:

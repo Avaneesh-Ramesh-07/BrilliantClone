@@ -11,6 +11,12 @@ interface PickGraphStepProps {
   onSelect: (optionId: string) => void;
   disabled?: boolean;
   showResult?: boolean;
+  /**
+   * When true, the correct graph is highlighted green. Gated by the player so
+   * the answer is only revealed once solved or missed twice in a row. A single
+   * wrong attempt still marks the chosen option but doesn't give the answer away.
+   */
+  revealCorrect?: boolean;
   selectedId?: string | null;
 }
 
@@ -19,6 +25,7 @@ export function PickGraphStep({
   onSelect,
   disabled,
   showResult,
+  revealCorrect,
   selectedId,
 }: PickGraphStepProps) {
   const [localSelected, setLocalSelected] = useState<string | null>(null);
@@ -38,7 +45,7 @@ export function PickGraphStep({
       <div className="mt-4 grid grid-cols-2 gap-3">
         {problem.options.map((option) => {
           const isSelected = active === option.id;
-          const showCorrect = showResult && option.correct;
+          const showCorrect = revealCorrect && option.correct;
           const showWrong = showResult && isSelected && !option.correct;
 
           return (

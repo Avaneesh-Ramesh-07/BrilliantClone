@@ -74,8 +74,8 @@ export function PowerToggleStep({
 
   const caption =
     power === 1
-      ? "Linear (highest power of x is 1) — a straight line."
-      : "Quadratic (highest power of x is 2) — a U-shaped curve called a parabola.";
+      ? "Linear (highest power of x is 1): a straight line."
+      : "Quadratic (highest power of x is 2): a U-shaped curve called a parabola.";
 
   const labelStyle = { fontSize: 9, fill: "var(--color-muted)" } as const;
   const axisLabelStyle = {

@@ -36,18 +36,18 @@ const CELEBRATION_SUBTITLES = [
   "Your skills are growing at an exponential rate! Nice work finishing <lesson name>!",
   "Looks like you've found the value of x-cellence. Congrats on completing <lesson name>!",
   "You and algebra are becoming a perfect function. Great job on <lesson name>!",
-  "That lesson didn't stand a chance—you factored it completely! Congrats!",
+  "That lesson didn't stand a chance. You factored it completely! Congrats!",
   "You've officially crossed the equal sign into expertise. Well done!",
   "Your algebra skills are adding up fast! Congrats on finishing <lesson name>!",
   "You really know how to balance a challenge. Nice work completing <lesson name>!",
   "Looks like you've got all the right variables for success!",
-  "You didn't just solve the problem—you solved the whole lesson!",
+  "You didn't just solve the problem; you solved the whole lesson!",
   "You've reached a positive solution set. Congrats on mastering <lesson name>!",
   "That's one less unknown in the universe. Nice work finding your way through <lesson name>!",
-  "Your knowledge graph is looking pretty linear—in the best possible way!",
+  "Your knowledge graph is looking pretty linear, in the best possible way!",
   "You've got serious alge-braingpower. Congrats on completing <lesson name>!",
   "You've transformed from variable to constant legend!",
-  "Talk about a smooth operation—you handled that lesson like a pro!",
+  "Talk about a smooth operation. You handled that lesson like a pro!",
   "Your progress is greater than (>) expected!",
   "You've successfully isolated the most important variable: learning!",
   "That lesson has been officially eliminated from your system of equations.",
@@ -104,8 +104,7 @@ export default async function CompletePage({ params }: CompletePageProps) {
 
   let progress = await getLessonProgress(supabase, user.id, lesson.id);
 
-  // If the lesson is in a finished state, always show the congrats screen —
-  // even if the learner has since moved back through the lesson.
+  // If the lesson is in a finished state, always show the congrats screen, // even if the learner has since moved back through the lesson.
   if (!isLessonComplete(progress)) {
     if (progress.current_step_index < lesson.totalSteps - 1) {
       redirect(isAiLesson ? `/sandbox/lesson/${id}` : `/lesson/${id}`);
@@ -119,7 +118,7 @@ export default async function CompletePage({ params }: CompletePageProps) {
   const title = pickRandom(CELEBRATION_TITLES);
   const subtitle = pickRandom(CELEBRATION_SUBTITLES);
 
-  // AI lessons stand alone — there's no curriculum "next lesson" for them.
+  // AI lessons stand alone, there's no curriculum "next lesson" for them.
   const nextLessonId = isAiLesson ? null : getNextLessonId(lesson.id);
   const nextLesson = nextLessonId ? getLesson(nextLessonId) : undefined;
   // If the next lesson is already finished, send the learner to its congrats

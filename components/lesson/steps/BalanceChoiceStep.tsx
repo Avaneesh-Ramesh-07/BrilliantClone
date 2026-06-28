@@ -96,10 +96,10 @@ export function BalanceChoiceStep({
       return `Balanced. Doing the same thing to both sides keeps the scale level, and it isolates the variable: ${variable} = ${quotient}.`;
     }
     if (picked === "left") {
-      return `The left now weighs less than the right, so the beam tips down on the right. You changed only one side, so the two sides are no longer equal — that breaks the equation.`;
+      return `The left now weighs less than the right, so the beam tips down on the right. You changed only one side, so the two sides are no longer equal, which breaks the equation.`;
     }
     if (picked === "right") {
-      return `The right now weighs less than the left, so the beam tips down on the left. Changing only one side makes the sides unequal — that breaks the equation.`;
+      return `The right now weighs less than the left, so the beam tips down on the left. Changing only one side makes the sides unequal, which breaks the equation.`;
     }
     return `The scale starts level because ${coefficient}${variable} and ${rightValue} weigh the same. Keep it level: whatever you do, do it to both sides.`;
   })();
@@ -183,11 +183,11 @@ export function BalanceChoiceStep({
           {picked !== null &&
             (balanced ? (
               <span className="rounded-full border border-success/40 bg-success/10 px-3 py-1 text-label font-semibold text-success">
-                ✓ Balanced — both sides still equal
+                ✓ Balanced: both sides still equal
               </span>
             ) : (
               <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-label font-semibold text-amber-700">
-                ✗ Not balanced — the sides are no longer equal
+                ✗ Not balanced: the sides are no longer equal
               </span>
             ))}
         </div>

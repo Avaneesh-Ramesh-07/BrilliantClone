@@ -89,7 +89,7 @@ export function VariableBoxStep({
           <p className="mt-6 text-center text-body text-text">
             The box ({variable}) was hiding{" "}
             <span className="font-semibold text-success">{value}</span> all
-            along — so{" "}
+            along, so{" "}
             <span className="font-equation font-semibold">
               {variable} = {value}
             </span>

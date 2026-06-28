@@ -47,14 +47,14 @@ export interface ProblemFeedback {
  * Marks a question as a "throwback": a low-stakes retrieval-practice question
  * that recalls material from an earlier step or an earlier lesson. Throwbacks
  * are shown as a warm-up at the start of a later step, are NOT counted toward
- * the current step's mastery, and never trigger redemption/regression — getting
+ * the current step's mastery, and never trigger redemption/regression, getting
  * one wrong simply reveals the answer and continues. This implements the
  * learning-science principle that retrieval (recalling half-forgotten material)
  * is where durable learning happens.
  */
 export interface ThrowbackMeta {
   /**
-   * Short label for where this question is recalled from, shown on the badge —
+   * Short label for where this question is recalled from, shown on the badge,
    * e.g. "Step 1 · Balancing" (same lesson) or "Linear Equations" (earlier lesson).
    */
   source: string;
@@ -301,7 +301,7 @@ export interface VariableBoxProblem {
 /**
  * Division demo on a balance beam. The equation `coefficient · variable =
  * rightValue` is shown as a level scale (both pans weigh `rightValue`). The
- * learner chooses one of three moves — divide both sides by `coefficient`
+ * learner chooses one of three moves, divide both sides by `coefficient`
  * (correct), or divide only the left / only the right (wrong). A one-sided
  * division tips the beam (the changed side no longer matches), demonstrating
  * that you must do the same to both sides. Dividing both sides keeps it level
@@ -392,7 +392,7 @@ export interface PlotPointProblem {
   c?: number;
   /**
    * Optional multi-point answer key. When present the learner must click EVERY
-   * listed point (in any order) — used for "pick both roots". Falls back to the
+   * listed point (in any order), used for "pick both roots". Falls back to the
    * single {@link targetX}/{@link targetY} when omitted.
    */
   targets?: { x: number; y: number }[];
@@ -558,7 +558,7 @@ export interface QuadraticFormulaProblem {
  * Graded "click the vertex" problem. The parabola y = a·x² + b·x + c is drawn on
  * a grid and the learner clicks the point that is its minimum (target "min") or
  * maximum (target "max"), or presses a "There is no minimum/maximum" button.
- * A minimum exists only when a>0; a maximum only when a<0 — so concave-down
+ * A minimum exists only when a>0; a maximum only when a<0, so concave-down
  * parabolas correctly have "no minimum" and concave-up have "no maximum".
  * Self-driven via onCorrect/onIncorrect (like drag-to-solve); this IS graded.
  */

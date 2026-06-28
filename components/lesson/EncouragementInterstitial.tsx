@@ -9,7 +9,7 @@ const MESSAGES = [
   "Great job!",
   "Keep it up!",
   "You're on a roll!",
-  "Nice work — keep going!",
+  "Nice work, keep going!",
   "Crushing it!",
   "Way to stick with it!",
 ];

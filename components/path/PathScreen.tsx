@@ -21,7 +21,7 @@ export function PathScreen({ children }: PathScreenProps) {
       {/* Path nodes (lesson progression) */}
       <div className="flex flex-col items-center gap-4">{children}</div>
 
-      {/* Arena call-to-action — below the path nodes, above the bottom nav. */}
+      {/* Arena call-to-action, below the path nodes, above the bottom nav. */}
       <div className="mt-6 px-4">
         <Link
           href="/arena"

@@ -85,7 +85,7 @@ export default async function HomePage() {
       <div className="md:relative md:left-1/2 md:right-1/2 md:-mx-[50vw] md:w-screen">
         <div className="md:mx-auto md:max-w-5xl md:px-8">
           <div className="md:grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-start md:gap-12">
-            {/* LEFT — welcome header + streak (sticky on desktop) */}
+            {/* LEFT, welcome header + streak (sticky on desktop) */}
             <div className="md:sticky md:top-24">
               <header className="mb-8">
                 <p className="text-label text-muted">Welcome back</p>
@@ -108,7 +108,7 @@ export default async function HomePage() {
               </section>
             </div>
 
-            {/* RIGHT — vertical learning path */}
+            {/* RIGHT, vertical learning path */}
             <section>
               <h2 className="mb-1 font-heading text-heading-lg text-text">
                 Your learning path

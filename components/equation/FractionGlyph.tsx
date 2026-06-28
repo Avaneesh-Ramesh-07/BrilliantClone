@@ -1,19 +1,18 @@
 import type { ReactNode } from "react";
+import { Fraction } from "@/components/math/Fraction";
 
 interface FractionGlyphProps {
   numerator: ReactNode;
   denominator: ReactNode;
 }
 
-/** Renders a stacked fraction (numerator over a bar over denominator). */
+/**
+ * Compact stacked fraction for draggable equation tiles. Delegates to the
+ * shared {@link Fraction} so every fraction in the app renders consistently,
+ * using its tight spacing variant to stay inside small tiles.
+ */
 export function FractionGlyph({ numerator, denominator }: FractionGlyphProps) {
-  return (
-    <span className="inline-flex flex-col items-center justify-center leading-none align-middle">
-      <span className="px-1 pb-0.5">{numerator}</span>
-      <span className="h-px w-full bg-current" />
-      <span className="px-1 pt-0.5">{denominator}</span>
-    </span>
-  );
+  return <Fraction tight numerator={numerator} denominator={denominator} />;
 }
 
 const DIVISION_TILE = /^[÷/](\d+(?:\.\d+)?)$/;

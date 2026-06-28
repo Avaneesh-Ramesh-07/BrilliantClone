@@ -1,609 +1,609 @@
 {
-  "id": "lesson-equations",
-  "title": "Solving Equations",
-  "subject": "Algebra",
-  "description": "Learn to find x by moving terms across the equals sign.",
-  "estimatedMinutes": 15,
-  "totalSteps": 5,
-  "masteryRule": {
-    "description": "After all problems in a step are submitted, compute first-attempt correctness. If below masteryThreshold, send the student to fallbackStepId and show fallbackMessage. Step 1 failures restart Step 1.",
-    "nextButtonVisibleOnlyAfterMastery": true
-  },
-  "steps": [
-    {
-      "id": "step-1",
-      "title": "What Does x Mean?",
-      "concept": "Variables as unknowns",
-      "conceptFraming": "x is a mystery number. Your job is to find it. When you see x + 3 = 7, x is just a number we don't know yet.",
-      "masteryThreshold": 1.0,
-      "skipMasteryGate": true,
-      "fallbackStepId": "step-1",
-      "fallbackMessage": "Let's try that again — x is just a number in disguise.",
-      "hints": [
-        "What number makes the equation true?",
-        "The equals sign means both sides must be the same value."
-      ],
-      "completionAction": {
-        "buttonLabel": "Next Step →",
-        "nextStepId": "step-2"
-      },
-      "problems": [
-        {
-          "id": "p1a",
-          "type": "variable-box",
-          "demo": true,
-          "prompt": "What is a variable?",
-          "question": "A variable like x is just a box that stands in for a number we don't know yet. This equation says the box equals 9 — tap the box to reveal what x is.",
-          "variable": "x",
-          "value": 9,
-          "feedback": {
-            "correct": "That's the idea — a variable is a box holding a number. Here the box holds 9, so x = 9."
-          }
-        },
-        {
-          "id": "p1b",
-          "type": "slider-balance",
-          "prompt": "Now balance the scale: x = 9. Slide to set the value of x until both sides match.",
-          "answer": 9,
-          "sliderMin": 0,
-          "sliderMax": 18,
-          "sliderDefault": 5,
-          "leftLabel": "x",
-          "rightLabel": "9",
-          "rightValue": 9,
-          "hint": "The scale only sits level when the left side weighs exactly the same as the right — keep adjusting x until it balances.",
-          "feedback": {
-            "correct": "Balanced! When x = 9, both sides weigh the same — that's what the equation x = 9 means.",
-            "incorrect": "Not level yet — slide x until the left side matches the right side."
-          }
-        }
-      ]
-    },
-    {
-      "id": "step-2",
-      "title": "One-Step Equations: Addition",
-      "concept": "Subtract to isolate x",
-      "conceptFraming": "To find x, you need to get it alone on one side of the equals sign. If something is being added to x, subtract it from both sides.",
-      "masteryThreshold": 0.5,
-      "fallbackStepId": "step-1",
-      "fallbackMessage": "Let's revisit what x means before we start moving terms.",
-      "partialMasteryMessage": "Watch your step — you missed one in the last section.",
-      "hints": ["How can we get x alone on one side?"],
-      "interactive": {
-        "id": "step-2-helper",
-        "type": "eliminate-blocks",
-        "prompt": "Get the variable x by itself on the left side.",
-        "question": "Here's x + 3 = 7 as two stacks of blocks — x + 3 on the left, 7 on the right. What move clears the +3 so x is alone?",
-        "variable": "x",
-        "constant": 3,
-        "rightValue": 7,
-        "feedback": {
-          "correct": "Nice — eliminating +3 from both sides keeps the stacks balanced and isolates x, giving x = 4. The same move solves your question."
-        }
-      },
-      "completionAction": {
-        "buttonLabel": "Next Step →",
-        "nextStepId": "step-3"
-      },
-      "present": 3,
-      "throwbacks": [
-        {
-          "id": "tb-eq-s2-1",
-          "type": "multiple-choice",
-          "throwback": { "source": "Step 1 · What x means" },
-          "prompt": "Throwback: x is just a mystery number that makes an equation true. What is x in x + 0 = 6?",
-          "options": [
-            { "id": "a", "text": "6", "correct": true },
-            { "id": "b", "text": "0", "correct": false },
-            { "id": "c", "text": "12", "correct": false }
-          ],
-          "feedback": {
-            "correct": "Yes — adding 0 changes nothing, so x = 6.",
-            "incorrect": "x = 6, because adding 0 to x leaves it unchanged."
-          }
-        },
-        {
-          "id": "tb-eq-s2-2",
-          "type": "numeric-input",
-          "throwback": { "source": "Step 1 · What x means" },
-          "prompt": "Throwback: x stands for the unknown number that makes the equation true. What value of x makes x + 0 = 4 true?  x = ?",
-          "answer": 4,
-          "feedback": {
-            "correct": "Right — x = 4.",
-            "incorrect": "x = 4, since adding 0 doesn't change the value on the left."
-          }
-        }
-      ],
-      "problems": [
-        {
-          "id": "p2a",
-          "type": "eliminate-blocks",
-          "demo": true,
-          "prompt": "Get the variable x all by itself on the left side.",
-          "question": "Here's x + 3 = 7 as two stacks of blocks: the left stack is x plus 3 extra blocks, the right stack is 7 blocks. How do we clear the +3 to leave x alone?",
-          "variable": "x",
-          "constant": 3,
-          "rightValue": 7,
-          "feedback": {
-            "correct": "Correct! Eliminating +3 from both sides removes 3 blocks from each stack — keeping them balanced — and isolates the variable, leaving x = 4."
-          }
-        },
-        {
-          "id": "p2b",
-          "type": "numeric-input",
-          "prompt": "Now try on your own. Solve: x + 5 = 12. What is x?",
-          "answer": 7,
-          "hint": "x has 5 added to it. What operation undoes adding — done to both sides?",
-          "feedback": {
-            "correct": "Yes — subtracting 5 from both sides gives x = 7. Same move, different numbers.",
-            "incorrect": "Subtract 5 from both sides. If x + 5 = 12, then x = 12 − 5."
-          }
-        },
-        {
-          "id": "p2c",
-          "type": "numeric-input",
-          "prompt": "Solve: x + 8 = 15. What is x?",
-          "answer": 7,
-          "hint": "Something is being added to x. Undo it with the opposite operation on both sides.",
-          "feedback": {
-            "correct": "Right — subtract 8 from both sides, so x = 7.",
-            "incorrect": "Subtract 8 from both sides. If x + 8 = 15, then x = 15 − 8."
-          }
-        },
-        {
-          "id": "p2d",
-          "type": "numeric-input",
-          "prompt": "Solve: x + 2 = 9. What is x?",
-          "answer": 7,
-          "hint": "To isolate x, do the opposite of adding — to both sides of the equation.",
-          "feedback": {
-            "correct": "Yes — subtract 2 from both sides to get x = 7.",
-            "incorrect": "Subtract 2 from both sides. If x + 2 = 9, then x = 9 − 2."
-          }
-        },
-        {
-          "id": "p2e",
-          "type": "numeric-input",
-          "prompt": "Solve: x + 6 = 10. What is x?",
-          "answer": 4,
-          "hint": "Whatever is added to x, subtract it from both sides to keep things balanced.",
-          "feedback": {
-            "correct": "Right — subtract 6 from both sides, so x = 4.",
-            "incorrect": "Subtract 6 from both sides. If x + 6 = 10, then x = 10 − 6."
-          }
-        },
-        {
-          "id": "p2f",
-          "type": "numeric-input",
-          "prompt": "Solve: x + 4 = 11. What is x?",
-          "answer": 7,
-          "hint": "Get x alone by undoing the addition on both sides.",
-          "feedback": {
-            "correct": "Yes — subtract 4 from both sides to get x = 7.",
-            "incorrect": "Subtract 4 from both sides. If x + 4 = 11, then x = 11 − 4."
-          }
-        },
-        {
-          "id": "p2g",
-          "type": "numeric-input",
-          "prompt": "Solve: x + 9 = 13. What is x?",
-          "answer": 4,
-          "hint": "Cancel the number added to x by subtracting it from both sides.",
-          "feedback": {
-            "correct": "Right — subtract 9 from both sides, so x = 4.",
-            "incorrect": "Subtract 9 from both sides. If x + 9 = 13, then x = 13 − 9."
-          }
-        }
-      ]
-    },
-    {
-      "id": "step-3",
-      "title": "One-Step Equations: Multiplication",
-      "concept": "Divide to isolate x",
-      "conceptFraming": "If x is being multiplied by a number, divide both sides by that number to isolate x.",
-      "masteryThreshold": 0.67,
-      "fallbackStepId": "step-2",
-      "fallbackMessage": "Let's revisit subtraction before dividing — the moves are related.",
-      "hints": [
-        "What number is multiplying x?",
-        "Divide both sides by that number to cancel it out."
-      ],
-      "interactive": {
-        "id": "step-3-helper",
-        "type": "pizza-share",
-        "prompt": "Get a single x by itself.",
-        "question": "Picture 2x = 6 as one pizza of 6 slices to be shared fairly by 2 people. Make one straight cut through the center to split it evenly.",
-        "variable": "x",
-        "people": 2,
-        "slices": 6,
-        "feedback": {
-          "correct": "Sharing 6 slices equally between 2 people gives 3 each — that's 2x = 6 → x = 6/2 → x = 3. Divide by whatever multiplies x in your question."
-        }
-      },
-      "completionAction": {
-        "buttonLabel": "Next Step →",
-        "nextStepId": "step-4"
-      },
-      "anchors": 2,
-      "present": 4,
-      "throwbacks": [
-        {
-          "id": "tb-eq-s3-1",
-          "type": "numeric-input",
-          "throwback": { "source": "Step 2 · Addition equations" },
-          "prompt": "Throwback: solve x + 4 = 9.  x = ?",
-          "answer": 5,
-          "feedback": {
-            "correct": "Right — subtract 4 from both sides, so x = 5.",
-            "incorrect": "x = 5, because 9 − 4 = 5."
-          }
-        },
-        {
-          "id": "tb-eq-s3-2",
-          "type": "multiple-choice",
-          "throwback": { "source": "Step 1 · What x means" },
-          "prompt": "Throwback: x is just an unknown number that makes an equation true. What is x in x + 0 = 7?",
-          "options": [
-            { "id": "a", "text": "7", "correct": true },
-            { "id": "b", "text": "0", "correct": false },
-            { "id": "c", "text": "1", "correct": false }
-          ],
-          "feedback": {
-            "correct": "Yes — adding 0 changes nothing, so x = 7.",
-            "incorrect": "x = 7, because adding 0 to x leaves it unchanged."
-          }
-        },
-        {
-          "id": "tb-eq-s3-3",
-          "type": "numeric-input",
-          "throwback": { "source": "Step 2 · Addition equations" },
-          "prompt": "Throwback: solve x + 6 = 10.  x = ?",
-          "answer": 4,
-          "feedback": {
-            "correct": "Right — subtract 6 from both sides, so x = 4.",
-            "incorrect": "x = 4, because 10 − 6 = 4."
-          }
-        }
-      ],
-      "problems": [
-        {
-          "id": "p3a",
-          "type": "pizza-share",
-          "demo": true,
-          "prompt": "Split the pizza fairly to find x.",
-          "question": "2x = 6 is like one pizza of 6 slices to be shared fairly by 2 people. Make one straight cut through the center to split it evenly — watch the equation divide by 2 on both sides.",
-          "variable": "x",
-          "people": 2,
-          "slices": 6,
-          "feedback": {
-            "correct": "Correct! 6 slices split equally between 2 people is 3 each. That's 2x = 6 → x = 6/2 → x = 3."
-          }
-        },
-        {
-          "id": "p3a2",
-          "type": "balance-choice",
-          "demo": true,
-          "prompt": "Keep the scale balanced while you isolate x.",
-          "question": "5x = 35 sits level on a balance — both sides weigh the same. Which move keeps it balanced and gets x by itself?",
-          "variable": "x",
-          "coefficient": 5,
-          "rightValue": 35,
-          "feedback": {
-            "correct": "Exactly — dividing BOTH sides by 5 keeps the scale level and leaves x = 7. Dividing just one side tips the beam because the sides stop being equal."
-          }
-        },
-        {
-          "id": "p3b",
-          "type": "numeric-input",
-          "prompt": "Solve: 3x = 12. What is x?",
-          "answer": 4,
-          "hint": "x is multiplied by 3. What operation undoes multiplication?",
-          "feedback": {
-            "correct": "Exactly. 12 ÷ 3 = 4, so x = 4.",
-            "incorrect": "Divide both sides by 3. What is 12 ÷ 3?"
-          }
-        },
-        {
-          "id": "p3c",
-          "type": "numeric-input",
-          "prompt": "Solve: 4x = 20. What is x?",
-          "answer": 5,
-          "hint": "To undo multiplying by 4, do the opposite to both sides.",
-          "feedback": {
-            "correct": "Right. 20 ÷ 4 = 5, so x = 5.",
-            "incorrect": "Divide both sides by 4. What is 20 ÷ 4?"
-          }
-        },
-        {
-          "id": "p3d",
-          "type": "numeric-input",
-          "prompt": "Solve: 5x = 35. What is x?",
-          "answer": 7,
-          "hint": "Multiplication is undone by division — apply it to both sides.",
-          "feedback": {
-            "correct": "Right. 35 ÷ 5 = 7, so x = 7.",
-            "incorrect": "Divide both sides by 5. What is 35 ÷ 5?"
-          }
-        },
-        {
-          "id": "p3e",
-          "type": "numeric-input",
-          "prompt": "Solve: 6x = 18. What is x?",
-          "answer": 3,
-          "hint": "Whatever number multiplies x, divide both sides by it.",
-          "feedback": {
-            "correct": "Right. 18 ÷ 6 = 3, so x = 3.",
-            "incorrect": "Divide both sides by 6. What is 18 ÷ 6?"
-          }
-        }
-      ]
-    },
-    {
-      "id": "step-4",
-      "title": "Two-Step Equations",
-      "concept": "Undo in reverse order",
-      "conceptFraming": "Some equations need two moves. Always undo addition and subtraction first — then multiplication and division.",
-      "masteryThreshold": 0.67,
-      "fallbackStepId": "step-3",
-      "fallbackMessage": "Let's get division solid before we layer in two steps.",
-      "hints": [
-        "Deal with the number being added or subtracted first.",
-        "After that, divide both sides by the number in front of x."
-      ],
-      "interactive": {
-        "id": "step-4-helper",
-        "type": "two-step-share",
-        "prompt": "Get a single x by itself on the left side.",
-        "question": "Here's 2x + 3 = 11 as blocks. Undo the addition first — eliminate the +3 from both sides.",
-        "variable": "x",
-        "coefficient": 2,
-        "constant": 3,
-        "rightValue": 11,
-        "feedback": {
-          "correct": "Two moves in order: eliminate +3 from both sides to get 2x = 8, then share 8 slices equally between 2 people → x = 4. Same order works on your question."
-        }
-      },
-      "completionAction": {
-        "buttonLabel": "Next Step →",
-        "nextStepId": "step-5"
-      },
-      "present": 3,
-      "throwbacks": [
-        {
-          "id": "tb-eq-s4-1",
-          "type": "numeric-input",
-          "throwback": { "source": "Step 2 · Addition equations" },
-          "prompt": "Throwback: solve x + 7 = 12.  x = ?",
-          "answer": 5,
-          "feedback": {
-            "correct": "Right — subtract 7 from both sides, so x = 5.",
-            "incorrect": "x = 5, because 12 − 7 = 5."
-          }
-        },
-        {
-          "id": "tb-eq-s4-2",
-          "type": "numeric-input",
-          "throwback": { "source": "Step 3 · Multiplication equations" },
-          "prompt": "Throwback: solve 4x = 20.  x = ?",
-          "answer": 5,
-          "feedback": {
-            "correct": "Right — divide both sides by 4, so x = 5.",
-            "incorrect": "x = 5, because 20 ÷ 4 = 5."
-          }
-        },
-        {
-          "id": "tb-eq-s4-3",
-          "type": "multiple-choice",
-          "throwback": { "source": "Step 3 · Multiplication equations" },
-          "prompt": "Throwback: if 3x = 12, what is x?",
-          "options": [
-            { "id": "a", "text": "4", "correct": true },
-            { "id": "b", "text": "9", "correct": false },
-            { "id": "c", "text": "36", "correct": false }
-          ],
-          "feedback": {
-            "correct": "Yes — 12 ÷ 3 = 4, so x = 4.",
-            "incorrect": "x = 4, because 12 ÷ 3 = 4."
-          }
-        }
-      ],
-      "problems": [
-        {
-          "id": "p4a",
-          "type": "two-step-share",
-          "demo": true,
-          "prompt": "Get a single x by itself on the left side.",
-          "question": "Here's 2x + 3 = 11 as blocks: two x-blocks plus 3 on the left, 11 on the right. Undo the addition first — eliminate the +3 from both sides.",
-          "variable": "x",
-          "coefficient": 2,
-          "constant": 3,
-          "rightValue": 11,
-          "feedback": {
-            "correct": "Two moves in the right order: eliminate +3 from both sides to get 2x = 8, then share 8 slices equally between 2 people. That leaves x = 4."
-          }
-        },
-        {
-          "id": "p4b",
-          "type": "numeric-input",
-          "prompt": "Solve: 3x − 2 = 7. What is x?",
-          "answer": 3,
-          "hint": "Two moves. Undo the adding/subtracting first, then the multiplication.",
-          "feedback": {
-            "correct": "Right — add 2 to both sides first (getting 3x = 9), then divide by 3. x = 3.",
-            "incorrect": "Two steps: first add 2 to both sides, then divide by 3."
-          }
-        },
-        {
-          "id": "p4c",
-          "type": "numeric-input",
-          "prompt": "Solve: 2x + 5 = 13. What is x?",
-          "answer": 4,
-          "hint": "Clear the added/subtracted number first, then divide by the coefficient.",
-          "feedback": {
-            "correct": "Good. Subtract 5 first (2x = 8), then divide by 2. x = 4.",
-            "incorrect": "Two steps: subtract 5 from both sides, then divide by 2."
-          }
-        },
-        {
-          "id": "p4d",
-          "type": "numeric-input",
-          "prompt": "Solve: 4x + 1 = 13. What is x?",
-          "answer": 3,
-          "hint": "First get rid of the constant, then deal with the number in front of x.",
-          "feedback": {
-            "correct": "Good. Subtract 1 first (4x = 12), then divide by 4. x = 3.",
-            "incorrect": "Two steps: subtract 1 from both sides, then divide by 4."
-          }
-        },
-        {
-          "id": "p4e",
-          "type": "numeric-input",
-          "prompt": "Solve: 5x − 4 = 16. What is x?",
-          "answer": 4,
-          "hint": "Handle the subtraction first, then the multiplication.",
-          "feedback": {
-            "correct": "Right. Add 4 first (5x = 20), then divide by 5. x = 4.",
-            "incorrect": "Two steps: add 4 to both sides, then divide by 5."
-          }
-        }
-      ]
-    },
-    {
-      "id": "step-5",
-      "title": "Negative Numbers in Equations",
-      "concept": "Working with negatives",
-      "conceptFraming": "Negative numbers follow the same rules. When a negative term crosses the equals sign, it becomes positive — and vice versa.",
-      "masteryThreshold": 0.67,
-      "fallbackStepId": "step-4",
-      "fallbackMessage": "Two-step equations and negatives use the same moves. Let's solidify that first.",
-      "isLastStep": true,
-      "hints": [
-        "When a negative number crosses the =, its sign flips.",
-        "Think of it as: the opposite of −4 is +4."
-      ],
-      "completionAction": {
-        "buttonLabel": "Finish Lesson →",
-        "route": "/lesson/[id]/complete"
-      },
-      "present": 3,
-      "throwbacks": [
-        {
-          "id": "tb-eq-s5-1",
-          "type": "numeric-input",
-          "throwback": { "source": "Step 3 · Multiplication equations" },
-          "prompt": "Throwback: solve 6x = 18.  x = ?",
-          "answer": 3,
-          "feedback": {
-            "correct": "Right — divide both sides by 6, so x = 3.",
-            "incorrect": "x = 3, because 18 ÷ 6 = 3."
-          }
-        },
-        {
-          "id": "tb-eq-s5-2",
-          "type": "numeric-input",
-          "throwback": { "source": "Step 4 · Two-step equations" },
-          "prompt": "Throwback: solve 2x + 5 = 13.  x = ?",
-          "answer": 4,
-          "feedback": {
-            "correct": "Right — subtract 5 (2x = 8), then divide by 2, so x = 4.",
-            "incorrect": "x = 4: subtract 5 to get 2x = 8, then 8 ÷ 2 = 4."
-          }
-        },
-        {
-          "id": "tb-eq-s5-3",
-          "type": "multiple-choice",
-          "throwback": { "source": "Step 4 · Two-step equations" },
-          "prompt": "Throwback: if 3x − 2 = 7, what is x?",
-          "options": [
-            { "id": "a", "text": "3", "correct": true },
-            { "id": "b", "text": "9", "correct": false },
-            { "id": "c", "text": "5", "correct": false }
-          ],
-          "feedback": {
-            "correct": "Yes — add 2 (3x = 9), then divide by 3, so x = 3.",
-            "incorrect": "x = 3: add 2 to get 3x = 9, then 9 ÷ 3 = 3."
-          }
-        }
-      ],
-      "problems": [
-        {
-          "id": "p5a",
-          "type": "drag-to-solve",
-          "demo": true,
-          "prompt": "Drag −4 across the = to isolate x.",
-          "equation": {
-            "left": ["x", "−4"],
-            "right": ["3"]
-          },
-          "targetTile": "−4",
-          "targetSide": "right",
-          "solution": {
-            "left": ["x"],
-            "right": ["3", "+4"]
-          },
-          "answer": 7,
-          "visual": {
-            "type": "grid-plot",
-            "leftLine": { "label": "y = x − 4", "fn": "x - 4" },
-            "rightLine": { "label": "y = 3", "fn": "3" },
-            "solution": 7
-          },
-          "animation": { "greenVerticalLine": true },
-          "feedback": {
-            "correct": "When −4 crosses the equals sign, it becomes +4. Opposites swap. x = 7.",
-            "incorrect_moved_x": "Keep x on the left. Drag the −4 across.",
-            "incorrect_moved_right": "The 3 is already alone on the right. Move the −4 from the left side."
-          }
-        },
-        {
-          "id": "p5b",
-          "type": "multiple-choice",
-          "prompt": "Which equation has the same solution as x − 5 = 2?",
-          "hint": "Solve x − 5 = 2 for x first, then find the option that gives the same x.",
-          "options": [
-            { "id": "a", "text": "x + 3 = 10", "correct": true },
-            { "id": "b", "text": "x + 2 = 8", "correct": false },
-            { "id": "c", "text": "x − 1 = 5", "correct": false }
-          ],
-          "feedback": {
-            "correct": "Yes — both x − 5 = 2 and x + 3 = 10 give x = 7. Same solution, different equation.",
-            "incorrect": "Solve x − 5 = 2 first: x = 7. Now check which option also gives x = 7."
-          }
-        },
-        {
-          "id": "p5c",
-          "type": "numeric-input",
-          "prompt": "Solve: x − 8 = −3. What is x?",
-          "answer": 5,
-          "hint": "x has 8 subtracted from it. Undo it with the opposite operation on both sides.",
-          "feedback": {
-            "correct": "Right — add 8 to both sides. −3 + 8 = 5, so x = 5.",
-            "incorrect": "Add 8 to both sides. What is −3 + 8?"
-          }
-        },
-        {
-          "id": "p5d",
-          "type": "numeric-input",
-          "prompt": "Solve: x − 3 = −7. What is x?",
-          "answer": -4,
-          "hint": "Add to both sides to undo the subtraction — and watch the signs as you combine.",
-          "feedback": {
-            "correct": "Right — add 3 to both sides. −7 + 3 = −4, so x = −4.",
-            "incorrect": "Add 3 to both sides. What is −7 + 3?"
-          }
-        },
-        {
-          "id": "p5e",
-          "type": "numeric-input",
-          "prompt": "Solve: x + 6 = 1. What is x?",
-          "answer": -5,
-          "hint": "Subtract from both sides; don't be surprised if the result is negative.",
-          "feedback": {
-            "correct": "Right — subtract 6 from both sides. 1 − 6 = −5, so x = −5.",
-            "incorrect": "Subtract 6 from both sides. What is 1 − 6?"
-          }
-        }
-      ]
-    }
-  ]
+ "id": "lesson-equations",
+ "title": "Solving Equations",
+ "subject": "Algebra",
+ "description": "Learn to find x by moving terms across the equals sign.",
+ "estimatedMinutes": 15,
+ "totalSteps": 5,
+ "masteryRule": {
+ "description": "After all problems in a step are submitted, compute first-attempt correctness. If below masteryThreshold, send the student to fallbackStepId and show fallbackMessage. Step 1 failures restart Step 1.",
+ "nextButtonVisibleOnlyAfterMastery": true
+ },
+ "steps": [
+ {
+ "id": "step-1",
+ "title": "What Does x Mean?",
+ "concept": "Variables as unknowns",
+ "conceptFraming": "x is a mystery number. Your job is to find it. When you see x + 3 = 7, x is just a number we don't know yet.",
+ "masteryThreshold": 1.0,
+ "skipMasteryGate": true,
+ "fallbackStepId": "step-1",
+ "fallbackMessage": "Let's try that again. x is just a number in disguise.",
+ "hints": [
+ "What number makes the equation true?",
+ "The equals sign means both sides must be the same value."
+ ],
+ "completionAction": {
+ "buttonLabel": "Next Step →",
+ "nextStepId": "step-2"
+ },
+ "problems": [
+ {
+ "id": "p1a",
+ "type": "variable-box",
+ "demo": true,
+ "prompt": "What is a variable?",
+ "question": "A variable like x is just a box that stands in for a number we don't know yet. This equation says the box equals 9. Tap the box to reveal what x is.",
+ "variable": "x",
+ "value": 9,
+ "feedback": {
+ "correct": "That's the idea: a variable is a box holding a number. Here the box holds 9, so x = 9."
+ }
+ },
+ {
+ "id": "p1b",
+ "type": "slider-balance",
+ "prompt": "Now balance the scale: x = 9. Slide to set the value of x until both sides match.",
+ "answer": 9,
+ "sliderMin": 0,
+ "sliderMax": 18,
+ "sliderDefault": 5,
+ "leftLabel": "x",
+ "rightLabel": "9",
+ "rightValue": 9,
+ "hint": "The scale only sits level when the left side weighs exactly the same as the right. Keep adjusting x until it balances.",
+ "feedback": {
+ "correct": "Balanced! When x = 9, both sides weigh the same. That's what the equation x = 9 means.",
+ "incorrect": "Not level yet. Slide x until the left side matches the right side."
+ }
+ }
+ ]
+ },
+ {
+ "id": "step-2",
+ "title": "One-Step Equations: Addition",
+ "concept": "Subtract to isolate x",
+ "conceptFraming": "To find x, you need to get it alone on one side of the equals sign. If something is being added to x, subtract it from both sides.",
+ "masteryThreshold": 0.5,
+ "fallbackStepId": "step-1",
+ "fallbackMessage": "Let's revisit what x means before we start moving terms.",
+ "partialMasteryMessage": "Watch your step. You missed one in the last section.",
+ "hints": ["How can we get x alone on one side?"],
+ "interactive": {
+ "id": "step-2-helper",
+ "type": "eliminate-blocks",
+ "prompt": "Get the variable x by itself on the left side.",
+ "question": "Here's x + 3 = 7 as two stacks of blocks. x + 3 on the left, 7 on the right. What move clears the +3 so x is alone?",
+ "variable": "x",
+ "constant": 3,
+ "rightValue": 7,
+ "feedback": {
+ "correct": "Nice. Eliminating +3 from both sides keeps the stacks balanced and isolates x, giving x = 4. The same move solves your question."
+ }
+ },
+ "completionAction": {
+ "buttonLabel": "Next Step →",
+ "nextStepId": "step-3"
+ },
+ "present": 3,
+ "throwbacks": [
+ {
+ "id": "tb-eq-s2-1",
+ "type": "multiple-choice",
+ "throwback": { "source": "Step 1 · What x means" },
+ "prompt": "Throwback: x is just a mystery number that makes an equation true. What is x in x + 0 = 6?",
+ "options": [
+ { "id": "a", "text": "6", "correct": true },
+ { "id": "b", "text": "0", "correct": false },
+ { "id": "c", "text": "12", "correct": false }
+ ],
+ "feedback": {
+ "correct": "Yes. Adding 0 changes nothing, so x = 6.",
+ "incorrect": "x = 6, because adding 0 to x leaves it unchanged."
+ }
+ },
+ {
+ "id": "tb-eq-s2-2",
+ "type": "numeric-input",
+ "throwback": { "source": "Step 1 · What x means" },
+ "prompt": "Throwback: x stands for the unknown number that makes the equation true. What value of x makes x + 0 = 4 true? x = ?",
+ "answer": 4,
+ "feedback": {
+ "correct": "Right. x = 4.",
+ "incorrect": "x = 4, since adding 0 doesn't change the value on the left."
+ }
+ }
+ ],
+ "problems": [
+ {
+ "id": "p2a",
+ "type": "eliminate-blocks",
+ "demo": true,
+ "prompt": "Get the variable x all by itself on the left side.",
+ "question": "Here's x + 3 = 7 as two stacks of blocks: the left stack is x plus 3 extra blocks, the right stack is 7 blocks. How do we clear the +3 to leave x alone?",
+ "variable": "x",
+ "constant": 3,
+ "rightValue": 7,
+ "feedback": {
+ "correct": "Correct! Eliminating +3 from both sides removes 3 blocks from each stack, keeping them balanced, and isolates the variable, leaving x = 4."
+ }
+ },
+ {
+ "id": "p2b",
+ "type": "numeric-input",
+ "prompt": "Now try on your own. Solve: x + 5 = 12. What is x?",
+ "answer": 7,
+ "hint": "x has 5 added to it. What operation undoes adding, done to both sides?",
+ "feedback": {
+ "correct": "Yes. Subtracting 5 from both sides gives x = 7. Same move, different numbers.",
+ "incorrect": "Subtract 5 from both sides. If x + 5 = 12, then x = 12 − 5."
+ }
+ },
+ {
+ "id": "p2c",
+ "type": "numeric-input",
+ "prompt": "Solve: x + 8 = 15. What is x?",
+ "answer": 7,
+ "hint": "Something is being added to x. Undo it with the opposite operation on both sides.",
+ "feedback": {
+ "correct": "Right. Subtract 8 from both sides, so x = 7.",
+ "incorrect": "Subtract 8 from both sides. If x + 8 = 15, then x = 15 − 8."
+ }
+ },
+ {
+ "id": "p2d",
+ "type": "numeric-input",
+ "prompt": "Solve: x + 2 = 9. What is x?",
+ "answer": 7,
+ "hint": "To isolate x, do the opposite of adding, to both sides of the equation.",
+ "feedback": {
+ "correct": "Yes. Subtract 2 from both sides to get x = 7.",
+ "incorrect": "Subtract 2 from both sides. If x + 2 = 9, then x = 9 − 2."
+ }
+ },
+ {
+ "id": "p2e",
+ "type": "numeric-input",
+ "prompt": "Solve: x + 6 = 10. What is x?",
+ "answer": 4,
+ "hint": "Whatever is added to x, subtract it from both sides to keep things balanced.",
+ "feedback": {
+ "correct": "Right. Subtract 6 from both sides, so x = 4.",
+ "incorrect": "Subtract 6 from both sides. If x + 6 = 10, then x = 10 − 6."
+ }
+ },
+ {
+ "id": "p2f",
+ "type": "numeric-input",
+ "prompt": "Solve: x + 4 = 11. What is x?",
+ "answer": 7,
+ "hint": "Get x alone by undoing the addition on both sides.",
+ "feedback": {
+ "correct": "Yes. Subtract 4 from both sides to get x = 7.",
+ "incorrect": "Subtract 4 from both sides. If x + 4 = 11, then x = 11 − 4."
+ }
+ },
+ {
+ "id": "p2g",
+ "type": "numeric-input",
+ "prompt": "Solve: x + 9 = 13. What is x?",
+ "answer": 4,
+ "hint": "Cancel the number added to x by subtracting it from both sides.",
+ "feedback": {
+ "correct": "Right. Subtract 9 from both sides, so x = 4.",
+ "incorrect": "Subtract 9 from both sides. If x + 9 = 13, then x = 13 − 9."
+ }
+ }
+ ]
+ },
+ {
+ "id": "step-3",
+ "title": "One-Step Equations: Multiplication",
+ "concept": "Divide to isolate x",
+ "conceptFraming": "If x is being multiplied by a number, divide both sides by that number to isolate x.",
+ "masteryThreshold": 0.67,
+ "fallbackStepId": "step-2",
+ "fallbackMessage": "Let's revisit subtraction before dividing. The moves are related.",
+ "hints": [
+ "What number is multiplying x?",
+ "Divide both sides by that number to cancel it out."
+ ],
+ "interactive": {
+ "id": "step-3-helper",
+ "type": "pizza-share",
+ "prompt": "Get a single x by itself.",
+ "question": "Picture 2x = 6 as one pizza of 6 slices to be shared fairly by 2 people. Make one straight cut through the center to split it evenly.",
+ "variable": "x",
+ "people": 2,
+ "slices": 6,
+ "feedback": {
+ "correct": "Sharing 6 slices equally between 2 people gives 3 each. That's 2x = 6 → x = 6/2 → x = 3. Divide by whatever multiplies x in your question."
+ }
+ },
+ "completionAction": {
+ "buttonLabel": "Next Step →",
+ "nextStepId": "step-4"
+ },
+ "anchors": 2,
+ "present": 4,
+ "throwbacks": [
+ {
+ "id": "tb-eq-s3-1",
+ "type": "numeric-input",
+ "throwback": { "source": "Step 2 · Addition equations" },
+ "prompt": "Throwback: solve x + 4 = 9. x = ?",
+ "answer": 5,
+ "feedback": {
+ "correct": "Right. Subtract 4 from both sides, so x = 5.",
+ "incorrect": "x = 5, because 9 − 4 = 5."
+ }
+ },
+ {
+ "id": "tb-eq-s3-2",
+ "type": "multiple-choice",
+ "throwback": { "source": "Step 1 · What x means" },
+ "prompt": "Throwback: x is just an unknown number that makes an equation true. What is x in x + 0 = 7?",
+ "options": [
+ { "id": "a", "text": "7", "correct": true },
+ { "id": "b", "text": "0", "correct": false },
+ { "id": "c", "text": "1", "correct": false }
+ ],
+ "feedback": {
+ "correct": "Yes. Adding 0 changes nothing, so x = 7.",
+ "incorrect": "x = 7, because adding 0 to x leaves it unchanged."
+ }
+ },
+ {
+ "id": "tb-eq-s3-3",
+ "type": "numeric-input",
+ "throwback": { "source": "Step 2 · Addition equations" },
+ "prompt": "Throwback: solve x + 6 = 10. x = ?",
+ "answer": 4,
+ "feedback": {
+ "correct": "Right. Subtract 6 from both sides, so x = 4.",
+ "incorrect": "x = 4, because 10 − 6 = 4."
+ }
+ }
+ ],
+ "problems": [
+ {
+ "id": "p3a",
+ "type": "pizza-share",
+ "demo": true,
+ "prompt": "Split the pizza fairly to find x.",
+ "question": "2x = 6 is like one pizza of 6 slices to be shared fairly by 2 people. Make one straight cut through the center to split it evenly. Watch the equation divide by 2 on both sides.",
+ "variable": "x",
+ "people": 2,
+ "slices": 6,
+ "feedback": {
+ "correct": "Correct! 6 slices split equally between 2 people is 3 each. That's 2x = 6 → x = 6/2 → x = 3."
+ }
+ },
+ {
+ "id": "p3a2",
+ "type": "balance-choice",
+ "demo": true,
+ "prompt": "Keep the scale balanced while you isolate x.",
+ "question": "5x = 35 sits level on a balance. Both sides weigh the same. Which move keeps it balanced and gets x by itself?",
+ "variable": "x",
+ "coefficient": 5,
+ "rightValue": 35,
+ "feedback": {
+ "correct": "Exactly. Dividing BOTH sides by 5 keeps the scale level and leaves x = 7. Dividing just one side tips the beam because the sides stop being equal."
+ }
+ },
+ {
+ "id": "p3b",
+ "type": "numeric-input",
+ "prompt": "Solve: 3x = 12. What is x?",
+ "answer": 4,
+ "hint": "x is multiplied by 3. What operation undoes multiplication?",
+ "feedback": {
+ "correct": "Exactly. 12 ÷ 3 = 4, so x = 4.",
+ "incorrect": "Divide both sides by 3. What is 12 ÷ 3?"
+ }
+ },
+ {
+ "id": "p3c",
+ "type": "numeric-input",
+ "prompt": "Solve: 4x = 20. What is x?",
+ "answer": 5,
+ "hint": "To undo multiplying by 4, do the opposite to both sides.",
+ "feedback": {
+ "correct": "Right. 20 ÷ 4 = 5, so x = 5.",
+ "incorrect": "Divide both sides by 4. What is 20 ÷ 4?"
+ }
+ },
+ {
+ "id": "p3d",
+ "type": "numeric-input",
+ "prompt": "Solve: 5x = 35. What is x?",
+ "answer": 7,
+ "hint": "Multiplication is undone by division. Apply it to both sides.",
+ "feedback": {
+ "correct": "Right. 35 ÷ 5 = 7, so x = 7.",
+ "incorrect": "Divide both sides by 5. What is 35 ÷ 5?"
+ }
+ },
+ {
+ "id": "p3e",
+ "type": "numeric-input",
+ "prompt": "Solve: 6x = 18. What is x?",
+ "answer": 3,
+ "hint": "Whatever number multiplies x, divide both sides by it.",
+ "feedback": {
+ "correct": "Right. 18 ÷ 6 = 3, so x = 3.",
+ "incorrect": "Divide both sides by 6. What is 18 ÷ 6?"
+ }
+ }
+ ]
+ },
+ {
+ "id": "step-4",
+ "title": "Two-Step Equations",
+ "concept": "Undo in reverse order",
+ "conceptFraming": "Some equations need two moves. Always undo addition and subtraction first, then multiplication and division.",
+ "masteryThreshold": 0.67,
+ "fallbackStepId": "step-3",
+ "fallbackMessage": "Let's get division solid before we layer in two steps.",
+ "hints": [
+ "Deal with the number being added or subtracted first.",
+ "After that, divide both sides by the number in front of x."
+ ],
+ "interactive": {
+ "id": "step-4-helper",
+ "type": "two-step-share",
+ "prompt": "Get a single x by itself on the left side.",
+ "question": "Here's 2x + 3 = 11 as blocks. Undo the addition first. Eliminate the +3 from both sides.",
+ "variable": "x",
+ "coefficient": 2,
+ "constant": 3,
+ "rightValue": 11,
+ "feedback": {
+ "correct": "Two moves in order: eliminate +3 from both sides to get 2x = 8, then share 8 slices equally between 2 people → x = 4. Same order works on your question."
+ }
+ },
+ "completionAction": {
+ "buttonLabel": "Next Step →",
+ "nextStepId": "step-5"
+ },
+ "present": 3,
+ "throwbacks": [
+ {
+ "id": "tb-eq-s4-1",
+ "type": "numeric-input",
+ "throwback": { "source": "Step 2 · Addition equations" },
+ "prompt": "Throwback: solve x + 7 = 12. x = ?",
+ "answer": 5,
+ "feedback": {
+ "correct": "Right. Subtract 7 from both sides, so x = 5.",
+ "incorrect": "x = 5, because 12 − 7 = 5."
+ }
+ },
+ {
+ "id": "tb-eq-s4-2",
+ "type": "numeric-input",
+ "throwback": { "source": "Step 3 · Multiplication equations" },
+ "prompt": "Throwback: solve 4x = 20. x = ?",
+ "answer": 5,
+ "feedback": {
+ "correct": "Right. Divide both sides by 4, so x = 5.",
+ "incorrect": "x = 5, because 20 ÷ 4 = 5."
+ }
+ },
+ {
+ "id": "tb-eq-s4-3",
+ "type": "multiple-choice",
+ "throwback": { "source": "Step 3 · Multiplication equations" },
+ "prompt": "Throwback: if 3x = 12, what is x?",
+ "options": [
+ { "id": "a", "text": "4", "correct": true },
+ { "id": "b", "text": "9", "correct": false },
+ { "id": "c", "text": "36", "correct": false }
+ ],
+ "feedback": {
+ "correct": "Yes. 12 ÷ 3 = 4, so x = 4.",
+ "incorrect": "x = 4, because 12 ÷ 3 = 4."
+ }
+ }
+ ],
+ "problems": [
+ {
+ "id": "p4a",
+ "type": "two-step-share",
+ "demo": true,
+ "prompt": "Get a single x by itself on the left side.",
+ "question": "Here's 2x + 3 = 11 as blocks: two x-blocks plus 3 on the left, 11 on the right. Undo the addition first. Eliminate the +3 from both sides.",
+ "variable": "x",
+ "coefficient": 2,
+ "constant": 3,
+ "rightValue": 11,
+ "feedback": {
+ "correct": "Two moves in the right order: eliminate +3 from both sides to get 2x = 8, then share 8 slices equally between 2 people. That leaves x = 4."
+ }
+ },
+ {
+ "id": "p4b",
+ "type": "numeric-input",
+ "prompt": "Solve: 3x − 2 = 7. What is x?",
+ "answer": 3,
+ "hint": "Two moves. Undo the adding/subtracting first, then the multiplication.",
+ "feedback": {
+ "correct": "Right. Add 2 to both sides first (getting 3x = 9), then divide by 3. x = 3.",
+ "incorrect": "Two steps: first add 2 to both sides, then divide by 3."
+ }
+ },
+ {
+ "id": "p4c",
+ "type": "numeric-input",
+ "prompt": "Solve: 2x + 5 = 13. What is x?",
+ "answer": 4,
+ "hint": "Clear the added/subtracted number first, then divide by the coefficient.",
+ "feedback": {
+ "correct": "Good. Subtract 5 first (2x = 8), then divide by 2. x = 4.",
+ "incorrect": "Two steps: subtract 5 from both sides, then divide by 2."
+ }
+ },
+ {
+ "id": "p4d",
+ "type": "numeric-input",
+ "prompt": "Solve: 4x + 1 = 13. What is x?",
+ "answer": 3,
+ "hint": "First get rid of the constant, then deal with the number in front of x.",
+ "feedback": {
+ "correct": "Good. Subtract 1 first (4x = 12), then divide by 4. x = 3.",
+ "incorrect": "Two steps: subtract 1 from both sides, then divide by 4."
+ }
+ },
+ {
+ "id": "p4e",
+ "type": "numeric-input",
+ "prompt": "Solve: 5x − 4 = 16. What is x?",
+ "answer": 4,
+ "hint": "Handle the subtraction first, then the multiplication.",
+ "feedback": {
+ "correct": "Right. Add 4 first (5x = 20), then divide by 5. x = 4.",
+ "incorrect": "Two steps: add 4 to both sides, then divide by 5."
+ }
+ }
+ ]
+ },
+ {
+ "id": "step-5",
+ "title": "Negative Numbers in Equations",
+ "concept": "Working with negatives",
+ "conceptFraming": "Negative numbers follow the same rules. When a negative term crosses the equals sign, it becomes positive, and vice versa.",
+ "masteryThreshold": 0.67,
+ "fallbackStepId": "step-4",
+ "fallbackMessage": "Two-step equations and negatives use the same moves. Let's solidify that first.",
+ "isLastStep": true,
+ "hints": [
+ "When a negative number crosses the =, its sign flips.",
+ "Think of it as: the opposite of −4 is +4."
+ ],
+ "completionAction": {
+ "buttonLabel": "Finish Lesson →",
+ "route": "/lesson/[id]/complete"
+ },
+ "present": 3,
+ "throwbacks": [
+ {
+ "id": "tb-eq-s5-1",
+ "type": "numeric-input",
+ "throwback": { "source": "Step 3 · Multiplication equations" },
+ "prompt": "Throwback: solve 6x = 18. x = ?",
+ "answer": 3,
+ "feedback": {
+ "correct": "Right. Divide both sides by 6, so x = 3.",
+ "incorrect": "x = 3, because 18 ÷ 6 = 3."
+ }
+ },
+ {
+ "id": "tb-eq-s5-2",
+ "type": "numeric-input",
+ "throwback": { "source": "Step 4 · Two-step equations" },
+ "prompt": "Throwback: solve 2x + 5 = 13. x = ?",
+ "answer": 4,
+ "feedback": {
+ "correct": "Right. Subtract 5 (2x = 8), then divide by 2, so x = 4.",
+ "incorrect": "x = 4: subtract 5 to get 2x = 8, then 8 ÷ 2 = 4."
+ }
+ },
+ {
+ "id": "tb-eq-s5-3",
+ "type": "multiple-choice",
+ "throwback": { "source": "Step 4 · Two-step equations" },
+ "prompt": "Throwback: if 3x − 2 = 7, what is x?",
+ "options": [
+ { "id": "a", "text": "3", "correct": true },
+ { "id": "b", "text": "9", "correct": false },
+ { "id": "c", "text": "5", "correct": false }
+ ],
+ "feedback": {
+ "correct": "Yes. Add 2 (3x = 9), then divide by 3, so x = 3.",
+ "incorrect": "x = 3: add 2 to get 3x = 9, then 9 ÷ 3 = 3."
+ }
+ }
+ ],
+ "problems": [
+ {
+ "id": "p5a",
+ "type": "drag-to-solve",
+ "demo": true,
+ "prompt": "Drag −4 across the = to isolate x.",
+ "equation": {
+ "left": ["x", "−4"],
+ "right": ["3"]
+ },
+ "targetTile": "−4",
+ "targetSide": "right",
+ "solution": {
+ "left": ["x"],
+ "right": ["3", "+4"]
+ },
+ "answer": 7,
+ "visual": {
+ "type": "grid-plot",
+ "leftLine": { "label": "y = x − 4", "fn": "x - 4" },
+ "rightLine": { "label": "y = 3", "fn": "3" },
+ "solution": 7
+ },
+ "animation": { "greenVerticalLine": true },
+ "feedback": {
+ "correct": "When −4 crosses the equals sign, it becomes +4. Opposites swap. x = 7.",
+ "incorrect_moved_x": "Keep x on the left. Drag the −4 across.",
+ "incorrect_moved_right": "The 3 is already alone on the right. Move the −4 from the left side."
+ }
+ },
+ {
+ "id": "p5b",
+ "type": "multiple-choice",
+ "prompt": "Which equation has the same solution as x − 5 = 2?",
+ "hint": "Solve x − 5 = 2 for x first, then find the option that gives the same x.",
+ "options": [
+ { "id": "a", "text": "x + 3 = 10", "correct": true },
+ { "id": "b", "text": "x + 2 = 8", "correct": false },
+ { "id": "c", "text": "x − 1 = 5", "correct": false }
+ ],
+ "feedback": {
+ "correct": "Yes. Both x − 5 = 2 and x + 3 = 10 give x = 7. Same solution, different equation.",
+ "incorrect": "Solve x − 5 = 2 first: x = 7. Now check which option also gives x = 7."
+ }
+ },
+ {
+ "id": "p5c",
+ "type": "numeric-input",
+ "prompt": "Solve: x − 8 = −3. What is x?",
+ "answer": 5,
+ "hint": "x has 8 subtracted from it. Undo it with the opposite operation on both sides.",
+ "feedback": {
+ "correct": "Right. Add 8 to both sides. −3 + 8 = 5, so x = 5.",
+ "incorrect": "Add 8 to both sides. What is −3 + 8?"
+ }
+ },
+ {
+ "id": "p5d",
+ "type": "numeric-input",
+ "prompt": "Solve: x − 3 = −7. What is x?",
+ "answer": -4,
+ "hint": "Add to both sides to undo the subtraction, and watch the signs as you combine.",
+ "feedback": {
+ "correct": "Right. Add 3 to both sides. −7 + 3 = −4, so x = −4.",
+ "incorrect": "Add 3 to both sides. What is −7 + 3?"
+ }
+ },
+ {
+ "id": "p5e",
+ "type": "numeric-input",
+ "prompt": "Solve: x + 6 = 1. What is x?",
+ "answer": -5,
+ "hint": "Subtract from both sides; don't be surprised if the result is negative.",
+ "feedback": {
+ "correct": "Right. Subtract 6 from both sides. 1 − 6 = −5, so x = −5.",
+ "incorrect": "Subtract 6 from both sides. What is 1 − 6?"
+ }
+ }
+ ]
+ }
+ ]
 }

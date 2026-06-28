@@ -41,7 +41,7 @@ export function HelperInteractive({ problem, onDismiss }: HelperInteractiveProps
         Let&apos;s build the idea
       </div>
       <p className="mb-4 text-body text-muted">
-        No worries — work through this quick interactive, then give the question
+        No worries. Work through this quick interactive, then give the question
         another try.
       </p>
 
@@ -70,7 +70,7 @@ export function HelperInteractive({ problem, onDismiss }: HelperInteractiveProps
       {done && (
         <div className="mt-5">
           <Button type="button" fullWidth onClick={onDismiss}>
-            Got it — back to the question
+            Got it, back to the question
           </Button>
         </div>
       )}

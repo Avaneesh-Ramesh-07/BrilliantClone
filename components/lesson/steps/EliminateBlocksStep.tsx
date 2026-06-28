@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Fraction as StackedFraction } from "@/components/math/Fraction";
 import type { EliminateBlocksProblem } from "@/types/lesson";
 
 interface EliminateBlocksStepProps {
@@ -24,15 +25,9 @@ function VariableBlock({ label }: { label: string }) {
   );
 }
 
-/** A small stacked fraction (numerator over a thin rule over denominator). */
+/** A small stacked fraction; delegates to the shared {@link StackedFraction}. */
 function Fraction({ num, den }: { num: number; den: number }) {
-  return (
-    <span className="mx-0.5 inline-flex flex-col items-center align-middle leading-none">
-      <span>{num}</span>
-      <span className="my-0.5 h-px w-full bg-current" />
-      <span>{den}</span>
-    </span>
-  );
+  return <StackedFraction tight className="mx-0.5" numerator={num} denominator={den} />;
 }
 
 export function EliminateBlocksStep({
@@ -227,9 +222,10 @@ export function EliminateBlocksStep({
             </span>
           </div>
           <p className="mt-3 text-body text-error">
-            Dividing first turns the +{constant} into a fraction ({constant}/
-            {coefficient}) — now you&apos;re stuck doing fraction arithmetic.
-            Undo the +{constant} FIRST, then divide.
+            Dividing first turns the +{constant} into a fraction (
+            <Fraction num={constant} den={coefficient} />
+            ), so now you&apos;re stuck doing fraction arithmetic. Undo the +
+            {constant} FIRST, then divide.
           </p>
           <div className="mt-3">
             <Button type="button" variant="secondary" onClick={handleTryAgain}>
@@ -242,7 +238,7 @@ export function EliminateBlocksStep({
       {phase === "wrong" && distractorKind === "add" && (
         <div className="mt-4 rounded-lg border border-error/40 bg-error/5 px-4 py-3">
           <p className="text-body text-error">
-            Adding {constant} to both sides just makes both sides bigger — it
+            Adding {constant} to both sides just makes both sides bigger; it
             doesn&apos;t get {variable} alone. Eliminate the +{constant} instead.
           </p>
           <div className="mt-3">

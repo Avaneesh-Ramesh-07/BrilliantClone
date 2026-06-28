@@ -1,9 +1,10 @@
 import { z } from "zod";
+import type { Lesson } from "@/types/lesson";
 
 /**
- * Strict structured-output schema for an AI-generated practice test. Mirrors the
- * rules in types/ai-lesson.ts: uses `z.union` (NOT `z.discriminatedUnion`, whose
- * `oneOf` keyword OpenAI rejects) and NEVER `.optional()` — every field is
+ * Strict structured-output schema for an AI-generated practice test. Uses
+ * `z.union` (NOT `z.discriminatedUnion`, whose `oneOf` keyword OpenAI rejects
+ * in strict structured outputs) and NEVER `.optional()`, every field is
  * required (use `.nullable()` if a field must be absent), since strict mode
  * requires every property to appear in `required`.
  */
@@ -62,3 +63,62 @@ export const practiceTestSpecSchema = z.object({
 });
 
 export type PracticeTestSpec = z.infer<typeof practiceTestSpecSchema>;
+
+// --- Verified problems (post deterministic verification) ------------------
+
+/**
+ * Outcome of the deterministic answer-key verification for one problem:
+ * - "verified":     the key was confirmed by a machine computation (math.js),
+ *                   so the UI can show a "Verified" badge.
+ * - "unverifiable": the key could not be deterministically confirmed (e.g. the
+ *                   `answerExpression` didn't evaluate, or no single MC option
+ *                   matched it), but the problem is otherwise self-consistent.
+ *                   It is still playable; it just doesn't earn the badge.
+ *
+ * Problems that fail the self-consistency check (e.g. ask for a symbol absent
+ * from the equation) are "inconsistent" and DROPPED before reaching the UI, so
+ * that status never appears on a {@link VerifiedPracticeProblem}.
+ */
+export type VerificationStatus = "verified" | "unverifiable";
+
+interface VerifiedProblemBase {
+  /** Stable id used by the runner for attempt tracking. */
+  id: string;
+  conceptLabel: string;
+  prompt: string;
+  hint: string;
+  /** Full worked solution, revealed on the second consecutive miss. */
+  explanation: string;
+  correctFeedback: string;
+  incorrectFeedback: string;
+  status: VerificationStatus;
+  /** The fully-numeric expression used to check the key (shown as worked steps). */
+  answerExpression: string;
+  /** The math.js-computed value of `answerExpression`, or null if it didn't evaluate. */
+  computedAnswer: number | null;
+}
+
+export interface VerifiedNumericProblem extends VerifiedProblemBase {
+  kind: "numeric";
+  /** Authoritative answer (overridden by `computedAnswer` when verified). */
+  answer: number;
+}
+
+export interface VerifiedMcProblem extends VerifiedProblemBase {
+  kind: "mc";
+  options: string[];
+  correctIndex: number;
+}
+
+export type VerifiedPracticeProblem =
+  | VerifiedNumericProblem
+  | VerifiedMcProblem;
+
+/**
+ * A practice test stored as a {@link Lesson} (so completion / eligibility keep
+ * working) but carrying the verified problem bank the dedicated practice-test
+ * runner plays. The extra field rides along in the `lesson_json` JSONB column.
+ */
+export interface PracticeTestLesson extends Lesson {
+  practiceProblems: VerifiedPracticeProblem[];
+}

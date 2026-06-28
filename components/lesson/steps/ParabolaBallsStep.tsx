@@ -18,7 +18,7 @@ interface Ball {
   key: number;
   x: number;
   y: number;
-  /** Rendered fill colour — success once the ball has reached its goal. */
+  /** Rendered fill colour: success once the ball has reached its goal. */
   success: boolean;
   opacity: number;
 }
@@ -397,7 +397,7 @@ export function ParabolaBallsStep({
             y
           </text>
 
-          {/* Bold x-axis "floor" (y = 0) with subtle ground shading — ONLY for
+          {/* Bold x-axis "floor" (y = 0) with subtle ground shading, ONLY for
               the solutions demo, where balls come to rest ON this line at the
               crossings. The min/max demos use the plain grid axis instead. */}
           {mode === "settle-roots" && (

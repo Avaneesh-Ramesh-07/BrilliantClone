@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 /**
  * Resolves a post-signup redirect target from the `next` query param. Mirrors
  * the login page: only a same-origin RELATIVE path (e.g. "/arena/123") is
- * allowed — anything absolute ("https://…"), protocol-relative ("//evil.com"),
+ * allowed, anything absolute ("https://…"), protocol-relative ("//evil.com"),
  * or malformed falls back to "/home". Prevents open-redirect abuse while letting
  * an invited arena guest return to their challenge after creating an account.
  */
@@ -54,8 +54,7 @@ export default function SignupPage() {
     // creating an account). Read it client-side to avoid a useSearchParams
     // Suspense boundary; defaults to /home.
     //
-    // NOTE: this assumes signUp returns an active session (current behavior —
-    // the app navigates straight to /home). If email confirmation is later
+    // NOTE: this assumes signUp returns an active session (current behavior, // the app navigates straight to /home). If email confirmation is later
     // enabled in Supabase, there's no session yet, so middleware would bounce a
     // protected route to /login; the `next` target is still passed but the user
     // would need to confirm + log in first (login already honors `next`).

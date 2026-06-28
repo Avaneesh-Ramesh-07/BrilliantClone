@@ -2,7 +2,7 @@
  * Types for the endless Practice / Sandbox mode. These questions are generated
  * procedurally (see lib/practice/generators.ts) and are intentionally a
  * DIFFERENT format than the lesson questions: spot-the-mistake, order-the-steps,
- * and odd-one-out. Nothing here is persisted — the sandbox is session-only.
+ * and odd-one-out. Nothing here is persisted, the sandbox is session-only.
  */
 
 export type PracticeTopic = "equations" | "graphing" | "quadratics";
@@ -200,7 +200,7 @@ export interface TopicRecommendation {
   /** 0..100; weaker/again-and-again-struggling topics score higher. */
   urgency: number;
   trend: TopicTrend;
-  /** 1–2 sentence, nuance-aware recommendation. */
+  /** 1-2 sentence, nuance-aware recommendation. */
   recommendation: string;
 }
 
@@ -249,4 +249,25 @@ export interface FeedbackResponse {
   feedback: string | null;
   /** A user-facing error message when feedback is null, else null. */
   error: string | null;
+  /**
+   * "Here's what we read from your photo" - the steps/answer the model
+   * interpreted from the student's handwriting, surfaced so the learner can
+   * verify the AI read their work correctly. Null when unavailable.
+   */
+  readBack?: string | null;
+  /** The student's final answer as interpreted from the photo (or "unclear"). */
+  studentAnswer?: string | null;
+  /**
+   * The deterministic, server-computed correct answer used as ground truth
+   * (e.g. "x = 4"). Null when not derivable for the problem type.
+   */
+  correctAnswer?: string | null;
+  /** Worked steps for the correct solution, when derivable. */
+  workedSteps?: string[] | null;
+  /**
+   * False when the model's feedback was flagged/replaced because it contradicted
+   * the deterministic answer (the shown feedback is then a safe, corrected one).
+   * True when the model's feedback agreed with the known answer.
+   */
+  grounded?: boolean;
 }

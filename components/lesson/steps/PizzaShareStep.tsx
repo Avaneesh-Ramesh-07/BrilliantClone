@@ -167,7 +167,7 @@ export function PizzaShareStep({
           <span className="font-semibold">
             {divisionsNeeded} straight {divisionsNeeded === 1 ? "cut" : "cuts"}
           </span>{" "}
-          through the center — click a notch on the crust or an edge between
+          through the center. Click a notch on the crust or an edge between
           slices to slice straight across.
         </p>
       )}
@@ -226,7 +226,7 @@ export function PizzaShareStep({
                   return (
                     <g key={b}>
                       {/* Clickable radial EDGE (the line between slices), from the
-                          center out to the notch — lets the cut be selected by the
+                          center out to the notch, lets the cut be selected by the
                           edge as well as the vertex. Wide transparent hit target. */}
                       <line
                         x1={CX}
@@ -300,7 +300,7 @@ export function PizzaShareStep({
             )}
           </div>
 
-          {/* Equation — kept central and prominent: cutting in half is dividing
+          {/* Equation, kept central and prominent: cutting in half is dividing
               both sides by the number that multiplies x. */}
           <div className="flex-1 rounded-xl border-2 border-primary/40 bg-primary-light/60 px-5 py-6">
             <p className="text-center text-label font-semibold uppercase tracking-wide text-primary">

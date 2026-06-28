@@ -70,7 +70,7 @@ export function GraphInterceptStep({
       <p className="mt-2 text-label text-muted">
         Slide the ball along the line to{" "}
         <span className="font-equation text-primary">x = {targetX}</span> (the
-        y-axis) and read its height — that height is the y-intercept. Then press
+        y-axis) and read its height. That height is the y-intercept. Then press
         Check Answer.
       </p>
 

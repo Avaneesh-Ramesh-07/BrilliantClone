@@ -121,8 +121,8 @@ export function PlotPointStep({
         setMessage({
           text:
             remaining === 1
-              ? "Found one — now pick the other crossing."
-              : `Found one — ${remaining} more to go.`,
+              ? "Found one. Now pick the other crossing."
+              : `Found one, ${remaining} more to go.`,
           error: false,
         });
       }
@@ -131,7 +131,7 @@ export function PlotPointStep({
       setMessage({
         text:
           `You clicked (${p.x}, ${p.y}). ` +
-          (problem.feedback.incorrect ?? "That isn't a crossing — try again."),
+          (problem.feedback.incorrect ?? "That isn't a crossing. Try again."),
         error: true,
       });
     }
@@ -179,7 +179,7 @@ export function PlotPointStep({
           onMouseLeave={() => setHover(null)}
           onClick={handleClick}
           role="img"
-          aria-label="Coordinate grid — click the point you are solving for"
+          aria-label="Coordinate grid: click the point you are solving for"
         >
           {xTicks.map((tx) => (
             <line

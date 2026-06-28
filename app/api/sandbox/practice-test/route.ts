@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
-import { OPENAI_MODEL } from "@/lib/ai/lesson-builder";
 import {
+  PRACTICE_TEST_MODEL,
   buildPracticeTestFromSpec,
   buildPracticeTestSystemPrompt,
   buildPracticeTestUserPrompt,
@@ -14,18 +14,32 @@ import {
   type EligibleConcept,
 } from "@/lib/practice-test/eligibility";
 import {
-  reconcileMcProblem,
-  reconcileNumericProblem,
+  verifyPracticeProblem,
+  type ProblemVerification,
 } from "@/lib/practice-test/verify";
 import { createClient } from "@/lib/supabase/server";
 import {
   practiceTestSpecSchema,
-  type PracticeProblemSpec,
+  type PracticeTestLesson,
   type PracticeTestSpec,
+  type VerifiedPracticeProblem,
 } from "@/types/practice-test";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** Minimum number of valid (kept, non-dropped) problems a test must reach. */
+const TARGET_VALID = 15;
+/** Hard cap on generation attempts while accumulating toward TARGET_VALID. */
+const MAX_ATTEMPTS = 4;
+
+/**
+ * Normalizes a problem stem for cross-attempt dedupe: trim, lowercase, and
+ * collapse internal whitespace so reworded-identical prompts can't pad the count.
+ */
+function normalizeStem(prompt: string): string {
+  return prompt.trim().toLowerCase().replace(/\s+/g, " ");
+}
 
 /** A representative ALLOWED_TOPICS id whose family matches, for the `topic` column. */
 const FAMILY_TOPIC_ID: Record<string, string> = {
@@ -52,28 +66,17 @@ function dominantFamily(concepts: EligibleConcept[]): string {
 }
 
 /**
- * Runs the math.js answer-key verification over a spec's problems and returns
- * the reconciled, filtered problem list:
- * - NUMERIC: the `answerExpression` value is AUTHORITATIVE and overrides
- *   `answer` (auto-fixing LLM arithmetic slips). A numeric problem is DROPPED
- *   only when its expression is unevaluable/non-finite.
- * - MC: best-effort `correctIndex` correction; the problem is always KEPT.
+ * Runs deterministic verification over a spec's problems and returns only the
+ * ones to KEEP (each carrying its reconciled spec + verification metadata):
+ * - DROPPED: problems that fail the self-consistency check (e.g. asking for a
+ *   symbol absent from the equation - the gardener bug) and numeric problems
+ *   whose `answerExpression` can't be evaluated (ungradeable).
+ * - KEPT: everything else. NUMERIC keys are overridden by the computed value;
+ *   MC keys are best-effort corrected and tagged "verified" when confirmed or
+ *   "unverifiable" when the key couldn't be machine-confirmed.
  */
-function reconcileSpecProblems(
-  spec: PracticeTestSpec
-): PracticeProblemSpec[] {
-  const out: PracticeProblemSpec[] = [];
-  for (const problem of spec.problems) {
-    if (problem.kind === "numeric") {
-      const { ok, spec: reconciled } = reconcileNumericProblem(problem);
-      // Drop only when the expression couldn't be evaluated to a finite number.
-      if (ok) out.push(reconciled);
-    } else {
-      const { spec: reconciled } = reconcileMcProblem(problem);
-      out.push(reconciled);
-    }
-  }
-  return out;
+function verifyAndKeep(spec: PracticeTestSpec): ProblemVerification[] {
+  return spec.problems.map(verifyPracticeProblem).filter((v) => !v.drop);
 }
 
 /** Generates a practice-test spec from the eligible concepts (may throw). */
@@ -81,14 +84,18 @@ async function generatePracticeTestSpec(
   concepts: EligibleConcept[]
 ): Promise<PracticeTestSpec> {
   const result = await generateObject({
-    model: openai(OPENAI_MODEL),
+    model: openai(PRACTICE_TEST_MODEL),
     schema: practiceTestSpecSchema,
     system: buildPracticeTestSystemPrompt(),
     prompt: buildPracticeTestUserPrompt(concepts),
-    temperature: 0.7,
-    maxOutputTokens: 16000,
+    // gpt-5.5 is a reasoning model: it rejects a custom `temperature` (only the
+    // default is allowed) and spends reasoning tokens, so we omit `temperature`
+    // entirely and budget a generous output cap that fits ~20 heavy problems
+    // plus the reasoning tokens (well within the model's 128K output limit).
+    maxOutputTokens: 48000,
     maxRetries: 2,
-    abortSignal: AbortSignal.timeout(90000),
+    // Reasoning models are slower; give each attempt up to 180s.
+    abortSignal: AbortSignal.timeout(180000),
   });
   return result.object;
 }
@@ -131,56 +138,85 @@ export async function POST() {
     return NextResponse.json({ empty: true });
   }
 
-  let spec: PracticeTestSpec;
-  try {
-    spec = await generatePracticeTestSpec(concepts);
-  } catch (err) {
-    console.error("[sandbox/practice-test] generateObject failed:", err);
-    const e = (err ?? {}) as {
+  // Accumulate verified problems across up to MAX_ATTEMPTS generations until we
+  // reach at least TARGET_VALID (15) valid, deduped problems. Each attempt
+  // generates a fresh spec, runs deterministic verification (self-consistency +
+  // math.js key reconciliation; inconsistent / ungradeable problems are
+  // dropped), and ADDS its survivors to the running collection. A single failed
+  // attempt is caught and skipped so it can never crash the whole handler.
+  const kept: ProblemVerification[] = [];
+  const seenStems = new Set<string>();
+  let baseSpec: PracticeTestSpec | null = null;
+  let lastError: unknown = null;
+
+  for (
+    let attempt = 0;
+    attempt < MAX_ATTEMPTS && kept.length < TARGET_VALID;
+    attempt++
+  ) {
+    let attemptSpec: PracticeTestSpec;
+    try {
+      attemptSpec = await generatePracticeTestSpec(concepts);
+    } catch (err) {
+      console.error(
+        `[sandbox/practice-test] generateObject failed (attempt ${attempt + 1}/${MAX_ATTEMPTS}):`,
+        err
+      );
+      lastError = err;
+      continue;
+    }
+    // Keep the first successful spec for its title/description metadata.
+    if (!baseSpec) baseSpec = attemptSpec;
+    // Dedupe across attempts by normalized stem, keeping the first occurrence.
+    for (const v of verifyAndKeep(attemptSpec)) {
+      const stem = normalizeStem(v.spec.prompt);
+      if (seenStems.has(stem)) continue;
+      seenStems.add(stem);
+      kept.push(v);
+    }
+  }
+
+  // If EVERY attempt failed to even produce a spec, surface a graceful error
+  // (quota-aware), mirroring the prior single-attempt failure path.
+  if (!baseSpec) {
+    const e = (lastError ?? {}) as {
       statusCode?: number;
       name?: string;
       message?: string;
     };
-    const status = e.statusCode;
     const detail = [e.name, e.message].filter(Boolean).join(": ").slice(0, 300);
     const error =
-      status === 429
-        ? "The AI is over its current quota — try again shortly."
-        : `Couldn't build that practice test — try again. (${detail || "generation error"})`;
+      e.statusCode === 429
+        ? "The AI is over its current quota. Try again shortly."
+        : `Couldn't build that practice test. Try again. (${detail || "generation error"})`;
     return NextResponse.json({ error }, { status: 502 });
   }
 
-  // math.js answer-key verification: the computed value of each numeric problem
-  // overrides the LLM's `answer`, and mc keys are best-effort corrected.
-  // Unverifiable numeric problems are dropped here.
-  let problems = reconcileSpecProblems(spec);
+  const spec = baseSpec;
 
-  // If verification left fewer than 15 valid problems, make ONE more generation
-  // attempt and re-verify; keep whichever attempt yields more valid problems. A
-  // failed retry simply leaves us with the first attempt's reconciled problems.
-  if (problems.length < 15) {
-    try {
-      const retrySpec = await generatePracticeTestSpec(concepts);
-      const retryProblems = reconcileSpecProblems(retrySpec);
-      if (retryProblems.length > problems.length) {
-        spec = retrySpec;
-        problems = retryProblems;
-      }
-    } catch (err) {
-      console.error("[sandbox/practice-test] retry generateObject failed:", err);
-    }
-  }
-
-  // Proceed with whatever valid problems remain (need >= 1). Zero valid → 500.
-  if (problems.length === 0) {
+  // Proceed with whatever valid problems remain (need >= 1). After MAX_ATTEMPTS
+  // there may still be < TARGET_VALID, which is acceptable; only zero valid → 500.
+  if (kept.length === 0) {
     console.error("[sandbox/practice-test] no verifiable problems remain");
     return NextResponse.json(
-      { error: "Couldn't build a complete test — please try again." },
+      { error: "Couldn't build a complete test. Please try again." },
       { status: 500 }
     );
   }
 
-  const reconciledSpec: PracticeTestSpec = { ...spec, problems };
+  // Assign stable ids the runner uses for attempt tracking, and gather the
+  // runner-ready verified problem bank.
+  const practiceProblems: VerifiedPracticeProblem[] = [];
+  kept.forEach((v, i) => {
+    if (!v.problem) return;
+    v.problem.id = `pt-${i + 1}`;
+    practiceProblems.push(v.problem);
+  });
+
+  const reconciledSpec: PracticeTestSpec = {
+    ...spec,
+    problems: kept.map((v) => v.spec),
+  };
 
   const family = dominantFamily(concepts);
   const topic = FAMILY_TOPIC_ID[family] ?? "linear-equations";
@@ -195,10 +231,14 @@ export async function POST() {
   if (invalid) {
     console.error("[sandbox/practice-test] invalid test:", invalid);
     return NextResponse.json(
-      { error: "Couldn't build a complete test — please try again." },
+      { error: "Couldn't build a complete test. Please try again." },
       { status: 500 }
     );
   }
+
+  // Ride the verified problem bank along in the stored lesson_json so the
+  // dedicated runner can show worked steps, "Verified" badges, and gating.
+  const practiceLesson: PracticeTestLesson = { ...lesson, practiceProblems };
 
   const baseRow = {
     id: lessonId,
@@ -206,7 +246,7 @@ export async function POST() {
     topic,
     difficulty: "advanced",
     specific_concept: "Practice Test",
-    lesson_json: lesson,
+    lesson_json: practiceLesson,
   };
 
   // Insert WITH `kind`. If the column doesn't exist yet (pre-migration), retry
@@ -224,7 +264,7 @@ export async function POST() {
   if (insertError) {
     console.error("[sandbox/practice-test] insert failed:", insertError);
     return NextResponse.json(
-      { error: "Couldn't save your practice test — please try again." },
+      { error: "Couldn't save your practice test. Please try again." },
       { status: 500 }
     );
   }

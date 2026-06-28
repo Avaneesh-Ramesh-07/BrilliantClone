@@ -218,7 +218,7 @@ export function QuadraticFormulaStep({
           <div className="mt-7">
             <p className="mb-2 text-center text-label text-muted">
               {selected !== null
-                ? "Now tap a slot — or drag a tile into place."
+                ? "Now tap a slot, or drag a tile into place."
                 : "Drag each value into a, b and c (or tap a tile, then a slot)."}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2">

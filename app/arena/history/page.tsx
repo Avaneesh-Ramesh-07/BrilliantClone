@@ -77,7 +77,7 @@ export default async function DuelHistoryPage() {
   const avgAnswer =
     stats.avgAnswerMs != null
       ? `${(stats.avgAnswerMs / 1000).toFixed(1)}s`
-      : "—";
+      : "-";
   const mostComfortable = stats.mostComfortableTopic
     ? topicLabel(stats.mostComfortableTopic)
     : "Not enough data";
@@ -87,7 +87,7 @@ export default async function DuelHistoryPage() {
   const dps =
     stats.damagePerSecond != null
       ? `${stats.damagePerSecond.toFixed(2)} HP/s`
-      : "—";
+      : "-";
 
   return (
     <main className="py-8">

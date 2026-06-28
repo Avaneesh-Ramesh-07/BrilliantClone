@@ -39,14 +39,14 @@ export function PracticeTestBuilder() {
         };
         if (!active) return;
         if (!res.ok) {
-          setError(data.error ?? "Couldn't load your concepts — try again.");
+          setError(data.error ?? "Couldn't load your concepts. Try again.");
           setConcepts([]);
         } else {
           setConcepts(data.concepts ?? []);
         }
       } catch {
         if (active) {
-          setError("Couldn't load your concepts — try again.");
+          setError("Couldn't load your concepts. Try again.");
           setConcepts([]);
         }
       } finally {
@@ -85,13 +85,13 @@ export function PracticeTestBuilder() {
         return;
       }
       if (!res.ok || !data.lessonId) {
-        setError(data.error ?? "Couldn't build that practice test — try again.");
+        setError(data.error ?? "Couldn't build that practice test. Try again.");
         setGenerating(false);
         return;
       }
-      router.push(`/sandbox/lesson/${data.lessonId}`);
+      router.push(`/sandbox/practice-test/${data.lessonId}`);
     } catch {
-      setError("Couldn't reach the practice-test builder — try again.");
+      setError("Couldn't reach the practice-test builder. Try again.");
       setGenerating(false);
     }
   }
@@ -104,12 +104,17 @@ export function PracticeTestBuilder() {
 
       <header className="mb-6">
         <p className="text-label text-muted">Sandbox</p>
-        <h1 className="font-heading text-heading-lg text-text">
-          Create practice test
-        </h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="font-heading text-heading-lg text-text">
+            Create practice test
+          </h1>
+          <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-amber-700">
+            Beta
+          </span>
+        </div>
         <p className="mt-2 text-body text-muted">
           A challenging test of real-world word problems, built only from
-          concepts you reviewed on an earlier day — so it tests what should be
+          concepts you reviewed on an earlier day, so it tests what should be
           settling into long-term memory.
         </p>
       </header>
@@ -143,8 +148,8 @@ export function PracticeTestBuilder() {
           style={{ animation: "ptFade 0.3s ease" }}
         >
           <p className="text-body text-text">
-            You haven&apos;t reviewed any concepts from an earlier day yet —
-            revisit a lesson and come back tomorrow.
+            You haven&apos;t reviewed any concepts from an earlier day yet.
+            Revisit a lesson and come back tomorrow.
           </p>
           {error && <p className="mt-3 text-label text-error">{error}</p>}
         </section>

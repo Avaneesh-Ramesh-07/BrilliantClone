@@ -8,7 +8,7 @@ import type { ArenaProblem, ArenaTopic, ProblemPool } from "@/types/arena";
  * which build HARD, multi-step problems correct-by-construction across the
  * three algebra topics. Two pools:
  *
- *  - Guests: assumed fully proficient — the FULL topic range at hard difficulty.
+ *  - Guests: assumed fully proficient, the FULL topic range at hard difficulty.
  *  - Authenticated users: hard problems restricted to the topics behind the
  *    lessons they've completed (with a safe full-range fallback).
  *
@@ -33,7 +33,7 @@ export function buildGuestPool(): ProblemPool {
 /**
  * Authenticated pool built from the given completed lesson ids: resolves them
  * to arena topics and generates hard problems for only those topics. If no
- * topic resolves (shouldn't happen — the Arena gate requires ≥1 completed
+ * topic resolves (shouldn't happen, the Arena gate requires ≥1 completed
  * lesson), falls back to the full guest range so a match is always playable.
  */
 export function buildAuthedPool(completedLessonIds: string[]): ProblemPool {

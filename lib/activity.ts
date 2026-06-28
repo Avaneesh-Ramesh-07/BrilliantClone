@@ -6,7 +6,7 @@ import { getLessonOrder } from "@/lib/lessons";
  *
  * Pulls together every activity type that AlgebraPath records to the database
  * and buckets it by *local* calendar day (server timezone, matching the rest of
- * the app — see `getWeeklyActivity` in lib/progress.ts). The sources are:
+ * the app, see `getWeeklyActivity` in lib/progress.ts). The sources are:
  *
  *  - Curriculum + AI lessons  -> `step_attempts.duration_ms` (built-in lessons
  *                                and AI-built custom lessons).
@@ -36,14 +36,14 @@ export interface ActivityBreakdown {
   practiceTests: number;
   /** Estimated time spent in head-to-head duels (ms). */
   duels: number;
-  /** Endless practice — always 0 (not persisted anywhere). */
+  /** Endless practice, always 0 (not persisted anywhere). */
   endless: number;
 }
 
 export interface DayActivity {
   /** Local calendar date, `YYYY-MM-DD`. */
   date: string;
-  /** Day of month, 1–31. */
+  /** Day of month, 1-31. */
   day: number;
   /** Sum of every tracked activity's time that day (ms). */
   totalMs: number;
@@ -57,7 +57,7 @@ export interface DayActivity {
 export interface MonthlyActivity {
   /** Full year, e.g. 2026. */
   year: number;
-  /** Month, 1–12 (1 = January). */
+  /** Month, 1-12 (1 = January). */
   month: number;
   /** One entry per calendar day of the month, in order (index 0 = the 1st). */
   days: DayActivity[];
@@ -91,7 +91,7 @@ function dayKeyFromParts(year: number, month1: number, day: number): string {
 /**
  * Daily cross-activity totals for a single month.
  *
- * @param month 1–12 (1 = January). All boundaries are computed in server-local
+ * @param month 1-12 (1 = January). All boundaries are computed in server-local
  *   time and every query is scoped to `[firstOfMonth, firstOfNextMonth)`.
  */
 export async function getMonthlyActivity(

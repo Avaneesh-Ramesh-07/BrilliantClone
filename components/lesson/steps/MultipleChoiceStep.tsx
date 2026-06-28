@@ -11,6 +11,12 @@ interface MultipleChoiceStepProps {
   onSelect: (optionId: string) => void;
   disabled?: boolean;
   showResult?: boolean;
+  /**
+   * When true, the correct option is highlighted green. Gated by the player so
+   * the answer is only revealed once solved or missed twice in a row. A single
+   * wrong attempt still marks the chosen option but doesn't give the answer away.
+   */
+  revealCorrect?: boolean;
   selectedId?: string | null;
 }
 
@@ -19,6 +25,7 @@ export function MultipleChoiceStep({
   onSelect,
   disabled,
   showResult,
+  revealCorrect,
   selectedId,
 }: MultipleChoiceStepProps) {
   const [localSelected, setLocalSelected] = useState<string | null>(null);
@@ -41,7 +48,7 @@ export function MultipleChoiceStep({
       <div className="mt-4 flex flex-col gap-2">
         {problem.options.map((option) => {
           const isSelected = active === option.id;
-          const showCorrect = showResult && option.correct;
+          const showCorrect = revealCorrect && option.correct;
           const showWrong = showResult && isSelected && !option.correct;
 
           return (

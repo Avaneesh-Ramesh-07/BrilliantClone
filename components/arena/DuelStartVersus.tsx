@@ -9,9 +9,9 @@ export interface DuelStartCombatant {
 }
 
 interface DuelStartVersusProps {
-  /** The LOCAL player — always rendered on the LEFT of their own screen. */
+  /** The LOCAL player, always rendered on the LEFT of their own screen. */
   me: DuelStartCombatant;
-  /** The opponent — always rendered on the RIGHT. */
+  /** The opponent, always rendered on the RIGHT. */
   opponent: DuelStartCombatant;
   /** Called once after the full sequence finishes so the match can be revealed. */
   onDone: () => void;
@@ -120,7 +120,7 @@ export function DuelStartVersus({ me, opponent, onDone }: DuelStartVersusProps) 
 
       {/* The split stage (cards + bolt), with an impact shake. */}
       <div className="duel-vs-shake relative flex w-full max-w-app items-center justify-between gap-2 px-3">
-        {/* Local player — LEFT */}
+        {/* Local player: LEFT */}
         <div className="duel-vs-slam-left w-[44%] max-w-[220px]">
           <DuelCard username={me.username} wins={me.wins} side="left" />
         </div>
@@ -133,7 +133,7 @@ export function DuelStartVersus({ me, opponent, onDone }: DuelStartVersusProps) 
           <LightningBolt />
         </div>
 
-        {/* Opponent — RIGHT */}
+        {/* Opponent: RIGHT */}
         <div className="duel-vs-slam-right w-[44%] max-w-[220px]">
           <DuelCard username={opponent.username} wins={opponent.wins} side="right" />
         </div>

@@ -134,7 +134,7 @@ export function MasteryView({ lessons }: { lessons: LessonMastery[] }) {
 
   return (
     <div>
-      {/* Tabs — each shows the lesson name + completed status */}
+      {/* Tabs, each shows the lesson name + completed status */}
       <div
         role="tablist"
         aria-label="Lessons"

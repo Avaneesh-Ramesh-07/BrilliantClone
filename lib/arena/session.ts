@@ -18,7 +18,7 @@ const EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
  * A still-'active' session with no new events for this long is treated as
  * abandoned (e.g. both players closed their tabs). Loaders self-heal such rows
  * to 'complete' (winner 'draw') so they never linger as active forever. See
- * CHANGE 2 — this is the robust backstop to the best-effort tab-close handler.
+ * CHANGE 2, this is the robust backstop to the best-effort tab-close handler.
  */
 export const STALE_ACTIVE_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -147,7 +147,7 @@ export async function createSession(
     if (!error) return data as ArenaSession;
 
     lastError = error;
-    // 23505 = unique_violation: a code clash — retry with a fresh code.
+    // 23505 = unique_violation: a code clash, retry with a fresh code.
     if (error.code !== "23505") break;
   }
 
@@ -189,8 +189,7 @@ export async function joinAsUser(
   userId: string,
   joinerName: string | null
 ): Promise<ArenaSession | null> {
-  // A signed-in user may never claim the SECOND seat in a room they created —
-  // that would be dueling themselves. `.neq("created_by", userId)` makes the
+  // A signed-in user may never claim the SECOND seat in a room they created, // that would be dueling themselves. `.neq("created_by", userId)` makes the
   // update match no row in that case (so the claim fails and returns null);
   // it's also enforced by RLS (`created_by <> auth.uid()`). The creator's own
   // link still lands them as user1 via `roleForUser`, which never reaches here.
@@ -216,7 +215,7 @@ export async function joinAsUser(
 }
 
 /**
- * A guest claims a waiting session. No Supabase auth user is created — the
+ * A guest claims a waiting session. No Supabase auth user is created, the
  * guest's own browser writes via the anon role. A client-generated guest uuid
  * is stored in joined_by so the row records who the guest is, and guest_name is
  * set (which is what the anon RLS policy keys off of).
@@ -314,7 +313,7 @@ export async function insertEvent(
  * Self-heals the caller's abandoned rooms: any session they belong to that is
  * still 'active' but has had no event for > STALE_ACTIVE_MS (or, lacking any
  * event, was created that long ago) is forced to 'complete' (winner 'draw').
- * This is the robust backstop for CHANGE 2 — if BOTH players closed their tabs,
+ * This is the robust backstop for CHANGE 2, if BOTH players closed their tabs,
  * no client remained to end the match, so the next time the owner loads a list
  * of their sessions we tidy up the stragglers. Runs with the user's own
  * Supabase context, so RLS lets them update only their own sessions.
@@ -356,7 +355,7 @@ export async function healStaleSessionsForUser(
 
 /**
  * A throwaway client-side guest id (uuid) for a single join, stored in the row's
- * `joined_by`. It is NOT persisted anywhere on the client — guests are never
+ * `joined_by`. It is NOT persisted anywhere on the client, guests are never
  * re-identified across page loads, so a guest who leaves a match cannot rejoin.
  */
 export function newGuestId(): string {

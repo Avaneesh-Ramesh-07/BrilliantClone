@@ -86,7 +86,7 @@ export function ArenaRoom({
   // --- Auth resolution (fixes the self-play race) ---------------------------
   // The server-rendered `viewerId` is authoritative WHEN PRESENT, but a freshly
   // opened tab can server-render with a null `viewerId` before the auth token is
-  // readable server-side — even though the browser actually holds a live session
+  // readable server-side, even though the browser actually holds a live session
   // and "auto-logs-in" on the client a moment later. If we trusted that transient
   // null we'd show the GUEST join, letting a signed-in creator seat THEMSELVES as
   // a guest user2 and duel themselves (verified: such rows have joined_by = a
@@ -124,7 +124,7 @@ export function ArenaRoom({
   // OTHER than the creator (a genuine joiner whose authed pool/canPlay must come
   // from the server), re-run the server component once so it re-renders with the
   // now-valid session instead of the stale "logged-out" props. The creator needs
-  // no refresh — they're blocked below from the client identity directly. One
+  // no refresh; they're blocked below from the client identity directly. One
   // shot only (ref-guarded) so a persistently-null server can't cause a loop.
   useEffect(() => {
     if (refreshedRef.current) return;
@@ -143,7 +143,7 @@ export function ArenaRoom({
   // Member detection: the creator and an authenticated joiner are matched by
   // their Supabase id (now via the resolved `effectiveViewerId`). Guests are
   // matched only within the same render via `joinedRole` after they join
-  // (below) — there is intentionally NO cross-load re-identification, so a
+  // (below); there is intentionally NO cross-load re-identification, so a
   // player who leaves does not rejoin.
   const existingRole = session ? roleForUser(session, effectiveViewerId) : null;
 
@@ -152,7 +152,7 @@ export function ArenaRoom({
     if (autoJoinRef.current) return;
     if (!session) return;
     if (!authResolved) return; // don't claim a seat until we know who the viewer is
-    // Never self-join your own room — checked against the RESOLVED identity so
+    // Never self-join your own room; checked against the RESOLVED identity so
     // the auth-loading race can't let the creator slip through as a guest.
     if (effectiveViewerId && effectiveViewerId === session.created_by) return;
     // Only claim a seat once the SERVER has resolved the viewer, so the authed
@@ -172,7 +172,7 @@ export function ArenaRoom({
       const joined = await joinAsUser(supabase, sessionId, viewerId, viewerName);
       setJoining(false);
       if (!joined) {
-        setJoinError("Could not join — this arena may already be full.");
+        setJoinError("Could not join. This arena may already be full.");
         return;
       }
       setSession(joined);
@@ -194,7 +194,7 @@ export function ArenaRoom({
   ]);
 
   async function handleGuestJoin() {
-    // Hard safety net: a signed-in viewer must NEVER take a seat as a guest —
+    // Hard safety net: a signed-in viewer must NEVER take a seat as a guest;
     // that is exactly how the self-play bug happened (the creator's second tab
     // guest-joined its own room). The guest UI isn't shown to an authed viewer,
     // but guard here too so no code path can seat an authed user as a guest.
@@ -210,12 +210,12 @@ export function ArenaRoom({
     setJoinError(null);
     setJoining(true);
     // A throwaway per-join guest id for the row's joined_by. It is NOT persisted
-    // anywhere — guests cannot rejoin once they leave (by design).
+    // anywhere; guests cannot rejoin once they leave (by design).
     const guestId = newGuestId();
     const joined = await joinAsGuest(supabase, sessionId, name, guestId);
     setJoining(false);
     if (!joined) {
-      setJoinError("Could not join — this arena may already be full.");
+      setJoinError("Could not join. This arena may already be full.");
       return;
     }
     setSession(joined);
@@ -307,7 +307,7 @@ export function ArenaRoom({
   // ----- 6. Prospective joiner: expiry / full checks -----
   // Reached only when the viewer is NOT a seated participant, so a genuinely
   // occupied (or expired) room is rejected here. A player who left does not
-  // rejoin — they fall through to "Arena full" for an active occupied room.
+  // rejoin; they fall through to "Arena full" for an active occupied room.
   if (isExpired(session)) {
     return <Message title="This challenge has expired" />;
   }

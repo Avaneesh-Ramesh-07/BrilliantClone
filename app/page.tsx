@@ -8,7 +8,7 @@ export default function LandingPage() {
     // w-screen pulls this element out to span the entire viewport width so the
     // split reaches both screen edges.
     <div className="relative left-1/2 right-1/2 -mx-[50vw] flex min-h-screen w-screen flex-col md:flex-row">
-      {/* LEFT — the dojo brand (light) */}
+      {/* LEFT, the dojo brand (light) */}
       <section className="relative flex min-h-[40vh] w-full flex-col justify-center overflow-hidden bg-gradient-to-br from-primary-light via-bg to-surface px-8 py-16 md:min-h-screen md:w-1/2 md:px-14">
         {/* Soft indigo + red accent glows (kept light and airy) */}
         <div
@@ -66,14 +66,14 @@ export default function LandingPage() {
           <div className="mt-6 h-1 w-24 rounded-full bg-gradient-to-r from-error to-transparent" />
           <p className="mt-6 max-w-md text-body text-muted">
             Train like a ninja and master algebra by solving equations
-            hands-on — drag terms, strike down for{" "}
+            hands-on: drag terms, strike down for{" "}
             <span className="font-math text-primary">x</span>, and earn your
             black belt.
           </p>
         </div>
       </section>
 
-      {/* RIGHT — light math backdrop + auth card */}
+      {/* RIGHT, light math backdrop + auth card */}
       <section className="relative flex w-full flex-1 items-center justify-center overflow-hidden bg-bg px-6 py-16 md:w-1/2 md:px-10">
         {/* Math imagery backdrop: faint SVG/CSS equations & a parabola grid.
             Hidden entirely on phone (below md) for a clean single-column layout;
@@ -99,7 +99,7 @@ export default function LandingPage() {
             />
           </svg>
 
-          {/* Scattered equations, rotated and faint — each gently floats on its
+          {/* Scattered equations, rotated and faint, each gently floats on its
               own staggered cycle so the backdrop feels dynamic. Outer div holds
               position, middle div floats (animate-hero-float), inner keeps the
               rotation so the float doesn't clobber the transform. */}
@@ -154,7 +154,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Auth card — white card-pop with a thin indigo→red accent top bar */}
+        {/* Auth card, white card-pop with a thin indigo→red accent top bar */}
         <div className="card-pop relative z-10 w-full max-w-sm overflow-hidden">
           <div className="h-1.5 w-full bg-gradient-to-r from-primary via-accent-purple to-error" />
           <div className="p-8">

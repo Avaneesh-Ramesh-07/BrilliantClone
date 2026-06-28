@@ -38,6 +38,12 @@ interface StepRendererProps {
   onDragReset: () => void;
   problemSolved: boolean;
   showChoiceResult: boolean;
+  /**
+   * When true, choice-based questions may highlight the correct option green.
+   * Gated by StepPlayer so the answer is only revealed once the question is
+   * solved or missed twice in a row, never on a single wrong attempt.
+   */
+  revealAnswer: boolean;
   disabled?: boolean;
 }
 
@@ -54,6 +60,7 @@ export function StepRenderer({
   onDragReset,
   problemSolved,
   showChoiceResult,
+  revealAnswer,
   disabled,
 }: StepRendererProps) {
   switch (problem.type) {
@@ -96,6 +103,7 @@ export function StepRenderer({
           onSelect={onChoiceSelect}
           disabled={disabled || problemSolved}
           showResult={showChoiceResult}
+          revealCorrect={revealAnswer}
           selectedId={selectedChoice}
         />
       );
@@ -168,7 +176,7 @@ export function StepRenderer({
         />
       );
     case "slope-race":
-      // Note: we intentionally don't disable on `problemSolved` — the demo
+      // Note: we intentionally don't disable on `problemSolved`; the demo
       // stays replayable (via its own Reset) after it's been answered.
       return (
         <SlopeRaceStep
@@ -233,6 +241,7 @@ export function StepRenderer({
           onSelect={onChoiceSelect}
           disabled={disabled || problemSolved}
           showResult={showChoiceResult}
+          revealCorrect={revealAnswer}
           selectedId={selectedChoice}
         />
       );

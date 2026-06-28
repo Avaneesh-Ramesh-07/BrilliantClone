@@ -16,6 +16,7 @@ import {
 } from "@/lib/practice/skill";
 import { serializeProblem } from "@/lib/practice/context";
 import { sanitizeFeedback } from "@/lib/practice/sanitizeFeedback";
+import { hintForQuestion } from "@/lib/practice/hints";
 import {
   ComfortLevel,
   Difficulty,
@@ -86,6 +87,17 @@ export function PracticeSession({
   // Whether the last answer was correct (null until the current question is
   // answered). Drives the "upload a photo of your work" feedback affordance.
   const [lastCorrect, setLastCorrect] = useState<boolean | null>(null);
+
+  // Consecutive-wrong gating, mirroring the lesson UX (see StepPlayer):
+  //   1st wrong attempt → show ONLY a hint, never the answer.
+  //   2nd consecutive wrong attempt → reveal/highlight the correct answer.
+  // Reset on a correct answer or when moving to a new question. `reveal` drives
+  // the child question components; `hintShown` shows the conceptual nudge.
+  const [reveal, setReveal] = useState(false);
+  const [hintShown, setHintShown] = useState(false);
+  // Wrong-attempt counter for the CURRENT question, in a ref so the child's
+  // synchronous onAnswer callback always reads the latest value.
+  const attemptCountRef = useRef(0);
   const [stats, setStats] = useState<Stats>(INITIAL_STATS);
   const [phase, setPhase] = useState<"playing" | "summary">("playing");
 
@@ -96,7 +108,7 @@ export function PracticeSession({
   const [rationale, setRationale] = useState<RationaleMap>({});
   const rationaleRef = useRef<RationaleMap>({});
 
-  // Raw attempt log (per topic). Kept in a ref — needed for metrics, not render.
+  // Raw attempt log (per topic). Kept in a ref, needed for metrics, not render.
   const attemptsRef = useRef<AttemptMap>({});
   const questionStartRef = useRef(0);
 
@@ -134,12 +146,15 @@ export function PracticeSession({
       setQuestion(nextQuestion(history, allowedTopics, difficultyRef.current));
       setAnswered(false);
       setLastCorrect(null);
+      setReveal(false);
+      setHintShown(false);
+      attemptCountRef.current = 0;
       questionStartRef.current = nowMs();
     },
     [allowedTopics]
   );
 
-  // First question loads on the client only — the generators use Math.random,
+  // First question loads on the client only, the generators use Math.random,
   // which would otherwise cause a server/client hydration mismatch. We also seed
   // each topic's starting difficulty from its lesson comfort here.
   useEffect(() => {
@@ -158,14 +173,22 @@ export function PracticeSession({
     setQuestion(firstQuestion(allowedTopics));
     setAnswered(false);
     setLastCorrect(null);
+    setReveal(false);
+    setHintShown(false);
+    attemptCountRef.current = 0;
     questionStartRef.current = nowMs();
   }, [hasTopics, allowedTopics, topicComfort, applyDifficulty]);
 
-  const handleAnswer = useCallback(
+  // Finalize the current question: record the outcome, update stats/difficulty,
+  // and reveal the answer. Called once per question, when it reaches a terminal
+  // state (a correct answer, or a second consecutive miss). `correct` reflects
+  // first-attempt knowledge: a second-try success still records the first miss.
+  const finalize = useCallback(
     (correct: boolean) => {
       if (!question) return;
       setAnswered(true);
       setLastCorrect(correct);
+      setReveal(true);
 
       const now =
         typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -206,6 +229,31 @@ export function PracticeSession({
       });
     },
     [question, applyDifficulty, applyRationale]
+  );
+
+  // Called by the question component on EVERY check. Implements the gating:
+  //   - correct (any attempt): finalize as correct, reveal.
+  //   - 1st wrong attempt: show ONLY the hint; keep the question open for a retry.
+  //   - 2nd consecutive wrong attempt: finalize as a miss and reveal the answer.
+  const handleCheck = useCallback(
+    (correct: boolean) => {
+      if (!question || answered) return;
+      const attempt = attemptCountRef.current + 1;
+
+      if (correct) {
+        finalize(true);
+        return;
+      }
+
+      attemptCountRef.current = attempt;
+      if (attempt >= 2) {
+        finalize(false);
+      } else {
+        // First miss: reveal the hint only and let them try again.
+        setHintShown(true);
+      }
+    },
+    [question, answered, finalize]
   );
 
   const handleNext = useCallback(() => {
@@ -261,7 +309,7 @@ export function PracticeSession({
         </div>
         <p className="mt-2 text-body text-muted">
           {hasTopics
-            ? "Endless mixed practice that adapts to you. Difficulty shifts with your pace and accuracy — nothing here is graded."
+            ? "Endless mixed practice that adapts to you. Difficulty shifts with your pace and accuracy. Nothing here is graded."
             : "Practice draws on lessons you've finished."}
         </p>
       </header>
@@ -290,7 +338,7 @@ export function PracticeSession({
               label="Accuracy"
               value={
                 stats.answered === 0
-                  ? "—"
+                  ? "-"
                   : `${Math.round((stats.correct / stats.answered) * 100)}%`
               }
             />
@@ -321,10 +369,36 @@ export function PracticeSession({
                 <QuestionView
                   key={question.id}
                   question={question}
-                  onAnswer={handleAnswer}
+                  onAnswer={handleCheck}
                   disabled={answered}
+                  reveal={reveal}
                 />
               </div>
+
+              {hintShown && !reveal && (
+                <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+                    aria-hidden
+                  >
+                    <path
+                      d="M9 18h6M10 21h4M12 3a6 6 0 00-3.6 10.8c.6.45 1 1.15 1.1 1.95h5c.1-.8.5-1.5 1.1-1.95A6 6 0 0012 3z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <div>
+                    <p className="text-label font-semibold text-amber-700">Hint</p>
+                    <p className="text-body text-amber-700/90">
+                      {hintForQuestion(question)}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {answered && lastCorrect === false && (
                 <WorkFeedback key={question.id} question={question} />
@@ -351,10 +425,12 @@ function QuestionView({
   question,
   onAnswer,
   disabled,
+  reveal,
 }: {
   question: PracticeQuestion;
   onAnswer: (correct: boolean) => void;
   disabled: boolean;
+  reveal: boolean;
 }) {
   switch (question.type) {
     case "find-mistake":
@@ -363,6 +439,7 @@ function QuestionView({
           question={question}
           onAnswer={onAnswer}
           disabled={disabled}
+          reveal={reveal}
         />
       );
     case "order-steps":
@@ -371,6 +448,7 @@ function QuestionView({
           question={question}
           onAnswer={onAnswer}
           disabled={disabled}
+          reveal={reveal}
         />
       );
     case "odd-one-out":
@@ -379,6 +457,7 @@ function QuestionView({
           question={question}
           onAnswer={onAnswer}
           disabled={disabled}
+          reveal={reveal}
         />
       );
     default:
@@ -432,7 +511,7 @@ function downscaleImage(
 function WorkFeedback({ question }: { question: PracticeQuestion }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [result, setResult] = useState<FeedbackResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -448,7 +527,7 @@ function WorkFeedback({ question }: { question: PracticeQuestion }) {
       const timer = setTimeout(() => controller.abort(), 22000);
       setLoading(true);
       setError(null);
-      setFeedback(null);
+      setResult(null);
       try {
         const res = await fetch("/api/sandbox/feedback", {
           method: "POST",
@@ -461,10 +540,10 @@ function WorkFeedback({ question }: { question: PracticeQuestion }) {
           signal: controller.signal,
         });
         const data = (await res.json()) as FeedbackResponse;
-        if (data.feedback) setFeedback(data.feedback);
-        else setError(data.error ?? "Couldn't analyze that image — try again.");
+        if (data.feedback) setResult(data);
+        else setError(data.error ?? "Couldn't analyze that image. Try again.");
       } catch {
-        setError("Couldn't analyze that image — try again.");
+        setError("Couldn't analyze that image. Try again.");
       } finally {
         clearTimeout(timer);
         setLoading(false);
@@ -480,13 +559,13 @@ function WorkFeedback({ question }: { question: PracticeQuestion }) {
       e.target.value = "";
       if (!file) return;
       setError(null);
-      setFeedback(null);
+      setResult(null);
       try {
         const dataUrl = await downscaleImage(file, 1024, 0.7);
         setPreview(dataUrl);
         await requestFeedback(dataUrl);
       } catch {
-        setError("Couldn't read that image — try again.");
+        setError("Couldn't read that image. Try again.");
       }
     },
     [requestFeedback]
@@ -536,9 +615,48 @@ function WorkFeedback({ question }: { question: PracticeQuestion }) {
         </div>
       )}
 
-      {feedback && !loading && (
-        <div className="mt-3 rounded-lg border border-violet-200 bg-white p-4">
-          <FeedbackText text={feedback} />
+      {result?.feedback && !loading && (
+        <div className="mt-3 space-y-3">
+          {result.readBack && (
+            <div className="rounded-lg border border-violet-200 bg-white p-4">
+              <p className="text-label font-semibold text-violet-800">
+                Here&apos;s what we read from your photo
+              </p>
+              <p className="mt-1 whitespace-pre-line font-equation text-body text-text">
+                {result.readBack}
+              </p>
+              {result.studentAnswer && (
+                <p className="mt-2 text-label text-muted">
+                  Your answer, as we read it:{" "}
+                  <span className="font-medium text-text">
+                    {result.studentAnswer}
+                  </span>
+                </p>
+              )}
+              {result.correctAnswer && (
+                <p className="mt-1 text-label text-muted">
+                  Verified correct answer:{" "}
+                  <span className="font-medium text-success">
+                    {result.correctAnswer}
+                  </span>
+                </p>
+              )}
+              <p className="mt-2 text-label text-violet-700/70">
+                If that&apos;s not what you wrote, retake the photo so the
+                feedback matches your actual work.
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-lg border border-violet-200 bg-white p-4">
+            <FeedbackText text={result.feedback} />
+            {result.grounded === false && (
+              <p className="mt-2 text-label text-muted">
+                We double-checked this against the verified solution and
+                corrected the guidance to match.
+              </p>
+            )}
+          </div>
         </div>
       )}
 

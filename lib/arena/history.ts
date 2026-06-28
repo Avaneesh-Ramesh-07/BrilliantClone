@@ -6,7 +6,7 @@ import type { ArenaRole, ArenaSession, ArenaTopic } from "@/types/arena";
 /**
  * Server-side duel history + aggregate stats for the "Duel history" dashboard
  * (app/arena/history/page.tsx). Everything is derived from the completed
- * arena_sessions the user belongs to and their arena_events. No realtime — this
+ * arena_sessions the user belongs to and their arena_events. No realtime, this
  * is a read-only summary computed on each page load.
  */
 

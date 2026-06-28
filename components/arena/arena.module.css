@@ -64,7 +64,7 @@
 
 /* ===== Screen-edge damage feedback (Feature B) ===== */
 /* A full-viewport, click-through vignette that fades in then out. GREEN when I
-   land a blow on my opponent, RED when I take a blow — always from MY own
+   land a blow on my opponent, RED when I take a blow, always from MY own
    perspective. The element is keyed/remounted per flash so the animation
    restarts on repeat hits. */
 @keyframes arena-edge-fade {

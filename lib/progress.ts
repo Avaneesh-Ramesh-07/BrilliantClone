@@ -18,7 +18,7 @@ export function isLessonComplete(progress: LessonProgress): boolean {
 
 /**
  * Whether the learner has finished this lesson at least once, ever. This is
- * durable — it is never cleared, including on restart — so later lessons the
+ * durable, it is never cleared, including on restart, so later lessons the
  * learner unlocked stay unlocked even after they restart an earlier lesson.
  */
 export function hasEverCompleted(progress: LessonProgress): boolean {
@@ -279,7 +279,7 @@ export async function getProfile(
 /**
  * Whether the learner has actually FINISHED a lesson today (server local time),
  * based on any lesson's `lesson_progress.completed_at`. This is a real
- * completion signal — distinct from {@link getWeeklyActivity}, which is derived
+ * completion signal, distinct from {@link getWeeklyActivity}, which is derived
  * from `step_attempts` and therefore reflects practice activity (which would be
  * true for merely opening/attempting a lesson), not completion. Pass the map
  * already loaded via {@link getAllLessonProgress} so no extra query is needed.

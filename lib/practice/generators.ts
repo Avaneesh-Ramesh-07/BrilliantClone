@@ -2,7 +2,7 @@
  * Procedural generators for the endless Practice / Sandbox mode.
  *
  * Every question is generated correct-by-construction (no parsing/solving at
- * runtime — we build the worked solution from numbers we already control).
+ * runtime, we build the worked solution from numbers we already control).
  *
  * Difficulty-aware: each builder takes a `Difficulty` and adjusts number sizes,
  * step counts, and distractor closeness.
@@ -731,7 +731,7 @@ export function firstQuestion(allowedTopics?: PracticeTopic[]): PracticeQuestion
 }
 
 /**
- * Produce the next endless practice question entirely locally — selection plus
+ * Produce the next endless practice question entirely locally, selection plus
  * content. Kept as a thin wrapper over `pickTopicAndType` + `buildLocalQuestion`
  * so existing callers keep working.
  */

@@ -97,7 +97,7 @@ export function GraphLineStep({
           "That isn't the y-intercept. The y-intercept is where the line crosses the y-axis (x = 0)."
         );
         onIncorrect(
-          problem.feedback.incorrect ?? "That isn't the y-intercept — try again."
+          problem.feedback.incorrect ?? "That isn't the y-intercept. Try again."
         );
       }
       return;
@@ -120,7 +120,7 @@ export function GraphLineStep({
         "That point isn't on the line. From the intercept, use the slope (rise over run) to step to another point."
       );
       onIncorrect(
-        problem.feedback.incorrect ?? "That point isn't on the line — try again."
+        problem.feedback.incorrect ?? "That point isn't on the line. Try again."
       );
     }
   }
@@ -139,7 +139,7 @@ export function GraphLineStep({
       ? "Step 1: click the y-intercept."
       : stage === "second"
         ? "Step 2: click another point on the line using the slope."
-        : "Nice — that's the line!";
+        : "Nice! That's the line!";
 
   return (
     <div>
@@ -172,7 +172,7 @@ export function GraphLineStep({
           onMouseLeave={() => setHover(null)}
           onClick={handleClick}
           role="img"
-          aria-label="Coordinate grid — plot the line"
+          aria-label="Coordinate grid: plot the line"
         >
           {xTicks.map((tx) => (
             <line

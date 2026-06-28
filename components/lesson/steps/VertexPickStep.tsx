@@ -104,7 +104,7 @@ export function VertexPickStep({
     } else {
       setResult("incorrect");
       onIncorrect(
-        problem.feedback.incorrect ?? "That isn't it — try again."
+        problem.feedback.incorrect ?? "That isn't it. Try again."
       );
     }
   }
@@ -123,7 +123,7 @@ export function VertexPickStep({
     } else {
       setButtonResult("incorrect");
       onIncorrect(
-        problem.feedback.incorrect ?? "That isn't it — try again."
+        problem.feedback.incorrect ?? "That isn't it. Try again."
       );
     }
   }
@@ -176,7 +176,7 @@ export function VertexPickStep({
           onMouseLeave={() => setHover(null)}
           onClick={handleClick}
           role="img"
-          aria-label="Coordinate grid — click the vertex of the parabola"
+          aria-label="Coordinate grid: click the vertex of the parabola"
         >
           {xTicks.map((tx) => (
             <line

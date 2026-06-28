@@ -71,7 +71,7 @@ function UnitRow({
   );
 }
 
-/** Plain row of variable chips (not draggable) — used for the subtract stage. */
+/** Plain row of variable chips (not draggable), used for the subtract stage. */
 function XRow({ count, label }: { count: number; label: string }) {
   return (
     <div className="flex items-center gap-1">
@@ -82,7 +82,7 @@ function XRow({ count, label }: { count: number; label: string }) {
   );
 }
 
-/** Boxed variable group (dashed) — used as the draggable in the divide stage. */
+/** Boxed variable group (dashed), used as the draggable in the divide stage. */
 function XGroup({
   count,
   label,
@@ -288,7 +288,7 @@ export function IsolateBlocksStep({
       ? problem.question
       : `Now the equation is ${eqLabel(cur)}. ${
           move === "divide"
-            ? `${variable} is multiplied by ${coefficient} — how do we undo that to get one ${variable} alone?`
+            ? `${variable} is multiplied by ${coefficient}. How do we undo that to get one ${variable} alone?`
             : "What's the next move?"
         }`;
 
@@ -299,8 +299,8 @@ export function IsolateBlocksStep({
 
   const wrongMessage =
     wrongReason === "add"
-      ? `Adding ${cur.k} to both sides only makes the left side bigger — the variable still isn't alone. Undo the +${cur.k} by removing it instead.`
-      : `You can't just throw away the ${variable}'s — that loses the variable you're solving for. To undo multiplying by ${coefficient}, divide both sides by ${coefficient}.`;
+      ? `Adding ${cur.k} to both sides only makes the left side bigger, and the variable still isn't alone. Undo the +${cur.k} by removing it instead.`
+      : `You can't just throw away the ${variable}'s; that loses the variable you're solving for. To undo multiplying by ${coefficient}, divide both sides by ${coefficient}.`;
 
   // --- Equation rendering -------------------------------------------------
   let leftSide: ReactNode;

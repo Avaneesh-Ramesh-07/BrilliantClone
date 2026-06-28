@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { revalidateProgressViews } from "@/app/actions";
 import { AnnotatedFraming } from "@/components/lesson/AnnotatedFraming";
 import { FeedbackPanel } from "@/components/lesson/FeedbackPanel";
+import { MathText } from "@/components/lesson/MathText";
 import { StepProgressBar } from "@/components/lesson/StepProgressBar";
 import { StepRenderer } from "@/components/lesson/StepRenderer";
 import { HelperInteractive } from "@/components/lesson/steps/HelperInteractive";
@@ -31,7 +32,7 @@ interface StepPlayerProps {
 }
 
 const REDEMPTION_BANNER =
-  "Not quite — here's one more problem. Get this one right to move on.";
+  "Not quite. Here's one more problem; get this one right to move on.";
 
 interface EngineState {
   stepIndex: number;
@@ -332,7 +333,7 @@ export function StepPlayer({
   const supabase = useMemo(() => createClient(), []);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // When the current attempt started, used to record solve time per attempt
-  // (internal analytics only — never surfaced to the learner as a timer).
+  // (internal analytics only, never surfaced to the learner as a timer).
   const attemptStartRef = useRef<number>(Date.now());
 
   const [state, dispatch] = useReducer(
@@ -371,7 +372,7 @@ export function StepPlayer({
   // Interactive demos drive their own primary action (drag / tap / play /
   // click), so the bottom "Check Answer" button only appears once solved.
   // vertex-pick is graded but also self-driven via clicks, so it belongs here
-  // too (no "Check Answer" button — the click is the answer).
+  // too (no "Check Answer" button; the click is the answer).
   const isInteractiveDemo =
     problem.type === "drag-to-solve" ||
     problem.type === "isolate-blocks" ||
@@ -401,8 +402,8 @@ export function StepPlayer({
       : undefined;
 
   // Retrieval-practice throwback: a low-stakes recall question that only surfaces
-  // *after* the learner answers a real question correctly (see resolveForwardIndex
-  // — it's skipped after a wrong/retried/redeemed question). Excluded from mastery
+  // *after* the learner answers a real question correctly (see resolveForwardIndex;
+  // it's skipped after a wrong/retried/redeemed question). Excluded from mastery
   // and the redemption flow; a miss just reveals the answer and continues.
   // Redemption problems are never throwbacks.
   const throwbackMeta =
@@ -581,7 +582,7 @@ export function StepPlayer({
     // Mid-step redemption: treat the missed question as recovered and continue.
     const originProblem = step.problems[origin];
     const repaired = { ...state.firstAttempts, [originProblem.id]: true };
-    // Skip any throwback that follows the redeemed question — it was originally
+    // Skip any throwback that follows the redeemed question, since it was originally
     // missed, so the learner doesn't earn the post-correct throwback.
     let nextIndex = origin + 1;
     while (nextIndex <= step.problems.length - 1) {
@@ -598,7 +599,7 @@ export function StepPlayer({
         firstAttempts: repaired,
       });
     } else {
-      // The missed question was the last one — completing the redemption
+      // The missed question was the last one, so completing the redemption
       // finishes the step.
       void goToNextStep();
     }
@@ -610,7 +611,7 @@ export function StepPlayer({
   //               rebuild understanding; otherwise arm the redemption flow.
   //   later     → once the interactive has been worked through, fall back to
   //               the usual redemption flow.
-  // Demos are exempt — they're guided walkthroughs, not graded questions.
+  // Demos are exempt; they're guided walkthroughs, not graded questions.
   const escalateAfterWrong = useCallback(
     (attemptNum: number) => {
       if (isDemo) return;
@@ -637,11 +638,11 @@ export function StepPlayer({
 
   const handleCheck = useCallback(async () => {
     // Require a value before checking a numeric problem; a blank submission
-    // shouldn't count as a wrong attempt — nudge the learner instead.
+    // shouldn't count as a wrong attempt; nudge the learner instead.
     if (problem.type === "numeric-input" && state.numericValue.trim() === "") {
       dispatch({
         type: "PROMPT_ANSWER",
-        message: "Enter an answer to check — or tap \u201cI don\u2019t know\u201d.",
+        message: "Enter an answer to check, or tap \u201cI don\u2019t know\u201d.",
       });
       return;
     }
@@ -666,8 +667,8 @@ export function StepPlayer({
     const submitFeedback = isFirstMiss
       ? {
           message: hasHint
-            ? "Not quite — check the hint below and try again."
-            : "Not quite — take another look and try again.",
+            ? "Not quite. Check the hint below and try again."
+            : "Not quite. Take another look and try again.",
           isCorrect: false,
         }
       : result;
@@ -727,11 +728,11 @@ export function StepPlayer({
     escalateAfterWrong,
   ]);
 
-  // "I don't know" — explicitly give up on the current problem. This produces
+  // "I don't know": explicitly give up on the current problem. This produces
   // the same outcome as submitting a wrong answer (counts against mastery, can
   // trigger the redemption / regression flow).
   const handleGiveUp = useCallback(async () => {
-    let incorrectMsg = "That's okay — review the explanation and keep going.";
+    let incorrectMsg = "That's okay. Review the explanation and keep going.";
     if (
       problem.type === "numeric-input" ||
       problem.type === "slider-balance" ||
@@ -752,8 +753,8 @@ export function StepPlayer({
     const submitFeedback: FeedbackState = isFirstMiss
       ? {
           message: hasHint
-            ? "Not quite — check the hint below and try again."
-            : "Not quite — take another look and try again.",
+            ? "Not quite. Check the hint below and try again."
+            : "Not quite. Take another look and try again.",
           isCorrect: false,
         }
       : result;
@@ -845,7 +846,7 @@ export function StepPlayer({
       }
 
       // Two misses on the same problem trigger the redemption flow (demos are
-      // exempt — they're just guided walkthroughs).
+      // exempt; they're just guided walkthroughs).
       if (!isFirst && !isDemo) {
         dispatch({ type: "ARM_REDEMPTION", originIndex: state.problemIndex });
       }
@@ -916,7 +917,7 @@ export function StepPlayer({
       // correctly on the first try.
       const next = resolveForwardIndex(state.problemIndex, state.firstAttempts);
       if (next > step.problems.length - 1) {
-        // Defensive: everything after this was a skipped throwback — finish the
+        // Defensive: everything after this was a skipped throwback, so finish the
         // step (throwbacks are positioned to never be last, so this is rare).
         afterCorrectLastProblem(state.firstAttempts);
       } else {
@@ -975,6 +976,17 @@ export function StepPlayer({
     buttonLabel === "Check Answer" &&
     !state.masteryPassed &&
     !state.problemSolved;
+
+  // Reveal the correct answer (green highlight) only once the question is solved
+  // or the learner has missed it twice in a row on the same question. A single
+  // wrong attempt still marks the chosen option and shows the hint, but never
+  // gives the answer away; they get a free second try first. The counter is
+  // keyed per problem id (attemptCounts) and resets fresh on each new question
+  // or step, so "two in a row" is always scoped to the current question.
+  const wrongAttemptCount = state.attemptCounts[problem.id] ?? 0;
+  const revealAnswer =
+    state.problemSolved ||
+    (!!state.feedback && !state.feedback.isCorrect && wrongAttemptCount >= 2);
 
   return (
     <div className="flex min-h-screen flex-col pb-28">
@@ -1046,7 +1058,7 @@ export function StepPlayer({
       </h1>
       {isThrowback ? (
         <p className="mt-3 text-body text-muted">
-          A quick recall from earlier — bringing it back is how it sticks. This
+          A quick recall from earlier. Bringing it back is how it sticks. This
           one isn&apos;t graded.
         </p>
       ) : (
@@ -1066,7 +1078,7 @@ export function StepPlayer({
               fill="currentColor"
             />
           </svg>
-          Demo — walkthrough
+          Demo walkthrough
         </div>
       )}
 
@@ -1143,6 +1155,7 @@ export function StepPlayer({
               onDragReset={() => dispatch({ type: "RESET_ATTEMPT" })}
               problemSolved={state.problemSolved}
               showChoiceResult={state.showChoiceResult}
+              revealAnswer={revealAnswer}
               disabled={state.masteryPassed || state.redemptionArmed}
             />
           </div>
@@ -1199,7 +1212,9 @@ export function StepPlayer({
               </svg>
               <div>
                 <p className="text-label font-semibold text-amber-700">Hint</p>
-                <p className="text-body text-amber-700/90">{problemHint}</p>
+                <p className="text-body text-amber-700/90">
+                  <MathText text={problemHint} />
+                </p>
               </div>
             </div>
           )}

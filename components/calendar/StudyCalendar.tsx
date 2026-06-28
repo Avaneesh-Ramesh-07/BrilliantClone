@@ -13,7 +13,7 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 /** Builds the breakdown sentence for a day's tooltip. */
 function describeDay(day: DayActivity): string {
   if (!day.active) return "No activity";
-  if (day.totalMs === 0) return "Active — time not recorded";
+  if (day.totalMs === 0) return "Active (time not recorded)";
 
   const parts: string[] = [];
   const { lessons, practiceTests, duels } = day.breakdown;
@@ -23,7 +23,7 @@ function describeDay(day: DayActivity): string {
   if (duels > 0) parts.push(`Duels ${formatStudyTime(duels)}`);
 
   const total = `Studied ${formatStudyTime(day.totalMs)}`;
-  return parts.length > 0 ? `${total} — ${parts.join(" · ")}` : total;
+  return parts.length > 0 ? `${total}: ${parts.join(" · ")}` : total;
 }
 
 /** `Jun 12` style label for a day's date. */

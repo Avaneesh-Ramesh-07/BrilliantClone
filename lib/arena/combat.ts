@@ -1,7 +1,7 @@
 import type { ArenaRole, ArenaWinner } from "@/types/arena";
 
 /**
- * Pure head-to-head combat rules for the Arena. No I/O, no Supabase, no React —
+ * Pure head-to-head combat rules for the Arena. No I/O, no Supabase, no React,
  * just deterministic state transitions so the logic can be reasoned about and
  * unit-tested in isolation. Both clients run the same module; each client only
  * ever applies the effect of *its own* answer (its streak/blow counters and the
@@ -11,7 +11,7 @@ import type { ArenaRole, ArenaWinner } from "@/types/arena";
  * Rules (from the spec):
  *  - Base blow = 10 HP.
  *  - A blow lands every 2 correct answers (per-blow counter `correct_this_blow`).
- *  - The 2-correct blow counter resets ONLY after a blow is delivered — never on
+ *  - The 2-correct blow counter resets ONLY after a blow is delivered, never on
  *    a wrong answer.
  *  - A wrong answer resets the STREAK counter only.
  *  - Streak >= 5 correct in a row -> blows deal 15 HP. The buff persists until a
@@ -151,7 +151,7 @@ export function applyAnswer(
 /**
  * The minimal column patch a client should write after applying its own answer.
  * Only the attacker's own streak/blow counters, the opponent's HP, and (on game
- * end) status/winner are included — so the two players never clobber each
+ * end) status/winner are included, so the two players never clobber each
  * other's independent fields on the shared row.
  */
 export function patchForOutcome(

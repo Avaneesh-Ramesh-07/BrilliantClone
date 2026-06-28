@@ -36,7 +36,7 @@ export function ArenaLobby({
   const [codeCopied, setCodeCopied] = useState(false);
   const createdRef = useRef(false);
 
-  // Reuse the user's open session, or create one — exactly once on mount.
+  // Reuse the user's open session, or create one, exactly once on mount.
   // NOTE: we intentionally do NOT cancel/abort on cleanup. Under React 18
   // Strict Mode the effect runs (mount → cleanup → remount); a per-run
   // "cancelled" flag would discard the result of the single request the ref
@@ -155,7 +155,7 @@ export function ArenaLobby({
     );
   }
 
-  // Opponent joined — hand off to the shared live match screen.
+  // Opponent joined; hand off to the shared live match screen.
   if (session && session.status !== "waiting") {
     return (
       <ArenaMatch

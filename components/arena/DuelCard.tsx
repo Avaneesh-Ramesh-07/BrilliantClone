@@ -82,7 +82,7 @@ export interface DuelCardProps {
   username: string;
   /** The player's total duel wins (used to derive their rank). */
   wins: number;
-  /** Layout side — only affects subtle directional accents (default "left"). */
+  /** Layout side; only affects subtle directional accents (default "left"). */
   side?: "left" | "right";
   /** Optional precomputed rank (skips the internal getDuelRank call). */
   rank?: DuelRank;
@@ -165,7 +165,7 @@ export function DuelCard({
             <Blades />
           </div>
 
-          {/* Prestige stars (Shadow Lord) — otherwise show win count chip. */}
+          {/* Prestige stars (Shadow Lord), otherwise show win count chip. */}
           <div className="mt-1.5 flex items-center gap-1">
             {r.stars > 0 ? (
               <span

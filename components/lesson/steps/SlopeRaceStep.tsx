@@ -295,7 +295,7 @@ export function SlopeRaceStep({
 
       {phase === "finished" && tie && (
         <p className="mt-4 rounded-lg border border-border bg-surface px-4 py-3 text-center text-body text-muted">
-          It&apos;s a tie — both slopes are equal. Make one graph steeper than
+          It&apos;s a tie: both slopes are equal. Make one graph steeper than
           the other, then play again.
         </p>
       )}
@@ -347,7 +347,7 @@ export function SlopeRaceStep({
             <div className="mt-4 rounded-lg border border-error/40 bg-error/5 px-4 py-3">
               <p className="text-body text-error">
                 {problem.feedback.incorrect ??
-                  "Not quite — think about how the steepness of the slope affected the speed. Try again."}
+                  "Not quite. Think about how the steepness of the slope affected the speed. Try again."}
               </p>
             </div>
           )}

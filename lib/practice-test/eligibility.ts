@@ -40,16 +40,14 @@ function daysSince(iso: string | undefined): number | null {
 
 const MAX_CONCEPTS = 12;
 
-interface PendingConcept {
-  lessonId: string;
-  stepId: string;
-  daysAgo: number;
-}
-
 /**
- * Returns up to 12 concepts the learner last reviewed on a previous calendar
- * day (anything touched today is excluded). Resilient: never throws on missing
- * rows; unresolved steps are simply skipped. Returns [] on no eligible work.
+ * Returns up to 12 concepts whose MOST RECENT review fell on a previous calendar
+ * day (any concept touched today is excluded). Eligibility is per-CONCEPT, not
+ * per-lesson: a concept left untouched today stays eligible even when other
+ * concepts in the same lesson were practiced today, because "today" is resolved
+ * from per-step `step_attempts.attempted_at` timestamps (one row per concept).
+ * Resilient: never throws on missing rows; unresolved steps are simply skipped.
+ * Returns [] on no eligible work.
  */
 export async function getEligibleConcepts(
   supabase: SupabaseClient,
@@ -74,15 +72,13 @@ export async function getEligibleConcepts(
     }
   }
 
-  // Keep only steps last touched strictly before today (same-day excluded).
-  const pending: PendingConcept[] = [];
-  for (const { lessonId, stepId, at } of Object.values(latestByKey)) {
-    const daysAgo = daysSince(at);
-    if (daysAgo === null || daysAgo < 1) continue;
-    pending.push({ lessonId, stepId, daysAgo });
-  }
-
-  if (pending.length === 0) return [];
+  // Resolve EVERY latest-per-step entry to its concept, INCLUDING steps last
+  // touched today. We keep today's steps here (rather than filtering them out
+  // up front) so that a concept practiced today via ANY of its steps can be
+  // recognized below and excluded even when an older step happens to share its
+  // label. The per-concept "touched today?" decision is made after the dedupe.
+  const allLatest = Object.values(latestByKey);
+  if (allLatest.length === 0) return [];
 
   // Built-in lessons keyed by id for fast lookup.
   const builtInLessons: Record<string, Lesson> = {};
@@ -90,13 +86,9 @@ export async function getEligibleConcepts(
     builtInLessons[lesson.id] = lesson;
   }
 
-  // AI lessons: any eligible lessonId that isn't a built-in.
+  // AI lessons: any touched lessonId that isn't a built-in.
   const aiLessonIds = Array.from(
-    new Set(
-      pending
-        .map((p) => p.lessonId)
-        .filter((id) => !(id in builtInLessons))
-    )
+    new Set(allLatest.map((p) => p.lessonId).filter((id) => !(id in builtInLessons)))
   );
 
   const aiLessons: Record<
@@ -126,43 +118,50 @@ export async function getEligibleConcepts(
   }
 
   const resolved: EligibleConcept[] = [];
-  for (const p of pending) {
-    const builtIn = builtInLessons[p.lessonId];
+  for (const { lessonId, stepId, at } of allLatest) {
+    const daysAgo = daysSince(at);
+    if (daysAgo === null) continue;
+
+    const builtIn = builtInLessons[lessonId];
     if (builtIn) {
-      const step = builtIn.steps.find((s) => s.id === p.stepId);
+      const step = builtIn.steps.find((s) => s.id === stepId);
       if (!step) continue;
       const conceptLabel = (step.concept || step.title || "").trim();
       if (!conceptLabel) continue;
       resolved.push({
-        lessonId: p.lessonId,
-        stepId: p.stepId,
+        lessonId,
+        stepId,
         conceptLabel,
         lessonTitle: builtIn.title,
         // LESSON_TOPIC values ("equations"|"graphing"|"quadratics") are exactly
         // the TopicFamily union, so this maps directly.
-        topicFamily: LESSON_TOPIC[p.lessonId] ?? "equations",
-        lastReviewedDaysAgo: p.daysAgo,
+        topicFamily: LESSON_TOPIC[lessonId] ?? "equations",
+        lastReviewedDaysAgo: daysAgo,
       });
       continue;
     }
 
-    const ai = aiLessons[p.lessonId];
+    const ai = aiLessons[lessonId];
     if (!ai) continue;
-    const step = ai.lesson.steps.find((s) => s.id === p.stepId);
+    const step = ai.lesson.steps.find((s) => s.id === stepId);
     if (!step) continue;
     const conceptLabel = (step.concept || step.title || "").trim();
     if (!conceptLabel) continue;
     resolved.push({
-      lessonId: p.lessonId,
-      stepId: p.stepId,
+      lessonId,
+      stepId,
       conceptLabel,
       lessonTitle: ai.lesson.title,
       topicFamily: ai.topic ? topicFamily(ai.topic) : "equations",
-      lastReviewedDaysAgo: p.daysAgo,
+      lastReviewedDaysAgo: daysAgo,
     });
   }
 
-  // Dedupe by conceptLabel, keeping the most-recently-reviewed (smallest daysAgo).
+  // Dedupe by conceptLabel, collapsing to the MOST RECENT review (smallest
+  // daysAgo) across every step/lesson carrying that label. This makes the
+  // touched-today test per-CONCEPT: a concept reviewed today via any of its
+  // steps collapses to daysAgo 0 and is dropped below, while a concept whose
+  // most recent review was an earlier day stays eligible.
   const byLabel: Record<string, EligibleConcept> = {};
   for (const c of resolved) {
     const existing = byLabel[c.conceptLabel];
@@ -171,7 +170,9 @@ export async function getEligibleConcepts(
     }
   }
 
+  // Keep only concepts last reviewed strictly before today (same-day excluded).
   return Object.values(byLabel)
+    .filter((c) => c.lastReviewedDaysAgo >= 1)
     .sort((a, b) => a.lastReviewedDaysAgo - b.lastReviewedDaysAgo)
     .slice(0, MAX_CONCEPTS);
 }

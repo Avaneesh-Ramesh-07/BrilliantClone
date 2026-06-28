@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { splitGlossary } from "@/lib/glossary";
 import { GlossaryTerm } from "./GlossaryTerm";
 import { Fraction } from "./Fraction";
+import { renderWithFractions } from "@/lib/math/fractions";
 
 interface MathTextProps {
   text: string;
@@ -67,6 +68,19 @@ function renderSuperscripts(text: string, keyBase: string): React.ReactNode {
 }
 
 /**
+ * Renders a plain-text leaf with two enrichments: bare math fractions written
+ * with a slash (e.g. `3/4`, `b/(2a)`) become real stacked fractions, and
+ * caret-exponent notation inside the remaining text becomes superscripts.
+ * Fraction detection runs first and is conservative (see
+ * {@link renderWithFractions}), so prose slashes are never touched.
+ */
+function renderLeaf(text: string, keyBase: string): React.ReactNode {
+  return renderWithFractions(text, keyBase, (value, key) =>
+    renderSuperscripts(value, key)
+  );
+}
+
+/**
  * Renders an inline string with three layers of enrichment (no fractions here):
  *  1. math variables wrapped in backticks are shown in the "math" face;
  *  2. recognized glossary terms in the plain text become tappable definitions;
@@ -82,14 +96,12 @@ function renderInline(text: string, glossary: boolean) {
     if (part.length >= 2 && part.startsWith("`") && part.endsWith("`")) {
       return (
         <span key={i} className="font-math">
-          {renderSuperscripts(part.slice(1, -1), `bt-${i}`)}
+          {renderLeaf(part.slice(1, -1), `bt-${i}`)}
         </span>
       );
     }
     if (!glossary) {
-      return (
-        <Fragment key={i}>{renderSuperscripts(part, `pl-${i}`)}</Fragment>
-      );
+      return <Fragment key={i}>{renderLeaf(part, `pl-${i}`)}</Fragment>;
     }
     const segments = splitGlossary(part);
     return (
@@ -98,9 +110,7 @@ function renderInline(text: string, glossary: boolean) {
           seg.term && seg.definition ? (
             <GlossaryTerm key={j} term={seg.text} definition={seg.definition} />
           ) : (
-            <Fragment key={j}>
-              {renderSuperscripts(seg.text, `g-${i}-${j}`)}
-            </Fragment>
+            <Fragment key={j}>{renderLeaf(seg.text, `g-${i}-${j}`)}</Fragment>
           )
         )}
       </Fragment>

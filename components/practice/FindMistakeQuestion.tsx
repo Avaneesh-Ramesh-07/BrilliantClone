@@ -1,13 +1,20 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { FindMistakeQuestion as FindMistakeQuestionData } from "@/types/practice";
 import { Button } from "@/components/ui/Button";
 
 interface FindMistakeQuestionProps {
   question: FindMistakeQuestionData;
+  /** Called on EVERY check; the parent counts attempts and gates the reveal. */
   onAnswer: (correct: boolean) => void;
   disabled?: boolean;
+  /**
+   * When true, reveal/highlight the correct answer (green) and show the
+   * explanation. The parent flips this once the question is solved or missed
+   * twice in a row - a single miss never reveals the answer.
+   */
+  reveal?: boolean;
 }
 
 const NO_MISTAKE = -1;
@@ -16,25 +23,28 @@ export function FindMistakeQuestion({
   question,
   onAnswer,
   disabled,
+  reveal = false,
 }: FindMistakeQuestionProps) {
   const [selected, setSelected] = useState<number | null>(null);
-  const [checked, setChecked] = useState(false);
-  const answeredRef = useRef(false);
+  // A check has been submitted for the current selection (marks the pick). On a
+  // first miss this shows the pick as neutral; the answer stays hidden.
+  const [showResult, setShowResult] = useState(false);
 
-  const frozen = checked || !!disabled;
+  const frozen = reveal || !!disabled;
 
-  // The learner's pick maps to mistakeIndex: a step index, or null ("no mistake").
   const pickedIndex = selected === NO_MISTAKE ? null : selected;
-  const isCorrect = checked && pickedIndex === question.mistakeIndex;
+  const isCorrect = pickedIndex === question.mistakeIndex;
+
+  function handlePick(value: number) {
+    if (frozen) return;
+    setSelected(value);
+    setShowResult(false);
+  }
 
   function handleCheck() {
     if (frozen || selected === null) return;
-    const correct = pickedIndex === question.mistakeIndex;
-    setChecked(true);
-    if (!answeredRef.current) {
-      answeredRef.current = true;
-      onAnswer(correct);
-    }
+    setShowResult(true);
+    onAnswer(pickedIndex === question.mistakeIndex);
   }
 
   function optionClasses(value: number): string {
@@ -42,23 +52,27 @@ export function FindMistakeQuestion({
       "min-h-[44px] rounded-lg border px-4 py-3 text-left text-body transition-colors";
     const isSelected = selected === value;
 
-    if (checked) {
+    if (reveal) {
       const isCorrectChoice =
         (value === NO_MISTAKE && question.mistakeIndex === null) ||
         (value !== NO_MISTAKE && value === question.mistakeIndex);
 
-      // The correct answer is always shown in green — whether the learner picked
-      // it (they got it right) or not (revealing what they should have chosen).
-      // A green outline on a correctly-identified step signals success rather
-      // than flagging that step as "the error".
+      // The correct answer is always shown in green once revealed, whether the
+      // learner picked it or not. Their own incorrect pick is shown neutral
+      // (never red).
       if (isCorrectChoice) {
         return `${base} border-success bg-success/10 text-success`;
       }
-      // The learner's own incorrect pick is shown neutral (never red).
       if (isSelected) {
         return `${base} border-border bg-surface text-muted`;
       }
       return `${base} border-border bg-surface text-text`;
+    }
+
+    // A submitted (first-miss) pick is marked neutral - "not it" - without
+    // revealing which step is actually wrong, so the learner can try again.
+    if (showResult && isSelected) {
+      return `${base} border-border bg-surface text-muted`;
     }
 
     if (isSelected) {
@@ -81,7 +95,7 @@ export function FindMistakeQuestion({
             key={index}
             type="button"
             disabled={frozen}
-            onClick={() => setSelected(index)}
+            onClick={() => handlePick(index)}
             className={optionClasses(index)}
           >
             <span className="text-label text-muted">Step {index + 1}</span>
@@ -94,14 +108,14 @@ export function FindMistakeQuestion({
         <button
           type="button"
           disabled={frozen}
-          onClick={() => setSelected(NO_MISTAKE)}
+          onClick={() => handlePick(NO_MISTAKE)}
           className={optionClasses(NO_MISTAKE)}
         >
-          The work is correct — no mistake.
+          The work is correct, no mistake.
         </button>
       </div>
 
-      {!checked && (
+      {!reveal && (
         <div className="mt-4">
           <Button
             type="button"
@@ -110,12 +124,12 @@ export function FindMistakeQuestion({
             variant="primary"
             fullWidth
           >
-            Check
+            {showResult ? "Check again" : "Check"}
           </Button>
         </div>
       )}
 
-      {checked && (
+      {reveal && (
         <div
           className={`mt-4 rounded-lg border px-4 py-3 ${
             isCorrect

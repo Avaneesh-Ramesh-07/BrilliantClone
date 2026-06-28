@@ -10,7 +10,7 @@
  * correct-by-construction: we choose the answer-defining integers first, then
  * derive the displayed coefficients/constants from them. We never solve an
  * equation at runtime. Each player builds their OWN pool client-side, so plain
- * Math.random is fine — no cross-client determinism is required.
+ * Math.random is fine, no cross-client determinism is required.
  *
  * Difficulty is intentionally HARD across the board (multi-step, variables on
  * both sides, big coefficients), and escalates further across tiers.
@@ -48,7 +48,7 @@ function uid(topic: ArenaTopic): string {
 }
 
 // ---------------------------------------------------------------------------
-// Formatting helpers (display only — parseNumeric maps the unicode minus back)
+// Formatting helpers (display only, parseNumeric maps the unicode minus back)
 // ---------------------------------------------------------------------------
 
 /** " + 3" or " − 3": a signed constant term to append after another term. */
@@ -96,7 +96,7 @@ const BANDS: Band[] = [
 ];
 
 // ===========================================================================
-// EQUATIONS — multi-step linear with variables on BOTH sides
+// EQUATIONS, multi-step linear with variables on BOTH sides
 // ===========================================================================
 
 function genEquation(band: Band): Omit<ArenaProblem, "topic"> {
@@ -125,7 +125,7 @@ function genEquation(band: Band): Omit<ArenaProblem, "topic"> {
 }
 
 // ===========================================================================
-// GRAPHING / LINEAR — single numeric answer
+// GRAPHING / LINEAR, single numeric answer
 // ===========================================================================
 
 function genGraphing(band: Band): Omit<ArenaProblem, "topic"> {
@@ -174,7 +174,7 @@ function genGraphing(band: Band): Omit<ArenaProblem, "topic"> {
 }
 
 // ===========================================================================
-// QUADRATICS — factorable with integer roots
+// QUADRATICS, factorable with integer roots
 // ===========================================================================
 
 function genQuadratic(band: Band): Omit<ArenaProblem, "topic"> {

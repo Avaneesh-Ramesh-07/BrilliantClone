@@ -8,6 +8,7 @@ type FeatureCard = {
   cta: string;
   accent: string;
   btnClass: string;
+  beta?: boolean;
 };
 
 const FEATURES: FeatureCard[] = [
@@ -25,13 +26,23 @@ const FEATURES: FeatureCard[] = [
     emoji: "📝",
     title: "Practice Tests",
     description:
-      "Generate a focused, graded practice test built from the concepts you've recently reviewed — so it tests what's settling into memory.",
+      "Generate a focused, graded practice test built from the concepts you've recently reviewed, so it tests what's settling into memory.",
     href: "/sandbox/practice-test",
     cta: "Build a test",
     accent: "bg-accent-purple",
     btnClass: "btn-pop bg-accent-purple text-white",
+    beta: true,
   },
 ];
+
+/** A small, tasteful "BETA" pill used wherever the Practice Test feature surfaces. */
+function BetaPill() {
+  return (
+    <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wide text-amber-700">
+      Beta
+    </span>
+  );
+}
 
 export function MorePracticeLanding() {
   return (
@@ -46,9 +57,12 @@ export function MorePracticeLanding() {
               {feature.emoji}
             </span>
             <div className="min-w-0">
-              <h2 className="font-heading text-heading-md text-text">
-                {feature.title}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading text-heading-md text-text">
+                  {feature.title}
+                </h2>
+                {feature.beta && <BetaPill />}
+              </div>
               <p className="mt-1 text-body text-muted">{feature.description}</p>
             </div>
           </div>

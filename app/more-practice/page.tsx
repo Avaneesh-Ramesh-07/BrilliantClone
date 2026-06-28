@@ -33,7 +33,7 @@ export default async function MorePracticePage() {
           Practice
         </h1>
         <p className="mt-1 text-body text-muted">
-          Two ways to keep your algebra sharp — pick a path and dive in.
+          Two ways to keep your algebra sharp. Pick a path and dive in.
         </p>
       </header>
 

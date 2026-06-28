@@ -1,13 +1,20 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import type { OrderStepsQuestion as OrderStepsQuestionData } from "@/types/practice";
 
 interface OrderStepsQuestionProps {
   question: OrderStepsQuestionData;
+  /** Called on EVERY check; the parent counts attempts and gates the reveal. */
   onAnswer: (correct: boolean) => void;
   disabled?: boolean;
+  /**
+   * When true, reveal the correct ordering (green) and show the explanation.
+   * The parent flips this once the question is solved or missed twice in a row -
+   * a single miss never reveals the answer.
+   */
+  reveal?: boolean;
 }
 
 function arraysEqual(a: string[], b: string[]): boolean {
@@ -36,20 +43,23 @@ export function OrderStepsQuestion({
   question,
   onAnswer,
   disabled,
+  reveal = false,
 }: OrderStepsQuestionProps) {
   const [order, setOrder] = useState<string[]>(() =>
     shuffleSteps(question.steps)
   );
-  const [checked, setChecked] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const answeredRef = useRef(false);
+  // A check has been submitted for the current ordering. On a first miss this
+  // shows a neutral nudge; the correct order stays hidden until `reveal`.
+  const [showResult, setShowResult] = useState(false);
 
-  const frozen = disabled || checked;
+  const frozen = disabled || reveal;
+  const isCorrect = arraysEqual(order, question.steps);
 
   function move(index: number, direction: -1 | 1) {
     if (frozen) return;
     const target = index + direction;
     if (target < 0 || target >= order.length) return;
+    setShowResult(false);
     setOrder((prev) => {
       const next = [...prev];
       [next[index], next[target]] = [next[target], next[index]];
@@ -58,12 +68,9 @@ export function OrderStepsQuestion({
   }
 
   function handleCheck() {
-    if (frozen || answeredRef.current) return;
-    const correct = arraysEqual(order, question.steps);
-    answeredRef.current = true;
-    setIsCorrect(correct);
-    setChecked(true);
-    onAnswer(correct);
+    if (frozen) return;
+    setShowResult(true);
+    onAnswer(arraysEqual(order, question.steps));
   }
 
   return (
@@ -75,7 +82,7 @@ export function OrderStepsQuestion({
 
       <ol className="mt-4 space-y-2">
         {order.map((step, index) => {
-          const showSuccess = checked && isCorrect;
+          const showSuccess = reveal && isCorrect;
           const rowClasses = showSuccess
             ? "border-success/40 bg-success/10 text-success"
             : "border-border bg-surface text-text";
@@ -115,24 +122,31 @@ export function OrderStepsQuestion({
         })}
       </ol>
 
-      {!checked && (
+      {!reveal && (
         <Button
           type="button"
           className="mt-4"
           disabled={disabled}
           onClick={handleCheck}
         >
-          Check
+          {showResult ? "Check again" : "Check"}
         </Button>
       )}
 
-      {checked && isCorrect && (
+      {!reveal && showResult && (
+        <p className="mt-3 text-body text-muted">
+          That&apos;s not the right order yet. Rearrange the steps and check
+          again.
+        </p>
+      )}
+
+      {reveal && isCorrect && (
         <div className="mt-4 rounded-lg border border-success/40 bg-success/10 px-4 py-3">
           <p className="text-body text-success">{question.explanation}</p>
         </div>
       )}
 
-      {checked && !isCorrect && (
+      {reveal && !isCorrect && (
         <>
           <div className="mt-4 rounded-lg border border-border bg-surface px-4 py-3">
             <p className="text-body text-error">{question.explanation}</p>

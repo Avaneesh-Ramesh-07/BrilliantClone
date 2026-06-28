@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 
 /**
  * Resolves a post-login redirect target from the `next` query param. Only a
- * same-origin RELATIVE path (e.g. "/arena/123") is allowed — anything absolute
+ * same-origin RELATIVE path (e.g. "/arena/123") is allowed, anything absolute
  * ("https://…"), protocol-relative ("//evil.com"), or otherwise malformed falls
  * back to "/home". This prevents the `next` param from being abused as an open
  * redirect while still letting an invited arena guest return to their challenge.

@@ -12,6 +12,7 @@ import {
 } from "react";
 import { Button } from "@/components/ui/Button";
 import { DuelStartVersus } from "@/components/arena/DuelStartVersus";
+import { renderWithFractions } from "@/lib/math/fractions";
 import {
   applyAnswer,
   patchForOutcome,
@@ -204,7 +205,7 @@ export function ArenaMatch({
 
   const bothReady = iUnderstand && opponentReady;
 
-  // Trigger the match-start versus intro exactly once — but only AFTER the rules
+  // Trigger the match-start versus intro exactly once, but only AFTER the rules
   // gate clears (both players confirmed "I understand"). Setting both flags in a
   // single commit means the rules overlay is replaced directly by the versus
   // intro with no flash of the live board in between. It then auto-dismisses.
@@ -278,7 +279,7 @@ export function ArenaMatch({
       opponentPresentRef.current = opponentPresent;
 
       // Rules-gate readiness BACKSTOP (primary signal is the `ready` broadcast
-      // below). Scan ALL of the opponent's metas — a second track() call appends
+      // below). Scan ALL of the opponent's metas; a second track() call appends
       // a new meta rather than replacing, so the ready flag may not be at [0].
       // Readiness is monotonic within a match and we only ever flip it ON here,
       // so a stale meta can never reset a `ready` we already learned by broadcast.
@@ -299,7 +300,7 @@ export function ArenaMatch({
 
       if (opponentPresent) {
         opponentEverSeenRef.current = true;
-        // Opponent (re)connected within the debounce — cancel the pending
+        // Opponent (re)connected within the debounce; cancel the pending
         // forfeit and resume the match (this also absorbs presence flaps).
         if (disconnectTimerRef.current) {
           clearTimeout(disconnectTimerRef.current);
@@ -312,7 +313,7 @@ export function ArenaMatch({
       // Opponent not present. Only treat as a disconnect if we've seen them
       // before and the match is still live. After a short INVISIBLE debounce
       // (to ride out a momentary presence flap) the remaining player is awarded
-      // the forfeit win — there is no visible countdown.
+      // the forfeit win; there is no visible countdown.
       if (
         opponentEverSeenRef.current &&
         !disconnectTimerRef.current &&
@@ -350,7 +351,7 @@ export function ArenaMatch({
       .on("presence", { event: "leave" }, handlePresence)
       // Primary rules-gate signal: when the OTHER role announces "ready", mark
       // them ready. Sticky (only ever set true) so a later presence sync can't
-      // undo it. We never need to hear our own broadcast — the local click
+      // undo it. We never need to hear our own broadcast; the local click
       // counts immediately via `setIUnderstand(true)` in handleUnderstand.
       .on("broadcast", { event: "ready" }, ({ payload }) => {
         if ((payload as { role?: ArenaRole } | null)?.role === opponentRole) {
@@ -405,8 +406,8 @@ export function ArenaMatch({
   // "Leave duel" button below is the only client-initiated immediate forfeit.
 
   // ----- Explicit "Leave duel" (forfeit). -----
-  // When a player deliberately quits a live match, they forfeit: the opponent —
-  // if still present — is awarded the win and the leaver is recorded as the
+  // When a player deliberately quits a live match, they forfeit: the opponent,
+  // if still present, is awarded the win and the leaver is recorded as the
   // loser, reusing the SAME endSession termination path as a disconnect/normal
   // end (so wins/rank/history all derive consistently from session.winner). If
   // the opponent is already gone too, nobody remains to win, so the room is
@@ -420,7 +421,7 @@ export function ArenaMatch({
     leftRef.current = true;
     setLeaving(true);
 
-    // We are the one leaving — cancel any pending "opponent disconnected" timer.
+    // We are the one leaving; cancel any pending "opponent disconnected" timer.
     if (disconnectTimerRef.current) {
       clearTimeout(disconnectTimerRef.current);
       disconnectTimerRef.current = null;
@@ -429,9 +430,9 @@ export function ArenaMatch({
     if (statusRef.current === "active") {
       // Live match → record the forfeit, then STAY on the result screen. We
       // optimistically flip the local session to complete so the game-over
-      // overlay ("You forfeited — You Lose") shows immediately without waiting
+      // overlay ("You forfeited. You Lose") shows immediately without waiting
       // for the realtime round-trip; the matching DB update arrives right after
-      // and is identical. The user dismisses via the "Back to home" button —
+      // and is identical. The user dismisses via the "Back to home" button;
       // there is intentionally NO auto-navigation here.
       if (opponentPresentRef.current) {
         await insertEvent(supabase, sessionId, role, "disconnect");
@@ -488,7 +489,7 @@ export function ArenaMatch({
       } else if (correct) {
         setFeedback("Correct!");
       } else {
-        setFeedback("Wrong — streak reset.");
+        setFeedback("Wrong! Streak reset.");
       }
 
       void writeCombatPatch(supabase, sessionId, patch);
@@ -525,7 +526,7 @@ export function ArenaMatch({
   const handleUnderstand = useCallback(() => {
     if (iUnderstandRef.current) return;
     iUnderstandRef.current = true;
-    setIUnderstand(true); // local side counts immediately — never relies on echo
+    setIUnderstand(true); // local side counts immediately; never relies on echo
     const channel = channelRef.current;
     if (!channel) return;
     // Primary cross-client signal: a broadcast (reliable; presence-meta updates
@@ -549,7 +550,7 @@ export function ArenaMatch({
   }, [sessionId]);
 
   // A forfeit (explicit leave or disconnect) ends the match with a winner while
-  // the loser still has HP left — a normal end always drives the loser to 0 HP.
+  // the loser still has HP left; a normal end always drives the loser to 0 HP.
   // So a positive loser-HP on a completed, non-draw match means win-by-forfeit.
   // This lets BOTH the detecting client (opponentLeft) AND the one who only
   // receives the realtime terminal update render the forfeit outcome correctly.
@@ -569,10 +570,10 @@ export function ArenaMatch({
     if (session.winner === "draw") return "It's a draw!";
     if (session.winner === role) {
       return opponentLeft || byForfeit
-        ? "Opponent forfeited — You Win!"
+        ? "Opponent forfeited. You Win!"
         : "You Win!";
     }
-    return byForfeit ? "You forfeited — You Lose" : "You Lose";
+    return byForfeit ? "You forfeited. You Lose" : "You Lose";
   })();
 
   return (
@@ -724,14 +725,14 @@ export function ArenaMatch({
               className="px-2 text-center font-equation text-text"
               style={{ fontSize: 20, lineHeight: 1.4 }}
             >
-              {problem.prompt}
+              {renderWithFractions(problem.prompt, "arena-prompt", undefined, "mx-0.5")}
             </p>
           </div>
         )}
 
         {isActive && poolExhausted && (
           <p className="text-center text-body text-muted">
-            You&apos;ve cleared every problem in your pool — hold the line!
+            You&apos;ve cleared every problem in your pool. Hold the line!
           </p>
         )}
 
@@ -815,7 +816,7 @@ export function ArenaMatch({
             {/* Programmatic client-side navigation (not <Link>): a fresh soft
                 navigation preserves the App Router context (so the earlier
                 usePathname/useContext crash from a full reload does NOT return).
-                Goes to /home — the reliable destination for both authed players
+                Goes to /home, the reliable destination for both authed players
                 and guests (a guest has no /arena lobby). */}
             <button
               type="button"

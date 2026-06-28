@@ -102,10 +102,10 @@ export function ParabolaSliderStep({
 
   const concavity =
     a > 0
-      ? "Concave up (opens upward) — this parabola has a minimum."
+      ? "Concave up (opens upward): this parabola has a minimum."
       : a < 0
-        ? "Concave down (opens downward) — this parabola has a maximum."
-        : "a = 0: this is no longer a parabola — it's a straight line.";
+        ? "Concave down (opens downward): this parabola has a maximum."
+        : "a = 0: this is no longer a parabola; it's a straight line.";
 
   const labelStyle = { fontSize: 9, fill: "var(--color-muted)" } as const;
   const axisLabelStyle = {

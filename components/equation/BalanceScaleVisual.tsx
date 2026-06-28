@@ -39,7 +39,7 @@ export function BalanceScaleVisual({
           fill="var(--color-muted)"
         />
 
-        {/* Beam + pans — rotate around fulcrum */}
+        {/* Beam + pans, rotate around fulcrum */}
         <g transform={`rotate(${tilt}, 140, 155)`}>
           <rect
             x="40"
@@ -102,8 +102,8 @@ export function BalanceScaleVisual({
       {!balanced && diff !== 0 && (
         <p className="mt-2 text-center text-body text-muted">
           {diff > 0
-            ? "The right side is heavier — try a larger x."
-            : "The left side is heavier — try a smaller x."}
+            ? "The right side is heavier. Try a larger x."
+            : "The left side is heavier. Try a smaller x."}
         </p>
       )}
       {balanced && (

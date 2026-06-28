@@ -130,7 +130,7 @@ const UP = 0.78;
 const DOWN = 0.45;
 
 export function heuristicDifficulty(perf: TopicPerformance): Difficulty {
-  // Not enough evidence yet — hold the current band.
+  // Not enough evidence yet, hold the current band.
   if (perf.attempts < 2) return perf.currentDifficulty;
   const p = perf.proficiency;
 
@@ -179,7 +179,7 @@ export function fallbackCoach(req: CoachRequest): CoachResponse {
       const pct = Math.round(perf.successRate * 100);
       const rationale =
         difficulty === "hard"
-          ? `Strong work (${pct}% recent, on a good pace) — stepping it up.`
+          ? `Strong work (${pct}% recent, on a good pace). Stepping it up.`
           : difficulty === "easy"
             ? `Let's rebuild confidence with clearer, smaller problems (${pct}% recent).`
             : `Keeping it balanced while you find your footing (${pct}% recent).`;
@@ -198,7 +198,7 @@ export function fallbackSummary(req: SummaryRequest): SummaryResponse {
     if (trend === "improving") {
       recommendation = `You started shaky but you're trending up in ${label} (${pct}% recently). Keep going to lock it in.`;
     } else if (urgency >= 60) {
-      recommendation = `${label} needs attention — ${pct}% recent success. Revisit the lesson, then drill it here.`;
+      recommendation = `${label} needs attention: ${pct}% recent success. Revisit the lesson, then drill it here.`;
     } else if (urgency >= 30) {
       recommendation = `${label} is coming along (${pct}%). A little more practice will solidify it.`;
     } else {
@@ -215,7 +215,7 @@ export function fallbackSummary(req: SummaryRequest): SummaryResponse {
       ? "Answer a few questions to get personalized recommendations."
       : top.urgency >= 50
         ? `Nice session! Your best next move is to focus on ${TOPIC_LABELS[top.topic]}.`
-        : `Great session — you're in good shape across the board. Keep the streak going!`;
+        : `Great session! You're in good shape across the board. Keep the streak going!`;
 
   return { source: "fallback", recommendations: recs, overallMessage };
 }

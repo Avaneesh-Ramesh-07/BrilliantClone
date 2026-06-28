@@ -60,7 +60,7 @@ function nodeState(item: LessonPathItem): NodeState {
   return "open";
 }
 
-/** Horizontal lean (in 0–100 viewBox units) used for the gentle zig-zag. */
+/** Horizontal lean (in 0-100 viewBox units) used for the gentle zig-zag. */
 function leanFor(index: number): number {
   return index % 2 === 0 ? 34 : 66;
 }
@@ -268,7 +268,7 @@ function PathNode({
   onLeave,
   nodeRef,
 }: PathNodeProps) {
-  // NOTE: no scale/transform on hover or open — resizing the circle would move
+  // NOTE: no scale/transform on hover or open, resizing the circle would move
   // its edge out from under the cursor and cause open/close flicker. The hover
   // affordance is a ring + shadow (box-shadow based, so it never changes the
   // node's geometry or hit-area).
@@ -307,7 +307,7 @@ function PathNode({
     <button
       ref={nodeRef}
       type="button"
-      aria-label={`${item.lesson.title} — ${stateLabel}${
+      aria-label={`${item.lesson.title}: ${stateLabel}${
         highlightCurrent ? " (current lesson)" : ""
       }. Show details.`}
       aria-current={highlightCurrent ? "step" : undefined}
@@ -385,7 +385,7 @@ interface PopoverPos {
  *   - Vertically: prefer below the node, FLIP above when there's more room; if
  *     neither side fully fits, clamp within [navBottom+margin, viewportBottom-margin].
  *   - Horizontally: centre on the node, then CLAMP into the viewport.
- * Position is measured after mount (no SSR mismatch — hidden until computed) and
+ * Position is measured after mount (no SSR mismatch, hidden until computed) and
  * recomputed on resize/scroll while open; listeners are cleaned up on close.
  */
 function LessonPopover({
