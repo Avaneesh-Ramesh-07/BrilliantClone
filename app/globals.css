@@ -596,3 +596,600 @@ body {
     animation-delay: 0ms !important;
   }
 }
+
+/* ===== Arena keyframes (GLOBAL) =====
+   These are referenced by classes in components/arena/arena.module.css. They
+   MUST live here in global scope: CSS Modules under Turbopack locally hashes a
+   @keyframes name but leaves the `animation-name` reference unrewritten, so a
+   keyframe defined inside the module resolves to nothing (the element freezes).
+   Keeping the definitions global (with `arena-*` / `f-*` namespaced names) makes
+   the references resolve while the module's selector classes stay scoped. The
+   prefers-reduced-motion neutralization stays in the module (it just sets
+   `animation: none`, which works regardless of where the keyframes live). */
+
+@keyframes arena-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes arena-red-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(224, 49, 49, 0);
+    background-color: transparent;
+  }
+  30% {
+    box-shadow: 0 0 0 6px rgba(224, 49, 49, 0.55);
+    background-color: rgba(224, 49, 49, 0.18);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(224, 49, 49, 0);
+    background-color: transparent;
+  }
+}
+
+@keyframes arena-gold-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 8px 2px rgba(245, 195, 55, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 18px 6px rgba(245, 195, 55, 0.9);
+  }
+}
+
+@keyframes arena-edge-fade {
+  0% {
+    opacity: 0;
+  }
+  28% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ----- Fighter: retro ready-bounce idle (springy weight shift: vertical bounce
+   + subtle forward/back sway) ----- */
+@keyframes f-bob {
+  0% {
+    transform: translate(0, 0);
+  }
+  30% {
+    transform: translate(1.5px, -6px);
+  }
+  55% {
+    transform: translate(0, -1px);
+  }
+  80% {
+    transform: translate(-1.5px, -5px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* ----- Fighter: recoil (stagger back + lean; away from center for both, since
+   the opponent fighter is mirrored). ----- */
+@keyframes f-recoil {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(-11px, -2px) rotate(-8deg);
+  }
+  60% {
+    transform: translate(-4px, 0) rotate(-3deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/* ----- Fighter: kicks. From the guard stance the front thigh swings forward
+   (negative rotation toward the opponent) while the shin straightens/extends. */
+@keyframes f-frontkick {
+  0% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(-72deg);
+  }
+  55% {
+    transform: rotate(-68deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-frontkick-shin {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-24deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes f-sidekick-leg {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-82deg);
+  }
+  60% {
+    transform: rotate(-78deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-sidekick-shin {
+  0% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(-28deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-sidekick-body {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes f-roundhouse-leg {
+  0% {
+    transform: rotate(18deg);
+  }
+  45% {
+    transform: rotate(-82deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-roundhouse-lower {
+  0% {
+    transform: rotate(28deg);
+  }
+  45% {
+    transform: rotate(-14deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes f-jump {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-26px);
+  }
+  60% {
+    transform: translateY(-22px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes f-jumpkick-leg {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-74deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* ----- Fighter: punches. From guard the front forearm unfolds forward (large
+   positive rotation: the fist arcs from the chin out toward the opponent) with a
+   small upper-arm assist. ----- */
+@keyframes f-punch {
+  0% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(-18deg);
+  }
+  55% {
+    transform: rotate(-15deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-punch-fore {
+  0% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(112deg);
+  }
+  55% {
+    transform: rotate(106deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes f-jab {
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-14deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-jab-fore {
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(104deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes f-uppercut {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-44deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-uppercut-fore {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(86deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes f-sideswipe {
+  0% {
+    transform: rotate(8deg);
+  }
+  50% {
+    transform: rotate(-70deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-sideswipe-fore {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(92deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* ----- Fighter: knee + elbow families (bent limb leads from the guard) ----- */
+@keyframes f-knee-up {
+  0% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(-66deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-knee-fold {
+  0% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(58deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes f-elbow-arm {
+  0% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(-60deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes f-elbow-fold {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-30deg);
+  }
+  45% {
+    transform: rotate(-30deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* ===== Arena + fight-scene CLASSES (GLOBAL, `af-` prefix) =====
+   These are PLAIN GLOBAL classes (not CSS-module scoped). They MUST be global:
+   Turbopack's CSS Modules rewrites an `animation-name` reference to a hashed
+   keyframe even when the @keyframes itself is global, so any animation class
+   left in arena.module.css resolves to a non-existent name and freezes. Defined
+   globally, the `animation-name` is never scoped. Referenced by LITERAL string
+   class names in the arena components. */
+
+/* ----- HUD: avatar blow flash + streak buff glow ----- */
+.af-hit {
+  animation:
+    arena-shake 0.45s ease-in-out,
+    arena-red-flash 0.55s ease-in-out;
+}
+.af-buffed {
+  animation: arena-gold-pulse 1.1s ease-in-out infinite;
+  border-color: rgba(245, 195, 55, 0.95) !important;
+}
+
+/* ----- Screen-edge damage flash ----- */
+.af-edge {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+}
+.af-edge-green {
+  box-shadow: inset 0 0 90px 26px rgba(34, 197, 94, 0.55);
+  animation: arena-edge-fade 0.7s ease-out forwards;
+}
+.af-edge-red {
+  box-shadow: inset 0 0 90px 26px rgba(224, 49, 49, 0.55);
+  animation: arena-edge-fade 0.7s ease-out forwards;
+}
+
+/* ----- Fight-scene stage ----- */
+.af-stage {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+  padding: 8px 4px 14px;
+  border-bottom: 3px solid var(--color-border);
+}
+.af-slot {
+  display: flex;
+  width: 42%;
+  max-width: 190px;
+  align-items: flex-end;
+  justify-content: center;
+}
+.af-svg {
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+}
+
+/* All groups resolve transform-origin against the SVG view box so the joint
+   coordinates below line up with the drawing. Origin is the feet for the whole
+   fighter (so leans/jumps pivot from the ground). */
+.af-fighter {
+  transform-box: view-box;
+  transform-origin: 58px 152px;
+}
+.af-fighter g {
+  transform-box: view-box;
+}
+
+/* Joint transform-origins (view-box px) - matched to the guard-stance limb
+   coordinates in NinjaFighter.tsx (hip / shoulder / knee / elbow). */
+.af-head {
+  transform-origin: 63px 56px;
+}
+.af-arm-back {
+  transform-origin: 61px 58px;
+}
+.af-arm-back-lower {
+  transform-origin: 55px 72px;
+}
+.af-arm-front {
+  transform-origin: 63px 58px;
+}
+.af-arm-front-lower {
+  transform-origin: 69px 72px;
+}
+.af-leg-back {
+  transform-origin: 54px 100px;
+}
+.af-leg-back-lower {
+  transform-origin: 48px 126px;
+}
+.af-leg-front {
+  transform-origin: 58px 100px;
+}
+.af-leg-front-lower {
+  transform-origin: 66px 124px;
+}
+
+/* ----- Idle (retro ready-bounce) + recoil ----- */
+.af-idle {
+  animation: f-bob 0.75s ease-in-out infinite;
+}
+.af-recoil {
+  animation: f-recoil 0.6s ease-out;
+}
+
+/* ----- Kicks (front leg swings toward the opponent; shin extends) ----- */
+.af-front-kick .af-leg-front {
+  animation: f-frontkick 0.6s ease-out;
+}
+.af-front-kick .af-leg-front-lower {
+  animation: f-frontkick-shin 0.6s ease-out;
+}
+.af-side-kick .af-leg-front {
+  animation: f-sidekick-leg 0.6s ease-out;
+}
+.af-side-kick .af-leg-front-lower {
+  animation: f-sidekick-shin 0.6s ease-out;
+}
+.af-side-kick {
+  animation: f-sidekick-body 0.6s ease-out;
+}
+.af-roundhouse-kick .af-leg-front {
+  animation: f-roundhouse-leg 0.6s ease-out;
+}
+.af-roundhouse-kick .af-leg-front-lower {
+  animation: f-roundhouse-lower 0.6s ease-out;
+}
+.af-jump-kick {
+  animation: f-jump 0.7s ease-out;
+}
+.af-jump-kick .af-leg-front {
+  animation: f-jumpkick-leg 0.7s ease-out;
+}
+.af-jump-kick .af-leg-front-lower {
+  animation: f-frontkick-shin 0.7s ease-out;
+}
+.af-jump-roundhouse-kick {
+  animation: f-jump 0.75s ease-out;
+}
+.af-jump-roundhouse-kick .af-leg-front {
+  animation: f-roundhouse-leg 0.75s ease-out;
+}
+.af-jump-roundhouse-kick .af-leg-front-lower {
+  animation: f-roundhouse-lower 0.75s ease-out;
+}
+
+/* ----- Punches (front forearm unfolds forward toward the opponent) ----- */
+.af-punch .af-arm-front {
+  animation: f-punch 0.5s ease-out;
+}
+.af-punch .af-arm-front-lower {
+  animation: f-punch-fore 0.5s ease-out;
+}
+.af-jab .af-arm-front {
+  animation: f-jab 0.34s ease-out;
+}
+.af-jab .af-arm-front-lower {
+  animation: f-jab-fore 0.34s ease-out;
+}
+.af-uppercut .af-arm-front {
+  animation: f-uppercut 0.55s ease-out;
+}
+.af-uppercut .af-arm-front-lower {
+  animation: f-uppercut-fore 0.55s ease-out;
+}
+.af-sideswipe .af-arm-front {
+  animation: f-sideswipe 0.55s ease-out;
+}
+.af-sideswipe .af-arm-front-lower {
+  animation: f-sideswipe-fore 0.55s ease-out;
+}
+
+/* ----- Knee + elbow families (bent limb leads) ----- */
+.af-knee .af-leg-front {
+  animation: f-knee-up 0.55s ease-out;
+}
+.af-knee .af-leg-front-lower {
+  animation: f-knee-fold 0.55s ease-out;
+}
+.af-elbow .af-arm-front {
+  animation: f-elbow-arm 0.55s ease-out;
+}
+.af-elbow .af-arm-front-lower {
+  animation: f-elbow-fold 0.55s ease-out;
+}
+
+/* ----- Defeated: static slump (no motion) ----- */
+.af-defeated {
+  transform: translateY(20px);
+  opacity: 0.55;
+}
+.af-defeated .af-leg-front {
+  transform: rotate(62deg);
+}
+.af-defeated .af-leg-back {
+  transform: rotate(-52deg);
+}
+.af-defeated .af-arm-front {
+  transform: rotate(44deg);
+}
+.af-defeated .af-head {
+  transform: rotate(22deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .af-hit,
+  .af-buffed {
+    animation: none;
+  }
+
+  /* No harsh flashing: hold a gentle static tint for the (JS-cleared) duration
+     instead of pulsing opacity. */
+  .af-edge-green,
+  .af-edge-red {
+    animation: none;
+    opacity: 0.4;
+  }
+
+  /* Fighters hold a neutral static stance (the defeated slump is a pose, not
+     motion, so it is preserved). */
+  .af-fighter,
+  .af-fighter g {
+    animation: none !important;
+  }
+  .af-fighter:not(.af-defeated),
+  .af-fighter:not(.af-defeated) g {
+    transform: none !important;
+  }
+}

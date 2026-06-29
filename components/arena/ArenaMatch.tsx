@@ -12,12 +12,14 @@ import {
 } from "react";
 import { Button } from "@/components/ui/Button";
 import { DuelStartVersus } from "@/components/arena/DuelStartVersus";
+import { FightScene } from "@/components/arena/FightScene";
 import { renderWithFractions } from "@/lib/math/fractions";
 import {
   applyAnswer,
   patchForOutcome,
   type CombatState,
 } from "@/lib/arena/combat";
+import { randomMove, type MoveId } from "@/lib/arena/moves";
 import { nextProblem } from "@/lib/arena/problems";
 import {
   abandonSession,
@@ -40,6 +42,8 @@ import styles from "./arena.module.css";
 // countdown is shown; a real tab-close resolves to the win in a few seconds.
 const DISCONNECT_DEBOUNCE_MS = 2_500;
 const HIT_ANIM_MS = 600;
+// How long a fighter's strike/recoil plays before returning to the idle bob.
+const ATTACK_ANIM_MS = 800;
 
 interface ArenaMatchProps {
   sessionId: string;
@@ -125,6 +129,21 @@ export function ArenaMatch({
   const [enemyHit, setEnemyHit] = useState(false);
   const [selfHit, setSelfHit] = useState(false);
   const [opponentLeft, setOpponentLeft] = useState(false);
+
+  // The fight-scene strike currently playing. `attacker` is an ArenaRole so the
+  // same move is shown identically on both clients (each maps it to self/opponent
+  // by comparing against its own `role`). The move is chosen by the attacker and
+  // broadcast over the existing Realtime channel.
+  const [attack, setAttack] = useState<{
+    attacker: ArenaRole;
+    move: MoveId;
+    id: number;
+  } | null>(null);
+  const attackIdRef = useRef(0);
+  const attackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guaranteed defender-recoil trigger: bumped whenever MY hp drops via realtime,
+  // so the local fighter staggers even if the attacker's move broadcast was lost.
+  const [selfRecoilId, setSelfRecoilId] = useState(0);
 
   // Explicit "Leave duel" (forfeit) flow.
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -234,11 +253,21 @@ export function ArenaMatch({
     answerOutlineTimerRef.current = setTimeout(() => setAnswerOutline(null), 700);
   }, []);
 
+  // Play a fight-scene strike (and auto-return to idle). The incrementing id
+  // restarts the CSS animation even when the same move repeats.
+  const playAttack = useCallback((attacker: ArenaRole, move: MoveId) => {
+    attackIdRef.current += 1;
+    setAttack({ attacker, move, id: attackIdRef.current });
+    if (attackTimerRef.current) clearTimeout(attackTimerRef.current);
+    attackTimerRef.current = setTimeout(() => setAttack(null), ATTACK_ANIM_MS);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (edgeFlashTimerRef.current) clearTimeout(edgeFlashTimerRef.current);
       if (answerOutlineTimerRef.current)
         clearTimeout(answerOutlineTimerRef.current);
+      if (attackTimerRef.current) clearTimeout(attackTimerRef.current);
     };
   }, []);
 
@@ -358,6 +387,15 @@ export function ArenaMatch({
           setOpponentReady(true);
         }
       })
+      // The opponent landed a blow and broadcast the move they performed. Play
+      // it on this client so both screens show the identical strike (the local
+      // recoil is also driven by the HP-drop backstop below).
+      .on("broadcast", { event: "attack" }, ({ payload }) => {
+        const data = payload as { role?: ArenaRole; move?: MoveId } | null;
+        if (data?.role === opponentRole && data.move) {
+          playAttack(opponentRole, data.move);
+        }
+      })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           // Include the current readiness so a re-subscribe (e.g. after a flap)
@@ -388,6 +426,9 @@ export function ArenaMatch({
     if (myHp < prevMyHpRef.current) {
       setSelfHit(true);
       triggerEdgeFlash("red");
+      // Backstop recoil for the fight scene: guarantees the local fighter
+      // staggers even if the attacker's move broadcast was dropped.
+      setSelfRecoilId((n) => n + 1);
       const t = setTimeout(() => setSelfHit(false), HIT_ANIM_MS);
       prevMyHpRef.current = myHp;
       return () => clearTimeout(t);
@@ -481,6 +522,15 @@ export function ArenaMatch({
         // I just dealt damage to my opponent → flash MY screen edges GREEN.
         triggerEdgeFlash("green");
         setTimeout(() => setEnemyHit(false), HIT_ANIM_MS);
+        // Pick a random move, play it locally (MY fighter strikes), and
+        // broadcast it so the opponent's client shows the identical move.
+        const move = randomMove();
+        playAttack(role, move);
+        void channelRef.current?.send({
+          type: "broadcast",
+          event: "attack",
+          payload: { role, move },
+        });
         setFeedback(
           outcome.buffActive
             ? `Critical blow! −${outcome.damage} HP (1.5x)`
@@ -517,6 +567,7 @@ export function ArenaMatch({
       advance,
       flashAnswerOutline,
       triggerEdgeFlash,
+      playAttack,
     ]
   );
 
@@ -583,8 +634,8 @@ export function ArenaMatch({
         <div
           key={edgeFlash.id}
           aria-hidden
-          className={`${styles.edgeFlash} ${
-            edgeFlash.color === "green" ? styles.edgeGreen : styles.edgeRed
+          className={`af-edge ${
+            edgeFlash.color === "green" ? "af-edge-green" : "af-edge-red"
           }`}
         />
       )}
@@ -670,7 +721,7 @@ export function ArenaMatch({
           <Avatar
             label={selfName}
             tone="you"
-            className={`${selfHit ? styles.hit : ""} ${buffActive ? styles.buffed : ""}`}
+            className={`${selfHit ? "af-hit" : ""} ${buffActive ? "af-buffed" : ""}`}
           />
           <p className="max-w-full truncate text-label text-text">{selfName}</p>
           <p className="text-body font-semibold text-text">❤️ {Math.max(0, myHp)}</p>
@@ -690,7 +741,7 @@ export function ArenaMatch({
           <Avatar
             label={enemyDisplay}
             tone="enemy"
-            className={enemyHit ? styles.hit : ""}
+            className={enemyHit ? "af-hit" : ""}
           />
           <p className="max-w-full truncate text-label text-text">
             {enemyDisplay}
@@ -702,71 +753,93 @@ export function ArenaMatch({
         </div>
       </div>
 
-      {/* ===== Middle: current problem ===== */}
-      <div className="flex flex-1 flex-col items-center justify-center py-8">
-        {isWaiting && (
+      {/* ===== Middle: fight scene ===== */}
+      <div className="flex flex-1 flex-col items-stretch justify-center py-4">
+        {isWaiting ? (
           <div className="text-center">
             <p className="text-body text-muted">Waiting for your opponent…</p>
             <p className="mt-2 break-all text-label text-muted">{challengeLink}</p>
           </div>
-        )}
-
-        {isActive && problem && (
-          <div
-            className={`rounded-xl border-2 px-5 py-6 transition-colors duration-200 ${
-              answerOutline === "correct"
-                ? "border-success"
-                : answerOutline === "wrong"
-                  ? "border-error"
-                  : "border-border"
-            }`}
-          >
-            <p
-              className="px-2 text-center font-equation text-text"
-              style={{ fontSize: 20, lineHeight: 1.4 }}
-            >
-              {renderWithFractions(problem.prompt, "arena-prompt", undefined, "mx-0.5")}
-            </p>
-          </div>
-        )}
-
-        {isActive && poolExhausted && (
-          <p className="text-center text-body text-muted">
-            You&apos;ve cleared every problem in your pool. Hold the line!
-          </p>
-        )}
-
-        {feedback && isActive && (
-          <p className="mt-4 text-feedback text-muted">{feedback}</p>
+        ) : (
+          <FightScene
+            attack={
+              attack
+                ? {
+                    attacker: attack.attacker === role ? "self" : "opponent",
+                    move: attack.move,
+                    id: attack.id,
+                  }
+                : null
+            }
+            selfRecoilId={selfRecoilId}
+            isComplete={isComplete}
+            selfDefeated={session.winner === opponentRole}
+          />
         )}
       </div>
 
-      {/* ===== Bottom: input ===== */}
+      {/* ===== Bottom: current problem + answer input ===== */}
       {isActive && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          <input
-            inputMode="text"
-            autoComplete="off"
-            aria-label="Your answer"
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              if (inputError) setInputError(false);
-            }}
-            placeholder="Your answer"
-            className={`min-h-[48px] w-full rounded-lg border bg-surface px-4 text-equation text-text outline-none focus:ring-2 focus:ring-primary-light ${
-              inputError ? "border-error" : "border-border focus:border-primary"
-            }`}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            className="min-h-[48px]"
-            disabled={!problem}
-          >
-            Submit
-          </Button>
-        </form>
+        <div className="flex flex-col gap-3">
+          {problem && (
+            <div
+              className={`rounded-xl border-2 px-5 py-4 transition-colors duration-200 ${
+                answerOutline === "correct"
+                  ? "border-success"
+                  : answerOutline === "wrong"
+                    ? "border-error"
+                    : "border-border"
+              }`}
+            >
+              <p
+                className="px-2 text-center font-equation text-text"
+                style={{ fontSize: 20, lineHeight: 1.4 }}
+              >
+                {renderWithFractions(
+                  problem.prompt,
+                  "arena-prompt",
+                  undefined,
+                  "mx-0.5"
+                )}
+              </p>
+            </div>
+          )}
+
+          {poolExhausted && (
+            <p className="text-center text-body text-muted">
+              You&apos;ve cleared every problem in your pool. Hold the line!
+            </p>
+          )}
+
+          {feedback && (
+            <p className="text-center text-feedback text-muted">{feedback}</p>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <input
+              inputMode="text"
+              autoComplete="off"
+              aria-label="Your answer"
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                if (inputError) setInputError(false);
+              }}
+              placeholder="Your answer"
+              className={`min-h-[48px] w-full rounded-lg border bg-surface px-4 text-equation text-text outline-none focus:ring-2 focus:ring-primary-light ${
+                inputError ? "border-error" : "border-border focus:border-primary"
+              }`}
+            />
+            <Button
+              type="submit"
+              fullWidth
+              className="min-h-[48px]"
+              disabled={!problem}
+            >
+              Submit
+            </Button>
+          </form>
+        </div>
       )}
 
       {/* ===== Leave/forfeit confirmation ===== */}
